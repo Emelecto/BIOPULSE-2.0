@@ -1,0 +1,28 @@
+{
+  "fixtureKind": "contract-template",
+  "containsMeasurements": false,
+  "date": null,
+  "timezone": null,
+  "sourceReferences": [],
+  "metrics": {
+    "heartRate": null,
+    "restingHeartRate": null,
+    "heartRateVariabilitySDNN": null,
+    "sleepAnalysis": null,
+    "respiratoryRate": null,
+    "oxygenSaturation": null,
+    "wristTemperature": null,
+    "stepCount": null,
+    "walkingRunningDistance": null,
+    "activeEnergyBurned": null,
+    "appleExerciseTime": null,
+    "flightsClimbed": null,
+    "vo2Max": null,
+    "heartRateRecoveryOneMinute": null
+  },
+  "quality": {
+    "state": "missing",
+    "coverage": null,
+    "warnings": []
+  }
+}

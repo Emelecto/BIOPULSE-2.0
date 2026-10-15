@@ -1,0 +1,19 @@
+{
+  "fixtureKind": "contract-template",
+  "containsMeasurements": false,
+  "source": {
+    "kind": "healthKit",
+    "deviceModel": null,
+    "operatingSystem": null,
+    "timezone": null
+  },
+  "capabilities": [
+    { "metric": "heartRate", "state": "supported", "sampleCount": null, "coverage": null },
+    { "metric": "restingHeartRate", "state": "authorizationRequestNeeded", "sampleCount": null, "coverage": null },
+    { "metric": "heartRateVariabilitySDNN", "state": "readAccessIndeterminate", "sampleCount": null, "coverage": null },
+    { "metric": "sleepAnalysis", "state": "partial", "sampleCount": null, "coverage": null },
+    { "metric": "oxygenSaturation", "state": "unsupported", "sampleCount": null, "coverage": null },
+    { "metric": "wristTemperature", "state": "restricted", "sampleCount": null, "coverage": null },
+    { "metric": "workout", "state": "invalid", "sampleCount": null, "coverage": null }
+  ]
+}

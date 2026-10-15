@@ -1,0 +1,43 @@
+name: BioPulse
+options:
+  bundleIdPrefix: com.biopulse
+packages:
+  BioPulseDomain:
+    path: .
+  Supabase:
+    url: https://github.com/supabase/supabase-swift.git
+    exactVersion: 2.49.0
+targets:
+  BioPulse:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources/App
+      - path: Sources/HealthKit
+      - path: Resources/Assets.xcassets
+    dependencies:
+      - package: BioPulseDomain
+      - package: Supabase
+        product: Supabase
+    entitlements:
+      path: BioPulse.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.applesignin:
+          - Default
+    info:
+      properties:
+        CFBundleURLTypes:
+          - CFBundleURLName: com.biopulse.app.auth
+            CFBundleURLSchemes:
+              - biopulse
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.biopulse.app
+        SWIFT_VERSION: "5.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_NSHealthShareUsageDescription: "BioPulse lee las mediciones que autorices para mostrarte tus señales y tendencias de bienestar."
+        INFOPLIST_KEY_SUPABASE_URL: "https://ielprdmmuocajtbimvdx.supabase.co"
+        INFOPLIST_KEY_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_vBpKxn5X27C-gRvD1iiwpg_5BZ57_2E"
+        TARGETED_DEVICE_FAMILY: "1"

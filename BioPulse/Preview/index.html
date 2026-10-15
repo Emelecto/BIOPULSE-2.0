@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#08151e" />
+    <title>BioPulse 2.0 · Preview</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="preview-stage">
+      <div class="preview-note" aria-label="Estado de la preview">
+        <span class="preview-dot"></span>
+        <span>Preview visual · HealthKit no conectado</span>
+      </div>
+
+      <section class="phone" aria-label="Preview de la app BioPulse 2.0">
+        <div class="phone-speaker" aria-hidden="true"></div>
+        <div class="phone-screen">
+          <div class="status-bar" aria-hidden="true">
+            <span>9:41</span>
+            <span class="status-icons"><span>▮▮▮</span><span>⌁</span><span class="battery"></span></span>
+          </div>
+
+          <div class="app-content" id="app-content">
+            <section class="screen active" data-screen="today" aria-labelledby="today-title">
+              <div class="today-background" aria-hidden="true"></div>
+              <div class="screen-inner">
+                <header class="brand-row">
+                  <div class="brand-lockup">
+                    <span class="brand-name">BioPulse</span>
+                    <span class="pulse-mark" aria-hidden="true"></span>
+                  </div>
+                  <div class="source-state"><span class="state-dot"></span><span id="source-label">Sin sincronizar</span></div>
+                </header>
+
+                <div class="title-block">
+                  <h1 id="today-title">Hoy</h1>
+                  <p id="today-date"></p>
+                </div>
+
+                <section class="hero-insight" aria-labelledby="insight-title">
+                  <div class="insight-copy">
+                    <p class="eyebrow">BIENESTAR GENERAL</p>
+                    <h2 id="insight-title">Tu bienestar, con datos reales</h2>
+                    <p id="insight-description">Conecta Apple Salud para explorar lo que registra tu dispositivo.</p>
+                  </div>
+                  <button class="score-trigger" id="score-trigger" type="button" aria-label="Abrir explicación del BioScore">
+                    <span class="score-ring" aria-hidden="true"><span class="ring-dot"></span><strong>—</strong><small>BioScore</small></span>
+                    <span class="score-link">Ver detalle <span aria-hidden="true">↗</span></span>
+                  </button>
+                </section>
+
+                <div class="action-stack" id="connection-panel">
+                  <div class="message-panel">
+                    <div class="panel-icon" aria-hidden="true">♡</div>
+                    <div>
+                      <h3>Conecta Apple Salud</h3>
+                      <p>Tú eliges qué datos compartir. BioPulse consulta únicamente las mediciones autorizadas.</p>
+                    </div>
+                  </div>
+                  <button class="primary-button" id="connect-button" type="button">Solicitar acceso</button>
+                </div>
+
+                <section class="signals-section" aria-labelledby="signals-title">
+                  <div class="section-heading">
+                    <div><h2 id="signals-title">Señales principales</h2><p>Mediciones recientes, sin estimaciones</p></div>
+                  </div>
+                  <div class="signal-grid">
+                    <button class="signal-card" type="button" data-detail="hrv">
+                      <span class="card-top"><span class="metric-icon waveform">⌁</span><span class="card-title">HRV</span></span>
+                      <strong>—</strong>
+                      <span class="card-foot"><span class="muted-dot"></span>Sin dato</span>
+                    </button>
+                    <button class="signal-card" type="button" data-detail="sleep">
+                      <span class="card-top"><span class="metric-icon moon">◔</span><span class="card-title">Sueño</span></span>
+                      <strong>—</strong>
+                      <span class="card-foot"><span class="muted-dot"></span>Sin dato</span>
+                    </button>
+                  </div>
+                </section>
+
+                <button class="activity-row" type="button" data-detail="activity">
+                  <span class="activity-icon" aria-hidden="true">♧</span>
+                  <span class="activity-copy"><strong>Actividad</strong><span>Sin registros hoy</span></span>
+                  <span class="activity-chevron" aria-hidden="true">›</span>
+                </button>
+
+                <section class="signals-section" aria-labelledby="today-tools-title">
+                  <div class="section-heading"><div><h2 id="today-tools-title">Para hoy</h2><p>Herramientas sin datos simulados</p></div></div>
+                  <div class="tool-grid">
+                    <button class="tool-card" type="button" data-detail="energy"><span>☼</span><strong>Mapa de energía</strong><small>Entradas y cobertura</small></button>
+                    <button class="tool-card" type="button" data-detail="breathing"><span>≈</span><strong>Respiración</strong><small>Ritmo visual guiado</small></button>
+                  </div>
+                </section>
+
+                <p class="health-note">BioPulse describe registros disponibles; no ofrece diagnósticos médicos.</p>
+              </div>
+            </section>
+
+            <section class="screen" data-screen="trends" aria-labelledby="trends-title" hidden>
+              <div class="screen-inner plain-screen">
+                <header class="section-screen-heading"><p class="eyebrow">LECTURA PERSONAL</p><h1 id="trends-title">Tendencias</h1><p>Entiende cada señal en su contexto.</p></header>
+                <div class="message-panel large-panel"><div class="panel-icon">⌁</div><div><h3>Tu referencia personal está en preparación</h3><p>Una tendencia requiere historial y cobertura suficientes. Ahora puedes consultar cada medición real y su procedencia.</p></div></div>
+                <div class="section-heading"><div><h2>Mediciones</h2><p>Toca una señal para conocerla</p></div></div>
+                <div class="metric-list">
+                  <button class="metric-row" type="button" data-detail="hrv"><span class="metric-icon">⌁</span><span><strong>Variabilidad cardiaca</strong><small>Sin dato reciente</small></span><b>—</b><span>›</span></button>
+                  <button class="metric-row" type="button" data-detail="resting"><span class="metric-icon">⌁</span><span><strong>Frecuencia en reposo</strong><small>Sin dato reciente</small></span><b>—</b><span>›</span></button>
+                  <button class="metric-row" type="button" data-detail="respiration"><span class="metric-icon">◌</span><span><strong>Frecuencia respiratoria</strong><small>Sin dato reciente</small></span><b>—</b><span>›</span></button>
+                  <button class="metric-row" type="button" data-detail="oxygen"><span class="metric-icon">◒</span><span><strong>Oxígeno en sangre</strong><small>Sin dato reciente</small></span><b>—</b><span>›</span></button>
+                </div>
+                <div class="section-heading feature-heading"><div><h2>Lecturas amplias</h2><p>Contexto antes que conclusiones</p></div></div>
+                <div class="metric-list">
+                  <button class="metric-row" type="button" data-detail="weekly"><span class="metric-icon">▦</span><span><strong>Resumen semanal</strong><small>Cambios, cobertura y diario</small></span><b></b><span>›</span></button>
+                  <button class="metric-row" type="button" data-detail="technical"><span class="metric-icon">⌬</span><span><strong>Vista técnica</strong><small>Datos, métodos y limitaciones</small></span><b></b><span>›</span></button>
+                </div>
+              </div>
+            </section>
+
+            <section class="screen" data-screen="journal" aria-labelledby="journal-title" hidden>
+              <div class="screen-inner plain-screen">
+                <header class="section-screen-heading"><p class="eyebrow">CONTEXTO PERSONAL</p><h1 id="journal-title">Diario</h1><p>Hábitos, síntomas y eventos.</p></header>
+                <div class="message-panel"><div class="panel-icon">⌑</div><div><h3>Registro local en esta preview</h3><p>Solo se muestran entradas que tú escribas. Se eliminan al recargar y no se envían a ningún servidor.</p></div></div>
+                <form class="journal-form" id="journal-form">
+                  <label>Tipo<select id="journal-category"><option>Hábito</option><option>Síntoma</option><option>Evento</option></select></label>
+                  <label>Descripción<input id="journal-title-input" type="text" maxlength="80" placeholder="Ej. Entrenamiento intenso" required /></label>
+                  <label>Notas opcionales<textarea id="journal-notes" maxlength="240" placeholder="Añade el contexto que quieras recordar"></textarea></label>
+                  <button class="primary-button" type="submit">Guardar registro</button>
+                </form>
+                <div class="section-heading feature-heading"><div><h2>Tus registros</h2><p>Asociaciones futuras, nunca causalidad automática</p></div></div>
+                <div id="journal-empty" class="empty-journal">Aún no has añadido contexto.</div>
+                <div id="journal-list" class="journal-list" aria-live="polite"></div>
+              </div>
+            </section>
+
+            <section class="screen" data-screen="sleep" aria-labelledby="sleep-title" hidden>
+              <div class="screen-inner plain-screen">
+                <header class="section-screen-heading"><p class="eyebrow">RECUPERACIÓN</p><h1 id="sleep-title">Sueño</h1><p>Tu última noche registrada.</p></header>
+                <button class="sleep-score-card" type="button" data-detail="sleepScore">
+                  <span class="score-ring compact" aria-hidden="true"><strong>—</strong><small>Sleep Score</small></span>
+                  <span><strong>Puntuación pendiente</strong><small>Visible desde el MVP; sin cifra hasta validar fórmula y cobertura.</small></span>
+                </button>
+                <div class="sleep-summary"><span class="sleep-symbol">◔</span><div><strong>—</strong><span>Tiempo dormido registrado</span></div></div>
+                <div class="message-panel"><div class="panel-icon">◌</div><div><h3>Sin sueño disponible</h3><p>Usa un dispositivo compatible durante la noche y revisa los permisos de Sueño en Apple Salud.</p></div></div>
+                <div class="definition-block"><span class="metric-icon">i</span><div><h3>Qué incluye este tiempo</h3><p>Suma las etapas que Apple Salud marca como sueño. No incluye el tiempo simplemente en cama.</p></div></div>
+              </div>
+            </section>
+
+            <section class="screen" data-screen="profile" aria-labelledby="profile-title" hidden>
+              <div class="screen-inner plain-screen">
+                <header class="section-screen-heading"><p class="eyebrow">CONTROL LOCAL</p><h1 id="profile-title">Perfil</h1><p>Tus fuentes y tu privacidad.</p></header>
+                <div class="section-heading"><div><h2>Apple Salud</h2><p>La fuente principal de BioPulse</p></div></div>
+                <div class="message-panel"><div class="panel-icon">♡</div><div><h3>Disponible en este iPhone</h3><p>Elige qué categorías permitir. Puedes cambiarlas después en Ajustes o Apple Salud.</p></div></div>
+                <button class="primary-button" type="button" id="profile-connect">Solicitar acceso</button>
+                <button class="secondary-button" type="button" id="refresh-button">Actualizar mediciones</button>
+                <div class="section-heading"><div><h2>CSV</h2><p>Revisa un archivo antes de incorporarlo</p></div></div>
+                <div class="message-panel"><div class="panel-icon">□</div><div><h3>Vista previa local</h3><p>Acepta los formatos tidy y wide documentados. Esta revisión no guarda registros.</p></div></div>
+                <label class="secondary-button file-button" for="csv-input">Revisar archivo CSV<input id="csv-input" type="file" accept=".csv,text/csv,text/plain" /></label>
+                <div class="section-heading feature-heading"><div><h2>Cuenta</h2><p>Requerida para usar BioPulse</p></div></div>
+                <button class="metric-row" type="button" data-detail="account"><span class="metric-icon">♙</span><span><strong>Cuenta y sincronización</strong><small>Apple, correo y Google</small></span><b></b><span>›</span></button>
+                <button class="metric-row privacy-link" type="button" data-detail="privacy"><span class="metric-icon">⌂</span><span><strong>Privacidad y permisos</strong><small>Control local y cloud opcional</small></span><b></b><span>›</span></button>
+                <div class="privacy-copy"><span class="metric-icon">⌂</span><p>Las consultas y la revisión CSV se realizan en este dispositivo. Esta preview no envía datos a un servidor.</p></div>
+              </div>
+            </section>
+          </div>
+
+          <nav class="tab-bar" aria-label="Navegación principal">
+            <button class="tab active" type="button" data-tab="today"><span>⌂</span><b>Hoy</b></button>
+            <button class="tab" type="button" data-tab="trends"><span>▥</span><b>Tendencias</b></button>
+            <button class="tab" type="button" data-tab="journal"><span>✎</span><b>Diario</b></button>
+            <button class="tab" type="button" data-tab="sleep"><span>◔</span><b>Sueño</b></button>
+            <button class="tab" type="button" data-tab="profile"><span>♙</span><b>Perfil</b></button>
+          </nav>
+          <button class="coach-fab" id="coach-button" type="button" aria-label="Abrir Coach BioPulse">✦</button>
+          <div class="home-indicator" aria-hidden="true"></div>
+        </div>
+      </section>
+    </main>
+
+    <dialog class="detail-dialog" id="detail-dialog" aria-labelledby="dialog-title">
+      <button class="dialog-close" id="dialog-close" type="button" aria-label="Cerrar">×</button>
+      <div class="dialog-kicker" id="dialog-kicker">BIOPULSE</div>
+      <h2 id="dialog-title">BioScore</h2>
+      <div id="dialog-body"></div>
+    </dialog>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>
