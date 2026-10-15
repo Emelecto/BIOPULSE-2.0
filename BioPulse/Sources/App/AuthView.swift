@@ -261,7 +261,7 @@ private struct AuthView: View {
             } else {
                 let confirmationRequired = try await auth.signUp(email: normalizedEmail, password: password)
                 if confirmationRequired {
-                    message = "Si el registro fue aceptado, recibirás un correo para confirmar la cuenta antes de entrar."
+                    message = "Revisa tu correo en el celular. Confirma la cuenta allí, vuelve a BioPulse e inicia sesión."
                 }
             }
         } catch {

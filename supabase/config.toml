@@ -13,8 +13,8 @@ major_version = 17
 
 [auth]
 enabled = true
-site_url = "biopulse://auth-callback"
-additional_redirect_urls = ["biopulse://auth-callback"]
+site_url = "https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email"
+additional_redirect_urls = ["https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email", "biopulse://auth-callback"]
 enable_signup = true
 enable_anonymous_sign_ins = false
 
@@ -25,3 +25,6 @@ enable_confirmations = true
 
 [functions.coach]
 verify_jwt = true
+
+[functions.confirm-email]
+verify_jwt = false

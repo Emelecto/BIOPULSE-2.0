@@ -38,15 +38,11 @@ Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple 
 
 ## Confirmación de correo en Supabase remoto
 
-El callback de la app es `biopulse://auth-callback`. Está registrado en `Info.plist` y el cliente lo envía explícitamente al registrar una cuenta y al recuperar la contraseña. `supabase/config.toml` configura el proyecto **local**; no cambia automáticamente el proyecto alojado.
+El registro por correo vuelve a una URL pública de BioPulse en `https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email`. Muestra un mensaje sencillo en el navegador del celular: Supabase Edge Functions entrega HTML como texto plano, por lo que no se usa una página HTML. Así se puede confirmar desde un celular personal y luego iniciar sesión en el simulador, sin configurar el correo allí. Google y la recuperación de contraseña siguen usando `biopulse://auth-callback` para regresar a la app. El esquema está registrado en el `Info.plist` generado. `supabase/config.toml` configura el proyecto **local**; no cambia automáticamente el proyecto alojado.
 
-En el panel del proyecto `ielprdmmuocajtbimvdx`, abrir **Authentication → URL Configuration**:
+El proyecto remoto `ielprdmmuocajtbimvdx` ya tiene la **Site URL** configurada con esa URL HTTPS. En **Authentication → URL Configuration** están permitidas exactamente esa URL y `biopulse://auth-callback`; se comprobó que las demás propiedades remotas no cambiaron. Si una plantilla de **Authentication → Email Templates → Confirm signup** se personalizó y todavía manda a otra URL, comprobar que utiliza `{{ .ConfirmationURL }}` o respeta `{{ .RedirectTo }}` según la [documentación de Supabase](https://supabase.com/docs/guides/auth/redirect-urls#email-templates-when-using-redirectto).
 
-1. Configurar **Site URL** como `biopulse://auth-callback`.
-2. Añadir `biopulse://auth-callback` a **Redirect URLs** y guardar. Usar la URL exacta, sin comodines.
-3. En **Authentication → Email Templates → Confirm signup** comprobar que el enlace usa `{{ .ConfirmationURL }}`. Si se ha creado una plantilla personalizada que usa `{{ .SiteURL }}`, adaptarla para respetar `{{ .RedirectTo }}` según la [documentación de Supabase](https://supabase.com/docs/guides/auth/redirect-urls#email-templates-when-using-redirectto). Revisar también la plantilla de recuperación si fue personalizada.
-
-Pedir un **correo nuevo** tras guardar la configuración: un mensaje enviado antes conserva su enlace anterior. Abrirlo en el mismo iPhone donde esté instalada BioPulse; una instalación en el simulador no puede abrirse desde Safari de otro teléfono. Si el enlace anterior confirmó la cuenta antes de llegar a localhost, intentar primero iniciar sesión con esa cuenta.
+Pedir un **correo nuevo** desde la nueva versión de la app: un mensaje enviado antes conserva su enlace anterior. Abrirlo en el celular personal; debe mostrar el mensaje «Ya abriste el enlace de verificación». Después, volver al simulador e iniciar sesión con el mismo correo y contraseña. Si el enlace anterior confirmó la cuenta antes de llegar a localhost, intentar primero iniciar sesión con esa cuenta.
 
 Apple y Google requieren además la configuración de sus proveedores en Supabase y, para Apple, firma y capacidad en Apple Developer. Probar registro, callback, recuperación, cierre y cambio entre dos cuentas en iOS 17+; después verificar Dynamic Type, VoiceOver y lecturas reales de Apple Salud.
 

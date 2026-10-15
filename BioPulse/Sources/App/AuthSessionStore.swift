@@ -68,7 +68,7 @@ final class AuthSessionStore: ObservableObject {
         let response = try await configuredClient().auth.signUp(
             email: email,
             password: password,
-            redirectTo: Self.callbackURL
+            redirectTo: Self.emailConfirmationURL
         )
         return response.session == nil
     }
@@ -124,5 +124,9 @@ final class AuthSessionStore: ObservableObject {
 
     private static var callbackURL: URL? {
         URL(string: "biopulse://auth-callback")
+    }
+
+    private static var emailConfirmationURL: URL? {
+        URL(string: "https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email")
     }
 }
