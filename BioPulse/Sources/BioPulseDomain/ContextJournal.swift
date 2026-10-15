@@ -135,13 +135,6 @@ public enum JournalWriteRequest: Codable, Equatable, Sendable {
         .insert(id: id, draft: draft, provenance: provenance)
     }
 
-    public static func replace(
-        id: UUID,
-        expectedRevision: Int,
-        draft: JournalEntryDraft
-    ) -> JournalWriteRequest {
-        .replace(id: id, expectedRevision: expectedRevision, draft: draft)
-    }
 }
 
 public enum JournalWriteResult: Codable, Equatable, Sendable {

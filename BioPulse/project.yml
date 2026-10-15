@@ -27,17 +27,19 @@ targets:
         com.apple.developer.applesignin:
           - Default
     info:
+      path: Info.plist
       properties:
         CFBundleURLTypes:
           - CFBundleURLName: com.biopulse.app.auth
             CFBundleURLSchemes:
               - biopulse
+        NSHealthShareUsageDescription: "BioPulse lee las mediciones que autorices para mostrarte tus señales y tendencias de bienestar."
+        SUPABASE_URL: "https://ielprdmmuocajtbimvdx.supabase.co"
+        SUPABASE_PUBLISHABLE_KEY: "sb_publishable_vBpKxn5X27C-gRvD1iiwpg_5BZ57_2E"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.biopulse.app
         SWIFT_VERSION: "5.0"
-        GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_NSHealthShareUsageDescription: "BioPulse lee las mediciones que autorices para mostrarte tus señales y tendencias de bienestar."
-        INFOPLIST_KEY_SUPABASE_URL: "https://ielprdmmuocajtbimvdx.supabase.co"
-        INFOPLIST_KEY_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_vBpKxn5X27C-gRvD1iiwpg_5BZ57_2E"
+        GENERATE_INFOPLIST_FILE: NO
+        ASSETCATALOG_COMPILER_APPICON_NAME: ""
         TARGETED_DEVICE_FAMILY: "1"

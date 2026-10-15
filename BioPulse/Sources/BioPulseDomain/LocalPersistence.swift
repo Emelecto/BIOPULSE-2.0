@@ -45,13 +45,6 @@ public enum SnapshotWriteRequest: Codable, Equatable, Sendable {
         .insert(id: id, snapshot: snapshot)
     }
 
-    public static func replace(
-        id: UUID,
-        expectedRevision: Int,
-        snapshot: DailySnapshot
-    ) -> SnapshotWriteRequest {
-        .replace(id: id, expectedRevision: expectedRevision, snapshot: snapshot)
-    }
 }
 
 public enum SnapshotWriteResult: Codable, Equatable, Sendable {

@@ -51,40 +51,43 @@ private struct AuthView: View {
     }
 
     var body: some View {
-        ZStack {
-            Image("ForestNight")
-                .resizable()
-                .scaledToFill()
-                .overlay(PulseStyle.background.opacity(0.72))
-                .ignoresSafeArea()
+        ScrollView {
+            VStack(alignment: .leading, spacing: 25) {
+                header
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 25) {
-                    header
-
-                    if let configurationProblem = auth.configurationProblem {
-                        StatusPanel(
-                            symbol: "exclamationmark.triangle",
-                            title: "Falta configurar la conexión",
-                            message: configurationProblem
-                        )
-                    } else {
-                        credentialForm
-                        providerOptions
-                    }
-
-                    Text("Iniciar sesión es necesario para usar BioPulse. La sincronización de tus datos sigue siendo opcional y requiere tu consentimiento.")
-                        .font(.footnote)
-                        .foregroundStyle(PulseStyle.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                if let configurationProblem = auth.configurationProblem {
+                    StatusPanel(
+                        symbol: "exclamationmark.triangle",
+                        title: "Falta configurar la conexión",
+                        message: configurationProblem
+                    )
+                } else {
+                    credentialForm
+                    providerOptions
                 }
-                .frame(maxWidth: 460, alignment: .leading)
-                .padding(.horizontal, 24)
-                .padding(.top, 54)
-                .padding(.bottom, 36)
-                .frame(maxWidth: .infinity)
+
+                Text("Iniciar sesión es necesario para usar BioPulse. La sincronización de tus datos sigue siendo opcional y requiere tu consentimiento.")
+                    .font(.footnote)
+                    .foregroundStyle(PulseStyle.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .scrollIndicators(.hidden)
+            .frame(maxWidth: 460, alignment: .leading)
+            .padding(.horizontal, 24)
+            .padding(.top, 54)
+            .padding(.bottom, 36)
+            .frame(maxWidth: .infinity)
+        }
+        .scrollIndicators(.hidden)
+        .background {
+            GeometryReader { geometry in
+                Image("ForestNight")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+                    .overlay(PulseStyle.background.opacity(0.72))
+            }
+            .ignoresSafeArea()
         }
     }
 
