@@ -80,6 +80,10 @@ private struct AuthPasswordField: View {
 }
 
 private struct AuthView: View {
+    // Temporary: Personal Team provisioning cannot include Sign in with Apple.
+    // Re-enable after signing with a paid Apple Developer Program team.
+    private static let appleSignInEnabled = false
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var typeSize
     @ObservedObject var auth: AuthSessionStore
@@ -310,26 +314,28 @@ private struct AuthView: View {
         VStack(spacing: 13) {
             HStack(spacing: 12) {
                 Rectangle().fill(.white.opacity(0.18)).frame(height: 1)
-                Text("o continúa con")
+                Text(Self.appleSignInEnabled ? "o continúa con" : "Continúa con")
                     .font(.caption)
                     .foregroundStyle(PulseStyle.secondary)
                     .fixedSize()
                 Rectangle().fill(.white.opacity(0.18)).frame(height: 1)
             }
 
-            SignInWithAppleButton(.signIn) { request in
-                let nonce = AppleSignInNonce.make()
-                appleNonce = nonce.rawValue
-                request.nonce = nonce.hashedValue
-                request.requestedScopes = [.email]
-            } onCompletion: { result in
-                Task { await completeAppleSignIn(result) }
+            if Self.appleSignInEnabled {
+                SignInWithAppleButton(.signIn) { request in
+                    let nonce = AppleSignInNonce.make()
+                    appleNonce = nonce.rawValue
+                    request.nonce = nonce.hashedValue
+                    request.requestedScopes = [.email]
+                } onCompletion: { result in
+                    Task { await completeAppleSignIn(result) }
+                }
+                .signInWithAppleButtonStyle(.whiteOutline)
+                .frame(height: 50)
+                .clipShape(RoundedRectangle(cornerRadius: 13))
+                .disabled(isWorking || auth.configurationProblem != nil)
+                .accessibilityLabel("Continuar con Apple")
             }
-            .signInWithAppleButtonStyle(.whiteOutline)
-            .frame(height: 50)
-            .clipShape(RoundedRectangle(cornerRadius: 13))
-            .disabled(isWorking || auth.configurationProblem != nil)
-            .accessibilityLabel("Continuar con Apple")
 
             Button {
                 Task { await signInWithGoogle() }

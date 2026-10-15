@@ -20,7 +20,7 @@ Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple 
 
 ## Estado funcional
 
-- **Autenticación implementada en código, no validada en Mac:** no se monta la app hasta que Supabase restaura o emite una sesión. Incluye correo/contraseña, Apple, Google, confirmación de registro, recuperación y cierre de sesión. Apple/Google requieren configuración de proveedores y credenciales en Supabase; Apple también requiere firma/capacidad en Apple Developer.
+- **Autenticación:** no se monta la app hasta que Supabase restaura o emite una sesión. Incluye correo/contraseña, Google, confirmación de registro, recuperación y cierre de sesión. El botón y la capacidad de Sign in with Apple están temporalmente desactivados para permitir firma en un Personal Team; para reactivarlos, habilitar `appleSignInEnabled` en `AuthView.swift` y añadir `com.apple.developer.applesignin: [Default]` a `project.yml`, además de configurar el proveedor en Supabase y firmar con un equipo compatible.
 - **Pantalla de acceso:** fondos de bosque, superficies iluminadas y campos de contraseña que permiten mostrar u ocultar el contenido. Tras registrarte puedes reenviar el enlace de confirmación cada 60 segundos y volver al acceso. La pantalla no afirma que tu cuenta esté confirmada antes de recibir la sesión.
 - **Aislamiento local implementado para el Diario:** el archivo nuevo usa una carpeta por UUID de usuario. El archivo antiguo sin ámbito no se carga ni se borra automáticamente.
 - La URL y clave publishable del proyecto Supabase están configuradas en el `Info.plist` generado desde `project.yml`; nunca debe añadirse una clave `service_role` a la app.
