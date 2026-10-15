@@ -35,7 +35,53 @@ struct AuthGateView: View {
     }
 }
 
+private enum AuthField: Hashable { case email, password, confirmation }
+
+private struct AuthPasswordField: View {
+    let title: String
+    @Binding var text: String
+    let isNew: Bool
+    let field: AuthField
+    let focus: FocusState<AuthField?>.Binding
+    var onSubmit: () -> Void
+    @State private var visible = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title).font(.subheadline.weight(.medium)).foregroundStyle(PulseStyle.secondary)
+            HStack(spacing: 4) {
+                Group {
+                    if visible { TextField(title, text: $text) }
+                    else { SecureField(title, text: $text) }
+                }
+                .textContentType(isNew ? .newPassword : .password)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .focused(focus, equals: field)
+                .submitLabel(field == .password && isNew ? .next : .go)
+                .onSubmit(onSubmit)
+                .accessibilityLabel(title)
+                Button {
+                    visible.toggle()
+                    focus.wrappedValue = field
+                } label: {
+                    Image(systemName: visible ? "eye.slash" : "eye")
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(PulseStyle.secondary)
+                .accessibilityLabel(visible ? "Ocultar \(title.lowercased())" : "Mostrar \(title.lowercased())")
+            }
+            .padding(.leading, 14).padding(.trailing, 4)
+            .modifier(PulseInputSurface(focused: focus.wrappedValue == field))
+        }
+    }
+}
+
 private struct AuthView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     @ObservedObject var auth: AuthSessionStore
     @State private var mode: AuthMode = .signIn
     @State private var email = ""
@@ -45,6 +91,10 @@ private struct AuthView: View {
     @State private var isWorking = false
     @State private var message: String?
     @State private var errorMessage: String?
+    @State private var confirmationEmail: String?
+    @State private var nextResendAt = Date.distantPast
+    @State private var hasAppeared = false
+    @FocusState private var focusedField: AuthField?
 
     private var normalizedEmail: String {
         email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
@@ -52,145 +102,208 @@ private struct AuthView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 25) {
-                header
-
+            VStack(alignment: .leading, spacing: 26) {
+                header.pulseEntrance(visible: hasAppeared, reduceMotion: reduceMotion)
                 if let configurationProblem = auth.configurationProblem {
-                    StatusPanel(
-                        symbol: "exclamationmark.triangle",
-                        title: "Falta configurar la conexión",
-                        message: configurationProblem
-                    )
+                    StatusPanel(symbol: "exclamationmark.triangle", title: "Falta configurar la conexión", message: configurationProblem)
+                } else if let confirmationEmail {
+                    confirmationPanel(email: confirmationEmail)
                 } else {
-                    credentialForm
-                    providerOptions
+                    credentialForm.pulseEntrance(visible: hasAppeared, reduceMotion: reduceMotion, delay: 0.06)
+                    providerOptions.pulseEntrance(visible: hasAppeared, reduceMotion: reduceMotion, delay: 0.1)
                 }
-
-                Text("Iniciar sesión es necesario para usar BioPulse. La sincronización de tus datos sigue siendo opcional y requiere tu consentimiento.")
-                    .font(.footnote)
-                    .foregroundStyle(PulseStyle.secondary)
+                Label("Tu cuenta protege el acceso. Tú decides qué datos compartir.", systemImage: "lock.shield")
+                    .font(.footnote).foregroundStyle(PulseStyle.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: 460, alignment: .leading)
-            .padding(.horizontal, 24)
-            .padding(.top, 54)
-            .padding(.bottom, 36)
+            .padding(.horizontal, 22).padding(.top, 26).padding(.bottom, 32)
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)
-        .background {
-            GeometryReader { geometry in
-                Image("ForestNight")
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .clipped()
-                    .overlay(PulseStyle.background.opacity(0.72))
-            }
-            .ignoresSafeArea()
+        .scrollDismissesKeyboard(.interactively)
+        .background { PulseBackdrop(forest: true) }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: mode)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: confirmationEmail)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: message)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.18), value: errorMessage)
+        .onChange(of: mode) { _, _ in
+            clearFeedback()
+            passwordConfirmation = ""
         }
+        .onAppear { hasAppeared = true }
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Image(systemName: "waveform.path.ecg")
-                .font(.system(size: 25, weight: .medium))
-                .foregroundStyle(PulseStyle.mint)
-                .accessibilityHidden(true)
-
-            Text("BioPulse")
-                .font(.largeTitle.weight(.semibold))
+        VStack(alignment: .leading, spacing: 14) {
+            PulseIcon(symbol: "waveform.path.ecg")
+            Text("BioPulse").font(.largeTitle.weight(.bold)).foregroundStyle(.white)
+            Text(confirmationEmail != nil ? "Un paso más para entrar." : mode == .signIn ? "Tu bienestar,\nen perspectiva." : "Un espacio para conocerte.")
+                .font(.title.weight(.semibold))
                 .foregroundStyle(.white)
-
-            Text(mode == .signIn ? "Tu bienestar, en contexto." : "Crea tu espacio personal.")
-                .font(.title3.weight(.medium))
-                .foregroundStyle(.white.opacity(0.88))
-
-            Text(mode == .signIn
-                 ? "Entra para consultar tu experiencia BioPulse."
-                 : "Usaremos tu cuenta para proteger tu acceso y separar tus datos en este dispositivo.")
-                .font(.subheadline)
-                .foregroundStyle(PulseStyle.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Text(mode == .signIn ? "Sueño, actividad y contexto. Empieza por tus señales." : "Crea tu cuenta para acceder a tus mediciones y tu Diario.")
+                .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(alignment: .trailing) {
+            PulseContours().stroke(PulseStyle.mint.opacity(0.2), lineWidth: 0.7)
+                .frame(width: 100, height: 130).clipped()
+                .accessibilityHidden(true).allowsHitTesting(false)
         }
     }
 
     private var credentialForm: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Picker("Acceso", selection: $mode) {
-                ForEach(AuthMode.allCases) { option in
-                    Text(option.rawValue).tag(option)
+        VStack(alignment: .leading, spacing: 18) {
+            if typeSize.isAccessibilitySize {
+                Picker("Acceso", selection: $mode) {
+                    ForEach(AuthMode.allCases) { Text($0.rawValue).tag($0) }
                 }
-            }
-            .pickerStyle(.segmented)
-            .accessibilityLabel("Elige iniciar sesión o crear una cuenta")
-
-            VStack(spacing: 12) {
-                TextField("Correo electrónico", text: $email)
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .textFieldStyle(.roundedBorder)
-                    .accessibilityLabel("Correo electrónico")
-
-                SecureField("Contraseña", text: $password)
-                    .textContentType(mode == .signUp ? .newPassword : .password)
-                    .textFieldStyle(.roundedBorder)
-                    .accessibilityLabel("Contraseña")
-
-                if mode == .signUp {
-                    SecureField("Repite la contraseña", text: $passwordConfirmation)
-                        .textContentType(.newPassword)
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityLabel("Repite la contraseña")
+                .pickerStyle(.menu)
+                .frame(minHeight: 44)
+                .disabled(isWorking)
+            } else {
+                Picker("Acceso", selection: $mode) {
+                    ForEach(AuthMode.allCases) { Text($0.rawValue).tag($0) }
                 }
-            }
-
-            if mode == .signIn {
-                Button("Olvidé mi contraseña") {
-                    Task { await requestPasswordReset() }
-                }
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(PulseStyle.mint)
+                .pickerStyle(.segmented)
                 .disabled(isWorking)
             }
 
-            if let message {
-                Text(message)
-                    .font(.subheadline)
-                    .foregroundStyle(PulseStyle.mint)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityAddTraits(.updatesFrequently)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Correo electrónico").font(.subheadline.weight(.medium)).foregroundStyle(PulseStyle.secondary)
+                TextField("nombre@correo.com", text: $email)
+                    .textContentType(.emailAddress).keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .focused($focusedField, equals: .email)
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .password }
+                    .padding(.horizontal, 14)
+                    .modifier(PulseInputSurface(focused: focusedField == .email))
+                    .accessibilityLabel("Correo electrónico")
             }
-            if let errorMessage {
-                Text(errorMessage)
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .accessibilityAddTraits(.updatesFrequently)
+            .disabled(isWorking)
+
+            AuthPasswordField(title: "Contraseña", text: $password, isNew: mode == .signUp, field: .password, focus: $focusedField) {
+                if mode == .signUp { focusedField = .confirmation }
+                else { Task { await submitCredentials() } }
             }
-            if let callbackError = auth.callbackError {
-                Text(callbackError)
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
-                    .fixedSize(horizontal: false, vertical: true)
+            .disabled(isWorking)
+
+            if mode == .signUp {
+                Text("Usa al menos 8 caracteres.").font(.caption).foregroundStyle(PulseStyle.secondary)
+                AuthPasswordField(title: "Repite la contraseña", text: $passwordConfirmation, isNew: true, field: .confirmation, focus: $focusedField) {
+                    Task { await submitCredentials() }
+                }
+                .disabled(isWorking)
+                .transition(.opacity)
+            } else {
+                Button("Olvidé mi contraseña") { Task { await requestPasswordReset() } }
+                    .font(.subheadline.weight(.medium)).foregroundStyle(PulseStyle.mint)
+                    .frame(minHeight: 44).disabled(isWorking)
             }
 
-            Button {
-                Task { await submitCredentials() }
-            } label: {
+            feedback
+
+            Button { Task { await submitCredentials() } } label: {
                 HStack(spacing: 10) {
                     if isWorking { ProgressView().tint(PulseStyle.background) }
                     Text(isWorking ? "Un momento…" : mode.rawValue)
                 }
-                .frame(maxWidth: .infinity, minHeight: 48)
             }
             .buttonStyle(PulseActionButtonStyle())
             .disabled(isWorking || auth.configurationProblem != nil)
+
+            if mode == .signIn {
+                Button("¿Necesitas confirmar tu correo?") {
+                    guard validEmail else {
+                        errorMessage = "Escribe el correo con el que creaste la cuenta."
+                        focusedField = .email
+                        return
+                    }
+                    clearFeedback()
+                    focusedField = nil
+                    confirmationEmail = normalizedEmail
+                }
+                .font(.footnote).foregroundStyle(PulseStyle.secondary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .disabled(isWorking)
+            }
         }
-        .padding(19)
-        .background(PulseStyle.surface.opacity(0.94), in: RoundedRectangle(cornerRadius: 20))
+        .padding(20).pulseSurface(prominent: true)
+    }
+
+    @ViewBuilder
+    private var feedback: some View {
+        if let message { PulseFeedback(message: message) }
+        if let errorMessage { PulseFeedback(message: errorMessage, isError: true) }
+        if let callbackError = auth.callbackError { PulseFeedback(message: callbackError, isError: true) }
+    }
+
+    private func confirmationPanel(email: String) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            PulseIcon(symbol: "envelope.badge")
+            Text("Revisa tu correo").font(.title2.weight(.semibold))
+            Text(email).font(.headline).textSelection(.enabled).fixedSize(horizontal: false, vertical: true)
+            Text("Abre el enlace de confirmación en tu celular personal. Después vuelve aquí e inicia sesión con tu contraseña.")
+                .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+            feedback
+            Button("Volver a iniciar sesión") {
+                clearFeedback()
+                mode = .signIn
+                confirmationEmail = nil
+                password = ""
+                passwordConfirmation = ""
+                focusedField = .password
+            }
+            .buttonStyle(PulseActionButtonStyle()).disabled(isWorking)
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                let remaining = max(0, Int(ceil(nextResendAt.timeIntervalSince(context.date))))
+                Button {
+                    Task { await resendConfirmation(to: email) }
+                } label: {
+                    HStack(spacing: 8) {
+                        if isWorking { ProgressView().tint(PulseStyle.mint) }
+                        Text(remaining > 0 ? "Reenviar en \(remaining) s" : "Reenviar enlace")
+                    }
+                }
+                .buttonStyle(PulseSecondaryButtonStyle())
+                .disabled(isWorking || remaining > 0)
+            }
+            Text("Revisa también la carpeta de correo no deseado.").font(.footnote).foregroundStyle(PulseStyle.secondary)
+            Button("Usar otro correo") {
+                clearFeedback()
+                confirmationEmail = nil
+                mode = .signUp
+                password = ""
+                passwordConfirmation = ""
+                focusedField = .email
+            }
+            .font(.subheadline).foregroundStyle(PulseStyle.mint)
+            .frame(minHeight: 44).disabled(isWorking)
+        }
+        .padding(22).pulseSurface(prominent: true)
+    }
+
+    private var validEmail: Bool {
+        let parts = normalizedEmail.split(separator: "@", omittingEmptySubsequences: false)
+        return parts.count == 2 && !parts[0].isEmpty && parts[1].contains(".")
+            && !normalizedEmail.contains(where: { $0.isWhitespace })
+    }
+
+    private func resendConfirmation(to email: String) async {
+        guard !isWorking, Date.now >= nextResendAt else { return }
+        clearFeedback()
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            try await auth.resendConfirmation(to: email)
+            nextResendAt = .now.addingTimeInterval(60)
+            message = "Si la cuenta necesita confirmación, recibirás un nuevo enlace."
+        } catch {
+            errorMessage = "No se pudo reenviar el enlace. Espera un momento y vuelve a intentarlo."
+        }
     }
 
     private var providerOptions: some View {
@@ -225,7 +338,7 @@ private struct AuthView: View {
                     .font(.subheadline.weight(.semibold))
                     .frame(maxWidth: .infinity, minHeight: 50)
                     .foregroundStyle(.white)
-                    .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 13))
+                    .pulseSurface()
             }
             .buttonStyle(PulsePressButtonStyle())
             .disabled(isWorking || auth.configurationProblem != nil)
@@ -233,8 +346,9 @@ private struct AuthView: View {
     }
 
     private func submitCredentials() async {
+        guard !isWorking else { return }
         clearFeedback()
-        guard normalizedEmail.contains("@") else {
+        guard validEmail else {
             errorMessage = "Escribe un correo electrónico válido."
             return
         }
@@ -253,6 +367,7 @@ private struct AuthView: View {
             }
         }
 
+        focusedField = nil
         isWorking = true
         defer { isWorking = false }
         do {
@@ -261,7 +376,10 @@ private struct AuthView: View {
             } else {
                 let confirmationRequired = try await auth.signUp(email: normalizedEmail, password: password)
                 if confirmationRequired {
-                    message = "Revisa tu correo en el celular. Confirma la cuenta allí, vuelve a BioPulse e inicia sesión."
+                    confirmationEmail = normalizedEmail
+                    nextResendAt = .now.addingTimeInterval(60)
+                    password = ""
+                    passwordConfirmation = ""
                 }
             }
         } catch {
@@ -272,8 +390,9 @@ private struct AuthView: View {
     }
 
     private func requestPasswordReset() async {
+        guard !isWorking else { return }
         clearFeedback()
-        guard normalizedEmail.contains("@") else {
+        guard validEmail else {
             errorMessage = "Escribe el correo de tu cuenta para solicitar el enlace."
             return
         }
@@ -328,6 +447,7 @@ private struct AuthView: View {
     }
 
     private func clearFeedback() {
+        auth.callbackError = nil
         message = nil
         errorMessage = nil
     }
@@ -340,25 +460,26 @@ private struct PasswordRecoveryView: View {
     @State private var isWorking = false
     @State private var errorMessage: String?
     @State private var didUpdatePassword = false
+    @FocusState private var focusedField: AuthField?
 
     var body: some View {
         ScreenShell(title: "Nueva contraseña", subtitle: "Elige una contraseña para proteger tu cuenta") {
-            SecureField("Nueva contraseña", text: $password)
-                .textContentType(.newPassword)
-                .textFieldStyle(.roundedBorder)
-            SecureField("Repite la contraseña", text: $confirmation)
-                .textContentType(.newPassword)
-                .textFieldStyle(.roundedBorder)
+            VStack(spacing: 18) {
+                AuthPasswordField(title: "Nueva contraseña", text: $password, isNew: true, field: .password, focus: $focusedField) {
+                    focusedField = .confirmation
+                }
+                AuthPasswordField(title: "Repite la contraseña", text: $confirmation, isNew: true, field: .confirmation, focus: $focusedField) {
+                    Task { await updatePassword() }
+                }
+            }
+            .disabled(isWorking || didUpdatePassword)
+            .padding(20).pulseSurface(prominent: true)
 
             if let errorMessage {
-                Text(errorMessage)
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
+                PulseFeedback(message: errorMessage, isError: true)
             }
             if didUpdatePassword {
-                Text("Contraseña actualizada.")
-                    .font(.subheadline)
-                    .foregroundStyle(PulseStyle.mint)
+                PulseFeedback(message: "Contraseña actualizada.")
             }
 
             Button {
@@ -376,6 +497,7 @@ private struct PasswordRecoveryView: View {
     }
 
     private func updatePassword() async {
+        guard !isWorking, !didUpdatePassword else { return }
         errorMessage = nil
         guard password.count >= 8 else {
             errorMessage = "La contraseña debe tener al menos 8 caracteres."
@@ -386,6 +508,7 @@ private struct PasswordRecoveryView: View {
             return
         }
         isWorking = true
+        focusedField = nil
         defer { isWorking = false }
         do {
             try await auth.updatePassword(password)

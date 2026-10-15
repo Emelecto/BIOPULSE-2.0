@@ -50,55 +50,36 @@ struct TrendsView: View {
 }
 
 struct SleepView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject var health: HealthDataController
 
     var body: some View {
         ScreenShell(title: "Sueño", subtitle: "Tu última noche registrada") {
-            HStack(spacing: 20) {
-                ScorePlaceholderRing(label: "Sleep Score")
-                VStack(alignment: .leading, spacing: 7) {
-                    Text("Puntuación pendiente")
-                        .font(.title3.weight(.semibold))
-                    Text("El score aparecerá cuando la fórmula y la cobertura de sueño estén validadas.")
-                        .font(.subheadline)
-                        .foregroundStyle(PulseStyle.secondary)
-                }
+            VStack(alignment: .leading, spacing: 18) {
+                PulseIcon(symbol: "moon.stars.fill", accent: PulseStyle.lavender)
+                Text("Tiempo dormido").font(.headline)
+                Text(HealthMetric.sleepAnalysis.formattedValue(health.readings[.sleepAnalysis]))
+                    .font(.largeTitle.weight(.semibold)).monospacedDigit()
+                    .foregroundStyle(PulseStyle.lavender)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .contentTransition(.numericText())
+                    .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: health.readings[.sleepAnalysis])
+                Text("Calculado a partir de los registros de Apple Salud.")
+                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-            .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 20))
-
-            HStack(alignment: .top, spacing: 18) {
-                Image(systemName: "moon.stars.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(PulseStyle.mint)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(HealthMetric.sleepAnalysis.formattedValue(health.readings[.sleepAnalysis]))
-                        .font(.system(size: 36, weight: .semibold, design: .rounded))
-                    Text("Tiempo dormido registrado")
-                        .font(.subheadline)
-                        .foregroundStyle(PulseStyle.secondary)
-                }
-                Spacer()
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(22)
-            .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 20))
+            .padding(24).pulseSurface(accent: PulseStyle.lavender, prominent: true)
 
             if let reading = health.readings[.sleepAnalysis] {
                 DataProvenance(reading: reading)
-                StatusPanel(
-                    symbol: "info.circle",
-                    title: "Qué incluye este tiempo",
-                    message: "Suma las etapas que Apple Salud marca como sueño y evita contar intervalos superpuestos dos veces. No incluye el tiempo simplemente en cama."
-                )
+                StatusPanel(symbol: "info.circle", title: "Qué incluye este tiempo", message: "Suma las etapas que Apple Salud marca como sueño y evita contar intervalos superpuestos dos veces. No incluye el tiempo simplemente en cama.")
             } else {
-                StatusPanel(
-                    symbol: "moon.zzz",
-                    title: "Sin sueño disponible",
-                    message: "Usa un dispositivo compatible durante la noche y revisa los permisos de Sueño en Apple Salud."
-                )
+                StatusPanel(symbol: "moon.zzz", title: "Aún no hay una noche registrada", message: "Cuando Apple Salud tenga registros de sueño compartidos con BioPulse, aparecerán aquí. Revisa los permisos y desliza hacia abajo para actualizar.")
             }
+            Label("Sleep Score aún no disponible", systemImage: "circle.dashed")
+                .font(.subheadline.weight(.medium)).foregroundStyle(PulseStyle.secondary)
+            Text("La puntuación necesita una fórmula validada y suficientes datos. Mientras tanto, puedes consultar el tiempo dormido y su procedencia.")
+                .font(.footnote).foregroundStyle(PulseStyle.secondary)
         }
         .refreshable { await health.reload() }
     }
@@ -109,19 +90,11 @@ struct ScoreExplanationView: View {
 
     var body: some View {
         ScreenShell(title: "BioScore", subtitle: "Bienestar general") {
-            HStack(spacing: 20) {
-                BioScoreRing()
-                VStack(alignment: .leading, spacing: 7) {
-                    Text("Cálculo pendiente")
-                        .font(.title3.weight(.semibold))
-                    Text("La fórmula aún necesita validación. El anillo indica dónde aparecerá tu score cuando sea fiable.")
-                        .font(.subheadline)
-                        .foregroundStyle(PulseStyle.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-            .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 20))
+            StatusPanel(
+                symbol: "circle.dashed",
+                title: "Puntuación aún no disponible",
+                message: "Estamos definiendo cómo combinar estas señales de forma fiable. Aquí puedes consultar las mediciones disponibles y su procedencia."
+            )
 
             SectionHeading(title: "Señales consideradas", subtitle: "Disponibilidad de datos, no puntuación")
             ForEach([HealthMetric.sleepAnalysis, .heartRateVariabilitySDNN, .restingHeartRate, .stepCount]) { metric in
@@ -142,14 +115,14 @@ struct MetricDetailView: View {
         ScreenShell(title: metric.displayName, subtitle: "Detalle de medición") {
             VStack(alignment: .leading, spacing: 8) {
                 Text(metric.formattedValue(reading))
-                    .font(.system(size: 40, weight: .semibold, design: .rounded))
+                    .font(.largeTitle.weight(.semibold)).monospacedDigit()
                     .foregroundStyle(PulseStyle.mint)
                 Text(metric.provenanceLabel(reading))
                     .foregroundStyle(PulseStyle.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(22)
-            .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 20))
+            .pulseSurface(prominent: true)
 
             if let reading {
                 DataProvenance(reading: reading)
@@ -179,17 +152,21 @@ struct DataProvenance: View {
         .foregroundStyle(PulseStyle.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(20)
-        .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 18))
+        .pulseSurface()
     }
 }
 
 struct MetricListRow: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
     let metric: HealthMetric
     let reading: HealthReading?
     let showsChevron: Bool
 
     var body: some View {
-        HStack(spacing: 12) {
+        let layout = typeSize >= .xxxLarge
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
+        layout {
             Image(systemName: metric.symbol)
                 .foregroundStyle(PulseStyle.mint)
                 .frame(width: 26)
@@ -199,11 +176,11 @@ struct MetricListRow: View {
                     .font(.caption)
                     .foregroundStyle(PulseStyle.secondary)
             }
-            Spacer(minLength: 5)
+            if typeSize < .xxxLarge { Spacer(minLength: 5) }
             Text(metric.formattedValue(reading))
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(reading == nil ? PulseStyle.secondary : PulseStyle.mint)
-            if showsChevron {
+            if showsChevron && typeSize < .xxxLarge {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundStyle(PulseStyle.muted)
@@ -211,6 +188,6 @@ struct MetricListRow: View {
         }
         .padding(17)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+        .pulseSurface()
     }
 }

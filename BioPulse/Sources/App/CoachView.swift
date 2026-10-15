@@ -2,6 +2,8 @@ import SwiftUI
 
 struct CoachPreviewView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     @StateObject private var model: CoachViewModel
     @State private var showingMemoryConfirmation = false
     @State private var showingRevokeConfirmation = false
@@ -31,7 +33,7 @@ struct CoachPreviewView: View {
                 }
             }
         }
-        .background(PulseStyle.background.ignoresSafeArea())
+        .background { PulseBackdrop() }
         .preferredColorScheme(.dark)
         .task { await model.loadConsent() }
         .onDisappear { model.endConversation() }
@@ -76,7 +78,7 @@ struct CoachPreviewView: View {
                     consentPoint("externaldrive", title: "Proveedor externo", detail: "Groq procesa las solicitudes. Por defecto no conserva entradas ni respuestas, aunque puede retenerlas temporalmente hasta 30 días para investigar problemas de fiabilidad o abuso. Si se retienen, los datos se procesan en EE. UU. No escribas información que no quieras compartir.")
                 }
                 .padding(19)
-                .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 18))
+                .pulseSurface()
 
                 Text("El Coach ofrece información de bienestar y entrenamiento; no diagnostica ni prescribe tratamientos. Si describes síntomas graves, buscará orientarte hacia atención médica urgente.")
                     .font(.footnote)
@@ -123,12 +125,7 @@ struct CoachPreviewView: View {
     private var conversationScreen: some View {
         VStack(spacing: 0) {
             HStack(alignment: .center, spacing: 12) {
-                Image(systemName: "sparkles")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(PulseStyle.mint)
-                    .frame(width: 42, height: 42)
-                    .background(PulseStyle.surface, in: Circle())
-                    .accessibilityHidden(true)
+                if !typeSize.isAccessibilitySize { PulseIcon(symbol: "sparkles") }
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Coach BioPulse")
                         .font(.headline)
@@ -152,6 +149,12 @@ struct CoachPreviewView: View {
                         .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Opciones de privacidad del Coach")
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark").font(.subheadline.weight(.semibold))
+                        .frame(width: 44, height: 44)
+                }
+                .foregroundStyle(PulseStyle.secondary)
+                .accessibilityLabel("Cerrar Coach")
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 10)
@@ -196,9 +199,10 @@ struct CoachPreviewView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .scrollIndicators(.hidden)
+                .scrollDismissesKeyboard(.interactively)
                 .onChange(of: model.messages.count) { _, _ in
                     guard let lastID = model.messages.last?.id else { return }
-                    withAnimation(.easeOut(duration: 0.2)) {
+                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
                         proxy.scrollTo(lastID, anchor: .bottom)
                     }
                 }
@@ -227,7 +231,7 @@ struct CoachPreviewView: View {
                 suggestion("¿Cómo puedo ajustar el esfuerzo de mi entrenamiento?")
             }
 
-            Label("Memoria breve activa hasta siete días · transcript no guardado", systemImage: "lock.shield")
+            Label("Memoria breve hasta siete días · la conversación se borra al cerrar", systemImage: "lock.shield")
                 .font(.caption)
                 .foregroundStyle(PulseStyle.muted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -245,7 +249,7 @@ struct CoachPreviewView: View {
                 .autocorrectionDisabled(false)
                 .padding(.horizontal, 15)
                 .padding(.vertical, 12)
-                .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 18))
+                .pulseSurface()
                 .accessibilityLabel("Escribe una pregunta para el Coach")
 
             Button {
@@ -290,7 +294,7 @@ struct CoachPreviewView: View {
 
     private func header(title: String, subtitle: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.system(size: 32, weight: .bold, design: .rounded))
+            Text(title).font(.largeTitle.weight(.bold))
             Text(subtitle).font(.subheadline).foregroundStyle(PulseStyle.secondary)
         }
         .foregroundStyle(.white)

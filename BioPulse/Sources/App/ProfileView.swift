@@ -82,7 +82,7 @@ struct ProfileView: View {
             .disabled(isSigningOut)
 
             SectionHeading(title: "Privacidad", subtitle: "Diseñada para mantener tus datos cerca")
-            Text("Las consultas de Apple Salud y la revisión del CSV se realizan en este dispositivo. BioPulse no envía estos datos a un servidor en esta versión.")
+            Text("Las consultas de Apple Salud y la revisión del CSV se realizan en este dispositivo. Si autorizas al Coach, se enviarán métricas agregadas y contexto reciente para responder tus preguntas; no las muestras originales de HealthKit.")
                 .font(.subheadline)
                 .foregroundStyle(PulseStyle.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -90,7 +90,7 @@ struct ProfileView: View {
             FeatureDestinationLink(
                 symbol: "lock.shield",
                 title: "Centro de privacidad y permisos",
-                subtitle: "Qué permanece local y qué podría sincronizarse"
+                subtitle: "Datos locales, contexto del Coach y permisos"
             ) {
                 PrivacyCenterView()
             }

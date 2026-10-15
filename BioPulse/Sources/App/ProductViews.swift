@@ -6,7 +6,7 @@ struct BreathingSessionView: View {
 
     var body: some View {
         ScreenShell(title: "Respiración", subtitle: "Una pausa guiada, sin interpretar biometría") {
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: startedAt == nil || reduceMotion)) { context in
+            TimelineView(.periodic(from: .now, by: startedAt == nil || reduceMotion ? 1 : 1.0 / 30.0)) { context in
                 let elapsed = startedAt.map { context.date.timeIntervalSince($0) } ?? 0
                 let position = elapsed.truncatingRemainder(dividingBy: 8)
                 let inhaling = position < 4
@@ -34,7 +34,7 @@ struct BreathingSessionView: View {
                 }
                 .padding(.vertical, 24)
                 .frame(maxWidth: .infinity)
-                .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 24))
+                .pulseSurface(prominent: true)
             }
 
             Button(startedAt == nil ? "Comenzar sesión" : "Detener sesión") {
@@ -50,27 +50,25 @@ private enum AnyPulseButtonStyle: ButtonStyle {
     case secondary
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
+        BreathingButtonLabel(label: configuration.label, primary: self == .primary, pressed: configuration.isPressed)
+    }
+}
+
+private struct BreathingButtonLabel: View {
+    let label: ButtonStyleConfiguration.Label
+    let primary: Bool
+    let pressed: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        label
             .font(.subheadline.weight(.semibold))
             .frame(maxWidth: .infinity, minHeight: 48)
-            .foregroundStyle(foreground)
-            .background(background, in: RoundedRectangle(cornerRadius: 14))
-            .opacity(configuration.isPressed ? 0.76 : 1)
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
-    }
-
-    private var foreground: Color {
-        switch self {
-        case .primary: PulseStyle.background
-        case .secondary: PulseStyle.mint
-        }
-    }
-
-    private var background: Color {
-        switch self {
-        case .primary: PulseStyle.mint
-        case .secondary: PulseStyle.elevated
-        }
+            .foregroundStyle(primary ? PulseStyle.background : PulseStyle.mint)
+            .background(primary ? PulseStyle.mint : PulseStyle.elevated, in: RoundedRectangle(cornerRadius: 14))
+            .opacity(pressed ? 0.8 : 1)
+            .scaleEffect(pressed && !reduceMotion ? 0.985 : 1)
+            .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 1), value: pressed)
     }
 }
 
@@ -98,7 +96,7 @@ struct EnergyMapView: View {
             Text("Pendiente").font(.caption).foregroundStyle(PulseStyle.secondary)
         }
         .padding(16)
-        .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+        .pulseSurface()
     }
 }
 
@@ -148,7 +146,7 @@ struct TechnicalView: View {
         }
         .padding(17)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 17))
+        .pulseSurface()
     }
 }
 
@@ -175,7 +173,7 @@ struct AccountRoadmapView: View {
             Text("Futuro").font(.caption).foregroundStyle(PulseStyle.secondary)
         }
         .padding(17)
-        .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+        .pulseSurface()
     }
 }
 
@@ -185,17 +183,17 @@ struct PrivacyCenterView: View {
             StatusPanel(
                 symbol: "iphone.gen3",
                 title: "HealthKit permanece local",
-                message: "Los datos biométricos originales no se sincronizarán con la nube por defecto."
+                message: "Las muestras originales se consultan en este dispositivo. El Coach recibe métricas agregadas solo cuando lo autorizas."
             )
             StatusPanel(
                 symbol: "icloud",
-                title: "Cloud opcional",
-                message: "Perfil, diario, configuraciones y métricas derivadas podrán sincronizarse únicamente con consentimiento explícito y revocable."
+                title: "Sincronización opcional",
+                message: "Iniciar sesión no activa la sincronización del Diario ni de tus mediciones. La sincronización general sigue en preparación."
             )
             StatusPanel(
                 symbol: "sparkles",
                 title: "Coach con autorización",
-                message: "Antes de enviar contexto a una IA, BioPulse deberá explicar qué datos utilizará y pedir permiso."
+                message: "Antes del primer envío, eliges si compartes métricas agregadas y contexto reciente con Groq. Puedes borrar la memoria de siete días o revocar el permiso desde el Coach."
             )
         }
     }

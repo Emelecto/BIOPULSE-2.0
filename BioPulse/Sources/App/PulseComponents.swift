@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum PulseStyle {
     static let background = Color(red: 0.035, green: 0.075, blue: 0.11)
@@ -7,6 +8,144 @@ enum PulseStyle {
     static let mint = Color(red: 0.59, green: 0.94, blue: 0.82)
     static let secondary = Color(red: 0.73, green: 0.82, blue: 0.84)
     static let muted = Color(red: 0.52, green: 0.65, blue: 0.68)
+    static let lavender = Color(red: 0.79, green: 0.77, blue: 0.98)
+    static let warning = Color(red: 1, green: 0.72, blue: 0.67)
+}
+
+// Observatorio personal: landscape behind opaque readings, materials for floating controls.
+// Motion follows actions; decoration never represents physiological measurements.
+struct PulseSurface: ViewModifier {
+    @Environment(\.colorSchemeContrast) private var contrast
+    var accent: Color = PulseStyle.mint
+    var prominent = false
+
+    func body(content: Content) -> some View {
+        content
+            .background {
+                RoundedRectangle(cornerRadius: prominent ? 24 : 18, style: .continuous)
+                    .fill(LinearGradient(
+                        colors: [prominent ? PulseStyle.elevated : PulseStyle.surface, PulseStyle.surface],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    ))
+                    .overlay(alignment: .top) {
+                        LinearGradient(colors: [accent.opacity(0.13), .clear], startPoint: .topLeading, endPoint: .bottomTrailing)
+                            .clipShape(RoundedRectangle(cornerRadius: prominent ? 24 : 18, style: .continuous))
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: prominent ? 24 : 18, style: .continuous)
+                            .strokeBorder(LinearGradient(
+                                colors: [.white.opacity(contrast == .increased ? 0.7 : 0.24), .white.opacity(0.03)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            ), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(prominent ? 0.3 : 0.18), radius: prominent ? 18 : 10, x: 0, y: prominent ? 12 : 6)
+            }
+    }
+}
+
+extension View {
+    func pulseSurface(accent: Color = PulseStyle.mint, prominent: Bool = false) -> some View {
+        modifier(PulseSurface(accent: accent, prominent: prominent))
+    }
+
+    func pulseEntrance(visible: Bool, reduceMotion: Bool, delay: Double = 0) -> some View {
+        opacity(visible ? 1 : 0.85)
+            .offset(y: visible || reduceMotion ? 0 : 8)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.3).delay(delay), value: visible)
+    }
+}
+
+struct PulseBackdrop: View {
+    var forest = false
+    var accent: Color = PulseStyle.mint
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                PulseStyle.background
+                if forest {
+                    Image("ForestNight")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .clipped()
+                        .overlay(PulseStyle.background.opacity(0.44))
+                        .overlay(LinearGradient(colors: [.clear, PulseStyle.background.opacity(0.95)], startPoint: .top, endPoint: .bottom))
+                }
+                RadialGradient(colors: [accent.opacity(forest ? 0.12 : 0.07), .clear], center: .topLeading, startRadius: 0, endRadius: geometry.size.width)
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .clipped()
+        }
+        .ignoresSafeArea()
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
+    }
+}
+
+/// Landscape contours, decorative only: never a chart or a health signal.
+struct PulseContours: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        for index in 0..<5 {
+            let y = rect.height * (0.15 + Double(index) * 0.16)
+            path.move(to: CGPoint(x: 0, y: y + rect.height * 0.25))
+            path.addCurve(to: CGPoint(x: rect.width, y: y),
+                          control1: CGPoint(x: rect.width * 0.35, y: y - rect.height * 0.5),
+                          control2: CGPoint(x: rect.width * 0.65, y: y + rect.height * 0.55))
+        }
+        return path
+    }
+}
+
+struct PulseIcon: View {
+    let symbol: String
+    var accent: Color = PulseStyle.mint
+
+    var body: some View {
+        Image(systemName: symbol)
+            .font(.title3.weight(.medium))
+            .foregroundStyle(accent)
+            .frame(width: 44, height: 44)
+            .background(LinearGradient(colors: [accent.opacity(0.18), accent.opacity(0.04)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 13))
+            .accessibilityHidden(true)
+    }
+}
+
+struct PulseFeedback: View {
+    let message: String
+    var isError = false
+
+    var body: some View {
+        Label(message, systemImage: isError ? "exclamationmark.circle" : "checkmark.circle")
+            .font(.subheadline)
+            .foregroundStyle(isError ? PulseStyle.warning : PulseStyle.mint)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityAddTraits(.updatesFrequently)
+            .transition(.opacity)
+            .onChange(of: message, initial: true) { _, value in
+                UIAccessibility.post(notification: .announcement, argument: value)
+            }
+    }
+}
+
+struct PulseInputSurface: ViewModifier {
+    let focused: Bool
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    func body(content: Content) -> some View {
+        content
+            .font(.body)
+            .foregroundStyle(.white)
+            .frame(minHeight: 50)
+            .background(PulseStyle.background.opacity(0.8), in: RoundedRectangle(cornerRadius: 12))
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(focused ? PulseStyle.mint : .white.opacity(contrast == .increased ? 0.65 : 0.16), lineWidth: focused ? 2 : 1)
+                    .allowsHitTesting(false)
+            }
+    }
 }
 
 struct ScorePlaceholderRing: View {
@@ -55,7 +194,7 @@ struct StatusPanel: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
-            Image(systemName: symbol).foregroundStyle(PulseStyle.mint).frame(width: 24)
+            PulseIcon(symbol: symbol)
             VStack(alignment: .leading, spacing: 7) {
                 Text(title).font(.headline)
                 Text(message)
@@ -67,7 +206,7 @@ struct StatusPanel: View {
         }
         .padding(19)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 18))
+        .pulseSurface()
     }
 }
 
@@ -86,7 +225,7 @@ struct ScreenShell<Content: View>: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(title).font(.system(size: 34, weight: .bold, design: .rounded))
+                    Text(title).font(.largeTitle.weight(.bold))
                     Text(subtitle).font(.subheadline).foregroundStyle(PulseStyle.secondary)
                 }
                 .padding(.top, 15)
@@ -94,23 +233,26 @@ struct ScreenShell<Content: View>: View {
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 30)
+            .frame(maxWidth: 620, alignment: .leading)
+            .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)
-        .background(PulseStyle.background.ignoresSafeArea())
-        .toolbar(.hidden, for: .navigationBar)
+        .background { PulseBackdrop() }
     }
 }
 
 struct PulseActionButtonStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.semibold))
             .frame(maxWidth: .infinity, minHeight: 48)
             .foregroundStyle(PulseStyle.background)
-            .background(PulseStyle.mint, in: RoundedRectangle(cornerRadius: 14))
-            .opacity(configuration.isPressed ? 0.78 : 1)
+            .background(LinearGradient(colors: [Color(red: 0.76, green: 1, blue: 0.91), PulseStyle.mint], startPoint: .top, endPoint: .bottom), in: RoundedRectangle(cornerRadius: 14))
+            .shadow(color: .black.opacity(configuration.isPressed ? 0.1 : 0.24), radius: configuration.isPressed ? 2 : 8, x: 0, y: configuration.isPressed ? 1 : 5)
+            .opacity(!isEnabled ? 0.5 : configuration.isPressed ? 0.85 : 1)
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.985 : 1)
             .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 1), value: configuration.isPressed)
     }
@@ -118,14 +260,15 @@ struct PulseActionButtonStyle: ButtonStyle {
 
 struct PulseSecondaryButtonStyle: ButtonStyle {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.semibold))
             .frame(maxWidth: .infinity, minHeight: 48)
             .foregroundStyle(PulseStyle.mint)
-            .background(PulseStyle.elevated, in: RoundedRectangle(cornerRadius: 14))
-            .opacity(configuration.isPressed ? 0.72 : 1)
+            .pulseSurface()
+            .opacity(!isEnabled ? 0.5 : configuration.isPressed ? 0.72 : 1)
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.985 : 1)
             .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 1), value: configuration.isPressed)
     }
@@ -163,10 +306,7 @@ struct FeatureDestinationLink<Destination: View>: View {
     var body: some View {
         NavigationLink(destination: destination) {
             HStack(spacing: 14) {
-                Image(systemName: symbol)
-                    .font(.title3.weight(.medium))
-                    .foregroundStyle(PulseStyle.mint)
-                    .frame(width: 30)
+                PulseIcon(symbol: symbol)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title).font(.headline)
                     Text(subtitle)
@@ -181,7 +321,7 @@ struct FeatureDestinationLink<Destination: View>: View {
             }
             .padding(17)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 17))
+            .pulseSurface()
         }
         .buttonStyle(PulsePressButtonStyle())
     }

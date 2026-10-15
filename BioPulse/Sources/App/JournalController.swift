@@ -8,6 +8,7 @@ final class JournalController: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var hasLoaded = false
     @Published var errorMessage: String?
+    @Published private(set) var saveRevision = 0
 
     private let store: any ContextJournalStore
 
@@ -34,26 +35,30 @@ final class JournalController: ObservableObject {
         isLoading = false
     }
 
-    func create(_ draft: JournalEntryDraft) async {
+    @discardableResult
+    func create(_ draft: JournalEntryDraft) async -> Bool {
         errorMessage = nil
         do {
             let result = try await store.apply(.insert(draft: draft), at: .now)
-            handle(result)
+            return handle(result)
         } catch {
             errorMessage = "No fue posible guardar esta entrada en el dispositivo."
+            return false
         }
     }
 
-    func update(_ entry: JournalEntry, with draft: JournalEntryDraft) async {
+    @discardableResult
+    func update(_ entry: JournalEntry, with draft: JournalEntryDraft) async -> Bool {
         errorMessage = nil
         do {
             let result = try await store.apply(
                 .replace(id: entry.id, expectedRevision: entry.revision, draft: draft),
                 at: .now
             )
-            handle(result)
+            return handle(result)
         } catch {
             errorMessage = "No fue posible actualizar esta entrada."
+            return false
         }
     }
 
@@ -76,7 +81,7 @@ final class JournalController: ObservableObject {
         errorMessage = nil
     }
 
-    private func handle(_ result: JournalWriteResult) {
+    private func handle(_ result: JournalWriteResult) -> Bool {
         switch result {
         case let .saved(saved):
             entries.removeAll { $0.id == saved.id }
@@ -87,8 +92,11 @@ final class JournalController: ObservableObject {
                 }
                 return $0.occurredAt > $1.occurredAt
             }
+            saveRevision += 1
+            return true
         case .conflict:
             errorMessage = "La entrada cambió antes de poder guardarla. Recarga el diario e inténtalo de nuevo."
+            return false
         }
     }
 }

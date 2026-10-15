@@ -2,21 +2,28 @@ import BioPulseDomain
 import SwiftUI
 
 struct JournalView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject var journal: JournalController
     @State private var showingComposer = false
     @State private var editingEntry: JournalEntry?
     @State private var deletionCandidate: JournalEntry?
+    @State private var showsSaveConfirmation = false
+    @State private var announcedSaveRevision = 0
 
     var body: some View {
         ScreenShell(title: "Diario", subtitle: "Hábitos, síntomas y eventos en contexto") {
             StatusPanel(
                 symbol: "lock.shield",
                 title: "Privado en este dispositivo",
-                message: "Tus registros se guardan localmente. No se comparten ni se sincronizan con la nube en esta versión."
+                message: "Tus registros se guardan localmente. Si autorizas al Coach, podrá recibir entradas recientes al enviarle una pregunta."
             )
 
             Button("Registrar contexto") { showingComposer = true }
                 .buttonStyle(PulseActionButtonStyle())
+
+            if showsSaveConfirmation {
+                PulseFeedback(message: "Registro guardado en tu Diario.")
+            }
 
             SectionHeading(
                 title: "Tus registros",
@@ -27,15 +34,15 @@ struct JournalView: View {
         }
         .task { await journal.load() }
         .refreshable { await journal.load(force: true) }
-        .sheet(isPresented: $showingComposer) {
+        .sheet(isPresented: $showingComposer, onDismiss: presentSaveConfirmation) {
             JournalEntryComposer { draft in
-                Task { await journal.create(draft) }
+                await journal.create(draft)
             }
             .presentationDetents([.medium, .large])
         }
-        .sheet(item: $editingEntry) { entry in
+        .sheet(item: $editingEntry, onDismiss: presentSaveConfirmation) { entry in
             JournalEntryComposer(entry: entry) { draft in
-                Task { await journal.update(entry, with: draft) }
+                await journal.update(entry, with: draft)
             }
             .presentationDetents([.medium, .large])
         }
@@ -59,6 +66,19 @@ struct JournalView: View {
             actions: { Button("Aceptar") { journal.dismissError() } },
             message: { Text(journal.errorMessage ?? "Error desconocido") }
         )
+        .sensoryFeedback(.success, trigger: announcedSaveRevision)
+        .task(id: announcedSaveRevision) {
+            guard showsSaveConfirmation else { return }
+            do { try await Task.sleep(for: .seconds(4)) } catch { return }
+            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { showsSaveConfirmation = false }
+        }
+        .onDisappear { showsSaveConfirmation = false }
+    }
+
+    private func presentSaveConfirmation() {
+        guard journal.saveRevision > announcedSaveRevision else { return }
+        announcedSaveRevision = journal.saveRevision
+        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { showsSaveConfirmation = true }
     }
 
     @ViewBuilder
@@ -71,7 +91,7 @@ struct JournalView: View {
                     .foregroundStyle(PulseStyle.secondary)
             }
             .frame(maxWidth: .infinity, minHeight: 110)
-            .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 17))
+            .pulseSurface()
         } else if journal.entries.isEmpty {
             StatusPanel(
                 symbol: "square.and.pencil",
@@ -94,7 +114,7 @@ struct JournalView: View {
 
     private var errorPresentation: Binding<Bool> {
         Binding(
-            get: { journal.errorMessage != nil },
+            get: { journal.errorMessage != nil && !showingComposer && editingEntry == nil },
             set: { if !$0 { journal.dismissError() } }
         )
     }
@@ -106,11 +126,10 @@ struct JournalView: View {
                 .frame(width: 25)
 
             VStack(alignment: .leading, spacing: 7) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(entry.category.localizedName.uppercased())
-                        .font(.caption2.weight(.bold))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(entry.category.localizedName)
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(PulseStyle.mint)
-                    Spacer()
                     Text(entry.occurredAt.formatted(date: .abbreviated, time: .shortened))
                         .font(.caption2)
                         .foregroundStyle(PulseStyle.muted)
@@ -136,7 +155,7 @@ struct JournalView: View {
                 }
             } label: {
                 Image(systemName: "ellipsis")
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
             .foregroundStyle(PulseStyle.secondary)
@@ -144,7 +163,7 @@ struct JournalView: View {
         }
         .padding(17)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(PulseStyle.surface, in: RoundedRectangle(cornerRadius: 17))
+        .pulseSurface()
     }
 }
 
@@ -155,11 +174,12 @@ private struct JournalEntryComposer: View {
     @State private var notes: String
     @State private var occurredAt: Date
     @State private var validationMessage: String?
+    @State private var isSaving = false
 
     private let entry: JournalEntry?
-    let onSave: (JournalEntryDraft) -> Void
+    let onSave: (JournalEntryDraft) async -> Bool
 
-    init(entry: JournalEntry? = nil, onSave: @escaping (JournalEntryDraft) -> Void) {
+    init(entry: JournalEntry? = nil, onSave: @escaping (JournalEntryDraft) async -> Bool) {
         self.entry = entry
         self.onSave = onSave
         _category = State(initialValue: entry?.category ?? .habit)
@@ -213,15 +233,19 @@ private struct JournalEntryComposer: View {
                         .foregroundStyle(PulseStyle.secondary)
                 }
             }
+            .disabled(isSaving)
+            .scrollContentBackground(.hidden)
+            .background { PulseBackdrop() }
             .navigationTitle(entry == nil ? "Nuevo registro" : "Editar registro")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancelar") { dismiss() }
+                        .disabled(isSaving)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar", action: save)
-                        .disabled(trimmedTitle.isEmpty)
+                    Button(isSaving ? "Guardando…" : "Guardar") { Task { await save() } }
+                        .disabled(trimmedTitle.isEmpty || isSaving)
                 }
             }
             .onChange(of: title) { _, value in
@@ -236,9 +260,12 @@ private struct JournalEntryComposer: View {
             }
         }
         .preferredColorScheme(.dark)
+        .interactiveDismissDisabled(isSaving)
     }
 
-    private func save() {
+    private func save() async {
+        guard !isSaving else { return }
+        validationMessage = nil
         do {
             let draft = try JournalEntryDraft(
                 category: category,
@@ -247,8 +274,13 @@ private struct JournalEntryComposer: View {
                 occurredAt: occurredAt,
                 timeZoneIdentifier: entry?.timeZoneIdentifier ?? TimeZone.current.identifier
             )
-            onSave(draft)
-            dismiss()
+            isSaving = true
+            defer { isSaving = false }
+            if await onSave(draft) {
+                dismiss()
+            } else {
+                validationMessage = "No se pudo guardar. Conservamos lo que escribiste; vuelve a intentarlo o recarga el Diario si el registro cambió."
+            }
         } catch {
             validationMessage = "Revisa el título, las notas y la fecha antes de guardar."
         }

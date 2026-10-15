@@ -278,3 +278,14 @@
 - **Implementado en código:** autorización única, conversación efímera, revocación/borrado de memoria y cliente iOS para la Edge Function; todavía sin compilación en Mac.
 - **Verificado:** la función vuelve a arrancar localmente después de los cambios y rechaza una llamada sin sesión (401).
 - **Pendiente:** evaluación breve de seguridad, configurar secretos/modelo, probar envío autenticado a Groq y desplegar la función solo tras validación.
+
+## D-043 — Profundidad visual y movimiento accesible
+
+- **Estado:** CONFIRMED
+- **Decisión:** ampliar el sistema nocturno de bosque y menta con superficies opacas iluminadas, sombras suaves y componentes con relieve; reservar el material translúcido para el acceso contextual del Coach. Lavanda diferencia Sueño; las líneas topográficas son decoración y nunca codifican una medición.
+- **Jerarquía:** Hoy destaca sueño, HRV, movimiento y contexto del Diario. BioScore y Sleep Score conservan su explicación visible, pero pasan a segundo plano mientras no tengan cálculo validado. Ninguna gráfica, anillo o cifra decorativa se presenta como dato fisiológico.
+- **Movimiento:** las transiciones breves acompañan foco, pulsación, aparición y cambio de valor. El fondo permanece quieto. Reducir movimiento elimina el desplazamiento y ralentiza la sesión respiratoria. Los gestos de navegación y las hojas siguen el comportamiento nativo.
+- **Accesibilidad:** Dynamic Type reorganiza las señales en pantallas estrechas o texto grande; VoiceOver recibe anuncios de estado; controles interactivos mantienen al menos 44 puntos de área táctil; Reducir transparencia usa fondos sólidos.
+- **Autenticación:** campos compartidos con foco de teclado, mostrar/ocultar contraseña, confirmación dedicada y reenvío de registro con enfriamiento visual de 60 segundos. La recuperación de contraseña reutiliza los mismos campos accesibles.
+- **Diario:** el formulario permanece abierto si la escritura local falla o entra en conflicto. El aviso, anuncio VoiceOver y háptica de éxito solo aparecen tras confirmar la persistencia y cerrar la hoja.
+- **Pendiente de verificación:** compilar con Xcode y revisar render, foco y VoiceOver en Mac; los cambios actuales se inspeccionaron mediante análisis sintáctico Swift, pero aún no se han renderizado en iOS.

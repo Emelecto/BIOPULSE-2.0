@@ -1,11 +1,15 @@
 import SwiftUI
 
 struct RootView: View {
+    private enum Tab: Hashable { case today, trends, journal, sleep, profile }
     let userID: UUID
     @ObservedObject var auth: AuthSessionStore
     @StateObject private var health = HealthDataController()
     @StateObject private var journal: JournalController
     @State private var showingCoach = false
+    @State private var selectedTab: Tab = .today
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
 
     init(userID: UUID, auth: AuthSessionStore) {
         self.userID = userID
@@ -14,33 +18,26 @@ struct RootView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            TabView {
-                NavigationStack { TodayView(health: health) }
+            TabView(selection: $selectedTab) {
+                NavigationStack {
+                    TodayView(health: health) { selectedTab = .journal }
+                        .safeAreaInset(edge: .bottom, spacing: 0) { coachDock }
+                }
                     .tabItem { Label("Hoy", systemImage: "house.fill") }
-                NavigationStack { TrendsView(health: health) }
+                    .tag(Tab.today)
+                NavigationStack { TrendsView(health: health).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
                     .tabItem { Label("Tendencias", systemImage: "chart.xyaxis.line") }
-                NavigationStack { JournalView(journal: journal) }
+                    .tag(Tab.trends)
+                NavigationStack { JournalView(journal: journal).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
                     .tabItem { Label("Diario", systemImage: "square.and.pencil") }
-                NavigationStack { SleepView(health: health) }
+                    .tag(Tab.journal)
+                NavigationStack { SleepView(health: health).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
                     .tabItem { Label("Sueño", systemImage: "moon.stars.fill") }
-                NavigationStack { ProfileView(health: health, auth: auth) }
+                    .tag(Tab.sleep)
+                NavigationStack { ProfileView(health: health, auth: auth).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
                     .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+                    .tag(Tab.profile)
             }
-
-            Button { showingCoach = true } label: {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(PulseStyle.background)
-                    .frame(width: 52, height: 52)
-                    .background(PulseStyle.mint, in: Circle())
-                    .shadow(color: PulseStyle.mint.opacity(0.2), radius: 16, y: 7)
-            }
-            .buttonStyle(PulsePressButtonStyle())
-            .padding(.trailing, 17)
-            .padding(.bottom, 72)
-            .accessibilityLabel("Abrir Coach BioPulse")
-        }
         .tint(PulseStyle.mint)
         .preferredColorScheme(.dark)
         .task { await health.reload() }
@@ -49,5 +46,30 @@ struct RootView: View {
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
         }
+    }
+
+    private var coachDock: some View {
+        HStack {
+            Spacer(minLength: 0)
+            Button { showingCoach = true } label: {
+                Label("Coach", systemImage: "sparkles")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(PulseStyle.mint)
+                    .padding(.horizontal, 20)
+                    .frame(minHeight: 48)
+                    .background {
+                        if reduceTransparency || contrast == .increased {
+                            Capsule().fill(PulseStyle.elevated)
+                        } else {
+                            Capsule().fill(.regularMaterial)
+                        }
+                    }
+                    .overlay { Capsule().strokeBorder(PulseStyle.mint.opacity(contrast == .increased ? 0.8 : 0.25), lineWidth: 1) }
+                    .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+            }
+            .buttonStyle(PulsePressButtonStyle())
+            .accessibilityLabel("Abrir Coach BioPulse")
+        }
+        .padding(.horizontal, 22).padding(.vertical, 8)
     }
 }

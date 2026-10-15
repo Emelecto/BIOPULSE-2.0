@@ -77,6 +77,14 @@ final class AuthSessionStore: ObservableObject {
         _ = try await configuredClient().auth.signIn(email: email, password: password)
     }
 
+    func resendConfirmation(to email: String) async throws {
+        try await configuredClient().auth.resend(
+            email: email,
+            type: .signup,
+            emailRedirectTo: Self.emailConfirmationURL
+        )
+    }
+
     func signInWithGoogle() async throws {
         _ = try await configuredClient().auth.signInWithOAuth(
             provider: .google,

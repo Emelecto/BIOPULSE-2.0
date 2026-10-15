@@ -4,7 +4,7 @@ Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple 
 
 ## Archivos iniciales
 
-- `Sources/App`: cuatro secciones navegables (`Hoy`, `Tendencias`, `Sueño`, `Perfil`), detalle de señales, ring BioScore sin cifra no validada, estados vacíos y lectura local de Apple Salud.
+- `Sources/App`: cinco secciones navegables (`Hoy`, `Tendencias`, `Diario`, `Sueño`, `Perfil`), pantalla de acceso, Coach, detalle y procedencia de señales, estados vacíos y lectura local de Apple Salud.
 - `Resources/Assets.xcassets/ForestNight.imageset`: fondo nocturno del inicio; recurso decorativo, sin datos de salud.
 - `project.yml`: especificación reproducible del proyecto iOS 17 para XcodeGen.
 - `Sources/HealthKit/HealthMetric.swift`: catálogo tipado de métricas y estados de capacidad.
@@ -16,15 +16,16 @@ Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple 
 - `Sources/BioPulseDomain/LocalPersistence.swift`: contrato local de persistencia e implementación temporal en memoria, con conflictos y revisiones para snapshots diarios.
 - `Sources/BioPulseDomain/ContextJournal.swift`: dominio y repositorios del Diario; valida entradas, conserva procedencia y revisiones, y persiste JSON local de forma atómica con protección completa en iOS.
 - `Sources/App/JournalController.swift` y `JournalView.swift`: pestaña Diario con carga, creación, edición, eliminación, estados de espera/error y actualización manual.
-- `Sources/App/AuthSessionStore.swift` y `AuthView.swift`: sesión obligatoria de Supabase Auth, correo/contraseña, Apple, Google, recuperación de contraseña y manejo de callback.
+- `Sources/App/AuthSessionStore.swift` y `AuthView.swift`: sesión obligatoria de Supabase Auth, correo/contraseña, Apple, Google, confirmación de correo con reenvío, recuperación con campos accesibles y manejo de callback.
 
 ## Estado funcional
 
 - **Autenticación implementada en código, no validada en Mac:** no se monta la app hasta que Supabase restaura o emite una sesión. Incluye correo/contraseña, Apple, Google, confirmación de registro, recuperación y cierre de sesión. Apple/Google requieren configuración de proveedores y credenciales en Supabase; Apple también requiere firma/capacidad en Apple Developer.
+- **Pantalla de acceso:** fondos de bosque, superficies iluminadas y campos de contraseña que permiten mostrar u ocultar el contenido. Tras registrarte puedes reenviar el enlace de confirmación cada 60 segundos y volver al acceso. La pantalla no afirma que tu cuenta esté confirmada antes de recibir la sesión.
 - **Aislamiento local implementado para el Diario:** el archivo nuevo usa una carpeta por UUID de usuario. El archivo antiguo sin ámbito no se carga ni se borra automáticamente.
 - La URL y clave publishable del proyecto Supabase están configuradas en el `Info.plist` generado desde `project.yml`; nunca debe añadirse una clave `service_role` a la app.
 - Apple Salud: solicita acceso de lectura solo para las señales utilizadas por la interfaz; muestra muestras recibidas o ausencia explícita. El permiso de lectura no puede confirmarse directamente mediante HealthKit.
-- Hoy: presenta HRV, sueño y pasos observados, con detalle y procedencia. El BioScore permanece sin número porque aún no existe una fórmula validada.
+- Hoy: destaca sueño, HRV, pasos observados y contexto del Diario, con detalle y procedencia. El BioScore permanece secundario y sin número porque aún no existe una fórmula validada.
 - Tendencias: muestra las mediciones actuales; el historial y la referencia personal todavía no están conectados a esta vista.
 - Sueño: suma las etapas dormidas registradas durante la noche y evita intervalos superpuestos.
 - Perfil: permite actualizar mediciones, abrir Ajustes y revisar localmente un CSV tidy/wide. Esta revisión no persiste el archivo ni incorpora sus registros al dashboard.
