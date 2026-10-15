@@ -56,6 +56,14 @@ El siguiente calendario es **PROPOSED** y depende de la auditoría, la disponibi
 - Completar la evaluación breve de respuestas de salud y el fallback local antes de habilitar el Coach.
 - Compilar y probar en Mac/Xcode, incluida autorización, memoria, revocación, errores y Dynamic Type.
 
+## Avance backend / investigación del 15-10-2026
+
+- **CONFIRMED:** esquema y RLS de agregados diarios, migración aplicada local y remotamente; cuatro consentimientos de sincronización independientes. El transporte iOS sigue pendiente.
+- **CONFIRMED:** panel Admin/Dev local y endpoint remoto desplegado; solo conteos operativos, sin datos de salud. `ADMIN_USER_ID` quedó configurado como secreto remoto. Falta verificar el inicio de sesión real del propietario en el navegador.
+- **CONFIRMED:** auditoría de 100.000 filas/286 sujetos del CSV heredado; sin etiqueta clínica independiente ni licencia verificada. Plantilla reproducible de dos familias ML y pruebas, sin modelo validado ni activado.
+- **CONFIRMED:** 67 pruebas pgTAP, 10 pruebas unitarias de política Coach, 3 pruebas de contrato ML y una prueba HTTP local autenticada del Coach pasan. La función Coach está desplegada; faltan pruebas con respuesta real de Groq y en dispositivo.
+- Ver [contrato cloud](DATA_SYNC_CONTRACT.md) e [investigación ML](ML_RESEARCH.md) para límites exactos. Las notas anteriores de este roadmap representan hitos históricos, no estado más reciente.
+
 ## Hitos de salida
 
 1. Proyecto iOS compilable.

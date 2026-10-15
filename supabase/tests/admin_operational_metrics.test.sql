@@ -1,0 +1,10 @@
+begin;
+select plan(6);
+select ok(not has_function_privilege('anon', 'public.admin_operational_metrics()', 'execute'), 'anonymous cannot read operations');
+select ok(not has_function_privilege('authenticated', 'public.admin_operational_metrics()', 'execute'), 'ordinary accounts cannot read operations');
+select ok(has_function_privilege('service_role', 'public.admin_operational_metrics()', 'execute'), 'server role can read operations');
+select ok((public.admin_operational_metrics() ? 'accounts'), 'account count is present');
+select ok((public.admin_operational_metrics() ? 'coachRequestsToday'), 'request count is present');
+select ok(not (public.admin_operational_metrics() ? 'journal'), 'no journal content or count is returned');
+select * from finish();
+rollback;

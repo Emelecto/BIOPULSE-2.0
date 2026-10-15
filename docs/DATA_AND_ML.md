@@ -1,5 +1,7 @@
 # BioPulse 2.0 — datos y machine learning
 
+Actualización 2026-10-15: ver [contrato de sincronización](DATA_SYNC_CONTRACT.md) y [auditoría e investigación ML](ML_RESEARCH.md). Las predicciones clínicas siguen bloqueadas; no hay un modelo 2.0 validado.
+
 ## Reglas obligatorias
 
 Todo modelo debe documentar dataset, licencia/procedencia, unidad de análisis, variables, transformaciones, etiqueta, separación temporal o por persona, control de leakage, baseline, métricas, incertidumbre y limitaciones.

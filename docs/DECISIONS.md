@@ -277,7 +277,7 @@
 - **Verificado:** migración `20261014000300` aplicada local y remotamente; suite pgTAP local 39/39; Edge Function inicia localmente y responde 401 sin JWT.
 - **Implementado en código:** autorización única, conversación efímera, revocación/borrado de memoria y cliente iOS para la Edge Function; todavía sin compilación en Mac.
 - **Verificado:** la función vuelve a arrancar localmente después de los cambios y rechaza una llamada sin sesión (401).
-- **Pendiente:** evaluación breve de seguridad, configurar secretos/modelo, probar envío autenticado a Groq y desplegar la función solo tras validación.
+- **Actualización 15-10-2026:** la función está desplegada; `GROQ_API_KEY` y `GROQ_MODEL` figuran configurados como secretos remotos (sus valores no se exponen). Pasaron 10 pruebas unitarias de política y una prueba HTTP local autenticada de consentimiento, respuesta urgente, borrado de memoria y revocación sin invocar Groq. Sigue pendiente validar una respuesta real de Groq y el flujo completo en iPhone.
 
 ## D-043 — Profundidad visual y movimiento accesible
 
@@ -289,3 +289,21 @@
 - **Autenticación:** campos compartidos con foco de teclado, mostrar/ocultar contraseña, confirmación dedicada y reenvío de registro con enfriamiento visual de 60 segundos. La recuperación de contraseña reutiliza los mismos campos accesibles.
 - **Diario:** el formulario permanece abierto si la escritura local falla o entra en conflicto. El aviso, anuncio VoiceOver y háptica de éxito solo aparecen tras confirmar la persistencia y cerrar la hoja.
 - **Pendiente de verificación:** compilar con Xcode y revisar render, foco y VoiceOver en Mac; los cambios actuales se inspeccionaron mediante análisis sintáctico Swift, pero aún no se han renderizado en iOS.
+
+## D-044 — Sincronización por categoría y agregados diarios
+
+- **Estado:** CONFIRMED para backend; PROPOSED para integración iOS.
+- **Decisión:** identidad obligatoria no implica subida. Perfil, ajustes, Diario y métricas derivadas tienen consentimiento independiente. El backend acepta solo agregados diarios con unidad, calidad y procedencia; nunca muestras HealthKit originales. Revocar bloquea nuevas escrituras y deja borrado remoto como acción separada.
+- **Verificación:** migraciones `20261015000100` y `20261015000300` aplicadas local y remotamente; suite pgTAP local 67/67.
+
+## D-045 — ML de dos familias con resultados bloqueados
+
+- **Estado:** CONFIRMED para auditoría y código de investigación; UNKNOWN para validez predictiva.
+- **Decisión:** separar eventos de riesgo/anomalía/enfermedad de resultados futuros de sueño, recuperación y rendimiento. No publicar modelos ni scores clínicos sin etiqueta independiente, licencia, consentimiento, corte temporal, sujetos no vistos y validación externa.
+- **Verificación:** CSV heredado auditado sin modificación (100.000 filas, 286 sujetos, sin etiqueta clínica); 3 pruebas de contrato ML pasan. Los AUC heredados no son evidencia clínica.
+
+## D-046 — Operaciones privadas sin datos de salud
+
+- **Estado:** CONFIRMED para código, despliegue y configuración del UUID; sesión real del propietario pendiente de prueba.
+- **Decisión:** panel web local, autenticación de cuenta y allowlist exacta de UUID en secreto de servidor. Solo seis contadores globales; ninguna fila sanitaria ni identidad se devuelve al navegador. Sin `ADMIN_USER_ID`, denegar a todos.
+- **Verificación:** migración `20261015000200` aplicada local y remotamente, endpoint desplegado, `ADMIN_USER_ID` configurado en secretos, 67/67 pruebas pgTAP y respuesta 401 sin JWT en remoto. La UI compila; no se ha probado sesión real del propietario.

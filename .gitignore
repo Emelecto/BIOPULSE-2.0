@@ -17,3 +17,8 @@ DerivedData/
 xcuserdata/
 **/xcuserdata/
 BioPulse/BioPulse.xcodeproj/
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
