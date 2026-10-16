@@ -1,6 +1,6 @@
 # BioPulse web + Health Auto Export
 
-**CONFIRMED:** implementación local; build, normalizador, migración local, 80 pruebas pgTAP y flujo HTTP local del puente pasan. **UNKNOWN:** recepción de un export real desde el iPhone, resultado de migración SQL/Edge Function en Supabase remoto, login OAuth y QA con una cuenta real. No se desplegó ni se modificó el proyecto remoto en esta fase.
+**CONFIRMED:** implementación local; build, normalizador, 80 pruebas pgTAP y flujo HTTP local del puente pasan. La migración `20261015000400` figura aplicada en Supabase remoto y la función `health-bridge` figura activa; la petición remota sin sesión recibe `401`. El código está en GitHub. **UNKNOWN:** recepción de un export real desde iPhone, login OAuth, QA con una cuenta real y despliegue Vercel. El sitio todavía no tiene URL pública confirmada.
 
 ## Ejecutar localmente
 
@@ -16,10 +16,10 @@ Abrir `http://127.0.0.1:4173/` (landing) y `/app` (cuenta obligatoria). `npm run
 
 Para pruebas web contra la pila Supabase local puede usarse `VITE_SUPABASE_URL=http://127.0.0.1:54321` y su clave pública local. En ese modo el asistente no crea enlaces para iPhone: `localhost` no es accesible desde el teléfono y el destino final requiere HTTPS público.
 
-## Preparar backend y desplegar (pendiente de autorización)
+## Estado de publicación y pasos pendientes
 
-1. Revisar la migración `supabase/migrations/20261015000400_health_bridge.sql` y aplicarla al proyecto correcto. En local ya se aplicó con `supabase migration up --local` (sin reset) y `supabase test db` pasó 80 pruebas. `supabase db reset` destruiría datos locales de desarrollo: no es necesario para este flujo y nunca debe usarse contra remoto.
-2. Desplegar `health-bridge` con verificación JWT del gateway deshabilitada. **La función verifica manualmente** JWT en acciones de cuenta y el token aleatorio revocable en POST de Health Auto Export. `supabase/config.toml` ya declara `verify_jwt = false` para esa función. Mantener `SUPABASE_URL`, clave pública y clave secreta solo en secretos del servidor. No exponer la secreta a Vite/Vercel.
+1. La migración `supabase/migrations/20261015000400_health_bridge.sql` ya está aplicada en el proyecto remoto vinculado. En local se aplicó sin reset y `supabase test db` pasó 80 pruebas. No ejecutar `supabase db reset` para este flujo.
+2. `health-bridge` ya está desplegada con verificación JWT del gateway deshabilitada. **La función verifica manualmente** JWT en acciones de cuenta y el token aleatorio revocable en POST de Health Auto Export. Mantener `SUPABASE_URL`, clave pública y clave secreta solo en secretos del servidor. No exponer la secreta a Vite/Vercel.
 3. En Supabase Auth → URL Configuration, añadir URLs exactas de redirección para `https://TU-DOMINIO/app` y `http://127.0.0.1:4173/app` al probar en local. No reemplazar sin análisis el callback iOS existente. Habilitar Google OAuth solo si el proveedor está configurado.
 4. En Vercel, crear proyecto con **Root Directory `web`**, Build Command `npm run build`, Output Directory `dist`. Configurar `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY`. El `vercel.json` reescribe `/app` para recargas y callbacks. Usar HTTPS y dominio definitivo antes de distribuir enlaces de correo.
 5. Probar alta y verificación de correo en web, login, recuperación de contraseña, RLS, Coach y revocación con una cuenta de prueba. La integración HTTP local automatizada está en `supabase/tests/health_bridge_http.mjs`; requiere `supabase functions serve health-bridge --no-verify-jwt` en otra terminal y crea/borra una cuenta sintética local. Luego validar el flujo de Health Auto Export en el iPhone del propietario antes de invitar a otros usuarios.
