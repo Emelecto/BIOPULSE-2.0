@@ -4,8 +4,8 @@ import { normalizeExport, type Stream } from "./normalize.ts";
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, apikey, content-type, x-client-info",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
   "Cache-Control": "no-store",
 };
 const json = (status: number, body: Record<string, unknown>) =>
