@@ -77,3 +77,12 @@ El siguiente calendario es **PROPOSED** y depende de la auditoría, la disponibi
 Sincronización multi-dispositivo, Coach IA remoto, publicación en App Store e integraciones OAuth externas.
 
 El consejo clínico y las predicciones clínicas sí permanecen fuera del producto.
+
+## Implementación de expansión de producto — 2026-10-15
+
+- **Landing:** las ocho mejoras están implementadas en fuente y se revisaron en navegador de escritorio y móvil. El sitio no está publicado; captura de beta apagada. Antes de lanzamiento faltan destino/consentimiento/bajas, contacto, políticas revisadas y enlace de App Store.
+- **iOS:** comparación personal, gráfica de 28 días con marcas de anotación, timeline, check-in subjetivo, experimentos, cobertura insuficiente, aprendizaje, exportación revisable, enfoque flexible, progreso no punitivo y preferencias/recordatorios locales están implementados en fuente.
+- **Verificación iOS pendiente:** no hay Xcode/macOS en el entorno de trabajo. El parser de Swift reconoce los archivos, pero falta compilación, tests con el SDK de Apple, revisión en iPhone/VoiceOver/HealthKit/notificaciones y confirmar APIs de Charts/HealthKit en la versión efectiva del proyecto.
+- **Apple Watch:** widgets y complicaciones siguen intencionalmente para después y no se anuncian como disponibles.
+
+El desglose, límites funcionales y criterios de verificación están en el [backlog de producto](PRODUCT_BACKLOG.md). La investigación ML y sus puertas de evidencia no cambian; ninguna predicción médica se ha activado.

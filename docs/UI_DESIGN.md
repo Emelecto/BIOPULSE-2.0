@@ -1,5 +1,23 @@
 # BioPulse 2.0 — sistema visual inicial
 
+## Implementación visual iOS actual (16 de octubre de 2026)
+
+- **CONFIRMED:** la dirección del home se trasladó a SwiftUI: fondo grafito casi plano, acentos de interfaz blancos, BioScore central en un anillo orgánico decorativo, y un grid de tarjetas de igual ancho. Energía activa ocupa la altura de dos tarjetas; HRV, FC en reposo, sueño y pasos muestran lecturas de Apple Salud o un estado vacío.
+- **CONFIRMED:** Tendencias usa agregados diarios observados con selección de 7/30/90 días y barras solo en días con registros. Sueño usa intervalos de etapas realmente recibidos. Diario ofrece check-in subjetivo y conserva el registro editable. Perfil conserva permisos, importación CSV y cierre de sesión.
+- **CONFIRMED:** `ScoreColor` interpola de rojo a amarillo y verde para scores futuros. No se aplica a lecturas crudas ni presenta un estado médico. BioScore, Sleep Score y subscores permanecen sin cifra hasta implementar y validar sus algoritmos.
+- **UNKNOWN:** compilación y apariencia final en Xcode/iPhone. En Windows solo se verificó la sintaxis de los archivos Swift; la compilación iOS, Dynamic Type y VoiceOver requieren el Mac.
+- Las decisiones de la sección histórica «Dirección aprobada» que hablan de bosque, menta global y BioScore secundario quedan sustituidas por la dirección anterior. Se conservan abajo como historial, no como especificación vigente.
+
+## Dirección visual más reciente para «Hoy» (15 de octubre de 2026)
+
+- **CONFIRMED:** ajuste final del home: grid de dos columnas de igual ancho. Esfuerzo conserva la altura de las tarjetas HRV+FC apiladas, pero tiene exactamente el mismo ancho que Sueño; HRV y FC tienen el mismo ancho que Pasos. Referencia más reciente: `../design-explorations/2026-10-15-app-flow/01-hoy.png`.
+- **PROPOSED:** mockups de Tendencias, Diario, Sueño y Perfil, coherentes con el home, en `../design-explorations/2026-10-15-app-flow/`. Pendientes de revisión del usuario y de implementación.
+- **CONFIRMED:** el usuario seleccionó el mosaico asimétrico con BioScore orgánico como dirección del home. Referencia final: `../design-explorations/2026-10-15-final/biopulse-home-semantic-colors.png`; reglas y límites: `../design-explorations/2026-10-15-final/README.md`.
+- **CONFIRMED:** el color verde deja de ser un acento global. Fondo, luces ambientales, navegación y botón del Coach IA son neutros blancos/plata sobre carbón oscuro. Cada métrica con score validado usa un matiz propio entre rojo (0), amarillo (50) y verde BioPulse (100), con variación gradual cada ~2 puntos.
+- **CONFIRMED:** la puntuación, el texto de estado y la explicación acompañan siempre al color. Un score ausente no adopta un color de alarma.
+- **PROPOSED:** las anclas cromáticas y la interpolación del README citado son referencia para implementación, no una fórmula científica. El mockup usa datos simulados y no autoriza mostrar BioScore ni sub-scores reales antes de validarlos.
+- Esta dirección sustituye, para el home futuro, la regla de menta como acento general y lavanda fija para sueño descrita en la sección histórica siguiente. La UI actualmente implementada puede seguir usando esa paleta hasta que se programe y verifique la nueva dirección.
+
 ## Dirección aprobada
 
 - **CONFIRMED:** equilibrio entre serenidad y rendimiento, con claridad cotidiana y profundidad técnica opcional.

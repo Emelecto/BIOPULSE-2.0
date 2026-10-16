@@ -1,8 +1,13 @@
+import Charts
 import SwiftUI
 
 struct TrendsView: View {
     @ObservedObject var health: HealthDataController
+    @ObservedObject var journal: JournalController
+    @ObservedObject var personal: PersonalContextStore
     @State private var selectedMetric: HealthMetric?
+    @State private var chartMetric: HealthMetric = .heartRateVariabilitySDNN
+    @State private var periodDays = 7
 
     private let metrics: [HealthMetric] = [
         .heartRateVariabilitySDNN, .restingHeartRate, .heartRate,
@@ -11,12 +16,54 @@ struct TrendsView: View {
     ]
 
     var body: some View {
-        ScreenShell(title: "Tendencias", subtitle: "Entiende cada señal en su contexto") {
-            StatusPanel(
-                symbol: "chart.xyaxis.line",
-                title: "Tu referencia personal está en preparación",
-                message: "Una tendencia requiere historial y cobertura suficientes. Ahora puedes consultar cada medición real y su procedencia."
-            )
+        ScreenShell(title: "Tendencias", subtitle: "Cambios observados en tus registros") {
+            DashboardCard {
+                Text("Tu historia, día a día").font(.headline)
+                Text("Solo se muestran días con datos de Apple Salud; los huecos no se rellenan.")
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
+                Picker("Periodo", selection: $periodDays) {
+                    Text("7 días").tag(7)
+                    Text("30 días").tag(30)
+                    Text("90 días").tag(90)
+                }
+                .pickerStyle(.segmented)
+                Picker("Señal", selection: $chartMetric) {
+                    Text("HRV").tag(HealthMetric.heartRateVariabilitySDNN)
+                    Text("FC reposo").tag(HealthMetric.restingHeartRate)
+                    Text("Sueño").tag(HealthMetric.sleepAnalysis)
+                    Text("Energía").tag(HealthMetric.activeEnergyBurned)
+                }
+                .pickerStyle(.menu)
+                if chartObservations.isEmpty {
+                    DashboardEmptyChart(message: "Aún no hay registros para este periodo")
+                        .frame(height: 205)
+                } else {
+                    Chart(chartObservations) { point in
+                        BarMark(x: .value("Día", point.day, unit: .day), y: .value("Valor", point.value))
+                            .foregroundStyle(.white)
+                            .cornerRadius(2)
+                    }
+                    .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                        AxisGridLine().foregroundStyle(.white.opacity(0.08))
+                        AxisValueLabel(format: .dateTime.day().month(.abbreviated))
+                    } }
+                    .chartYAxis { AxisMarks(position: .leading) { _ in
+                        AxisGridLine().foregroundStyle(.white.opacity(0.08))
+                        AxisValueLabel()
+                    } }
+                    .frame(height: 205)
+                    .accessibilityLabel("Historial de \(chartMetric.displayName), \(chartObservations.count) días con registros")
+                }
+                Text("Agregados reales · Apple Salud")
+                    .font(.caption2).foregroundStyle(PulseStyle.muted)
+            }
+            FeatureDestinationLink(
+                symbol: "waveform.path.ecg.rectangle",
+                title: "¿Qué cambió? y tu contexto",
+                subtitle: "Compara periodos reales, añade anotaciones y revisa tu día"
+            ) {
+                PersonalInsightsView(health: health, journal: journal, personal: personal)
+            }
             SectionHeading(title: "Mediciones", subtitle: "Toca una señal para conocerla")
             ForEach(metrics) { metric in
                 Button { selectedMetric = metric } label: {
@@ -31,7 +78,7 @@ struct TrendsView: View {
                 title: "Resumen semanal",
                 subtitle: "Cambios, cobertura y registros del diario"
             ) {
-                WeeklySummaryView()
+                WeeklySummaryView(health: health, journal: journal, personal: personal)
             }
             FeatureDestinationLink(
                 symbol: "flask",
@@ -47,41 +94,70 @@ struct TrendsView: View {
                 .presentationDetents([.medium, .large])
         }
     }
+
+    private var chartObservations: [DailyHealthObservation] {
+        let start = Calendar.current.date(byAdding: .day, value: -periodDays, to: Calendar.current.startOfDay(for: .now)) ?? .distantPast
+        return (health.dailyHistory[chartMetric] ?? []).filter { $0.day >= start }
+    }
 }
 
 struct SleepView: View {
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject var health: HealthDataController
 
     var body: some View {
         ScreenShell(title: "Sueño", subtitle: "Tu última noche registrada") {
-            VStack(alignment: .leading, spacing: 18) {
-                PulseIcon(symbol: "moon.stars.fill", accent: PulseStyle.lavender)
-                Text("Tiempo dormido").font(.headline)
+            DashboardCard {
+                PendingScoreHero(title: "Sleep Score", subtitle: "Cálculo en preparación")
+                Text("Tiempo dormido").font(.subheadline).foregroundStyle(PulseStyle.secondary)
                 Text(HealthMetric.sleepAnalysis.formattedValue(health.readings[.sleepAnalysis]))
-                    .font(.largeTitle.weight(.semibold)).monospacedDigit()
-                    .foregroundStyle(PulseStyle.lavender)
+                    .font(.largeTitle.weight(.semibold)).monospacedDigit().foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
-                    .contentTransition(.numericText())
-                    .animation(reduceMotion ? nil : .easeOut(duration: 0.25), value: health.readings[.sleepAnalysis])
-                Text("Calculado a partir de los registros de Apple Salud.")
+                Text("Tiempo observado en Apple Salud, no una puntuación.")
                     .font(.subheadline).foregroundStyle(PulseStyle.secondary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(24).pulseSurface(accent: PulseStyle.lavender, prominent: true)
-
+            DashboardCard {
+                Text("Etapas de la noche").font(.headline)
+                if health.sleepStages.isEmpty {
+                    DashboardEmptyChart(message: "Sin etapas de sueño registradas por un dispositivo compatible")
+                        .frame(height: 170)
+                } else {
+                    Chart(health.sleepStages) { interval in
+                        BarMark(
+                            xStart: .value("Inicio", interval.start),
+                            xEnd: .value("Fin", interval.end),
+                            y: .value("Etapa", interval.stage.title)
+                        )
+                        .foregroundStyle(stageColor(interval.stage))
+                        .cornerRadius(2)
+                    }
+                    .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) { _ in
+                        AxisValueLabel(format: .dateTime.hour().minute())
+                    } }
+                    .frame(height: 170)
+                    .accessibilityLabel("Etapas de sueño registradas en Apple Salud")
+                    Text("\(health.sleepStages.count) intervalos registrados · Apple Salud")
+                        .font(.caption2).foregroundStyle(PulseStyle.muted)
+                }
+            }
             if let reading = health.readings[.sleepAnalysis] {
                 DataProvenance(reading: reading)
-                StatusPanel(symbol: "info.circle", title: "Qué incluye este tiempo", message: "Suma las etapas que Apple Salud marca como sueño y evita contar intervalos superpuestos dos veces. No incluye el tiempo simplemente en cama.")
+                StatusPanel(symbol: "info.circle", title: "Qué incluye este tiempo", message: "Suma los intervalos marcados como sueño, sin contar superposiciones dos veces. No incluye el tiempo simplemente en cama.")
             } else {
                 StatusPanel(symbol: "moon.zzz", title: "Aún no hay una noche registrada", message: "Cuando Apple Salud tenga registros de sueño compartidos con BioPulse, aparecerán aquí. Revisa los permisos y desliza hacia abajo para actualizar.")
             }
-            Label("Sleep Score aún no disponible", systemImage: "circle.dashed")
-                .font(.subheadline.weight(.medium)).foregroundStyle(PulseStyle.secondary)
-            Text("La puntuación necesita una fórmula validada y suficientes datos. Mientras tanto, puedes consultar el tiempo dormido y su procedencia.")
+            Text("Sleep Score requiere una fórmula validada y datos suficientes. BioPulse no estima etapas ausentes.")
                 .font(.footnote).foregroundStyle(PulseStyle.secondary)
         }
         .refreshable { await health.reload() }
+    }
+
+    private func stageColor(_ stage: SleepStageKind) -> Color {
+        switch stage {
+        case .deep: Color.white.opacity(0.92)
+        case .rem: Color.white.opacity(0.72)
+        case .core: Color.white.opacity(0.5)
+        case .unspecified: Color.white.opacity(0.3)
+        }
     }
 }
 
@@ -110,6 +186,7 @@ struct ScoreExplanationView: View {
 struct MetricDetailView: View {
     let metric: HealthMetric
     let reading: HealthReading?
+    var readingLevel: PersonalReadingLevel = .simple
 
     var body: some View {
         ScreenShell(title: metric.displayName, subtitle: "Detalle de medición") {
@@ -134,6 +211,25 @@ struct MetricDetailView: View {
                 )
             }
             StatusPanel(symbol: "info.circle", title: "Qué significa", message: metric.plainDescription)
+            StatusPanel(symbol: "slider.horizontal.3", title: "Qué puede influir", message: metric.possibleInfluencesDescription)
+            StatusPanel(
+                symbol: "questionmark.circle",
+                title: "Qué no permite concluir",
+                message: "Una medición aislada o un cambio entre periodos no identifica su causa, no predice una enfermedad y no sustituye la evaluación de un profesional."
+            )
+            if readingLevel == .technical, let reading {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("Detalle técnico").font(.headline)
+                    Text("Valor: \(metric.formattedValue(reading))")
+                    Text("Fuente: \(reading.sourceName)")
+                    Text("Momento: \(reading.measuredAt.formatted(date: .abbreviated, time: .shortened))")
+                    Text("Los agregados diarios omiten días sin muestras; la cobertura depende de los registros disponibles.")
+                }
+                .font(.caption)
+                .foregroundStyle(PulseStyle.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(17).pulseSurface()
+            }
         }
     }
 }

@@ -8,9 +8,46 @@ struct HealthReading: Equatable {
     let sourceName: String
 }
 
+struct DailyHealthObservation: Identifiable, Equatable, Sendable {
+    let day: Date
+    let value: Double
+    let sourceName: String
+
+    var id: TimeInterval { day.timeIntervalSince1970 }
+}
+
+struct HourlyEnergyObservation: Identifiable, Equatable, Sendable {
+    let hour: Date
+    let kilocalories: Double
+    var id: TimeInterval { hour.timeIntervalSince1970 }
+}
+
+enum SleepStageKind: String, Equatable, Sendable {
+    case core, deep, rem, unspecified
+
+    var title: String {
+        switch self {
+        case .core: "Ligero"
+        case .deep: "Profundo"
+        case .rem: "REM"
+        case .unspecified: "Sueño"
+        }
+    }
+}
+
+struct SleepStageObservation: Identifiable, Equatable, Sendable {
+    let start: Date
+    let end: Date
+    let stage: SleepStageKind
+    var id: String { "\(start.timeIntervalSince1970)-\(end.timeIntervalSince1970)-\(stage.rawValue)" }
+}
+
 @MainActor
 final class HealthDataController: ObservableObject {
     @Published private(set) var readings: [HealthMetric: HealthReading] = [:]
+    @Published private(set) var dailyHistory: [HealthMetric: [DailyHealthObservation]] = [:]
+    @Published private(set) var hourlyActiveEnergy: [HourlyEnergyObservation] = []
+    @Published private(set) var sleepStages: [SleepStageObservation] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorMessage: String?
     @Published private(set) var lastUpdated: Date?
@@ -62,7 +99,6 @@ final class HealthDataController: ObservableObject {
         var failedQueries = 0
 
         for (metric, identifier, unit, start) in [
-            (HealthMetric.heartRateVariabilitySDNN, HKQuantityTypeIdentifier.heartRateVariabilitySDNN, HKUnit.secondUnit(with: .milli), today),
             (.restingHeartRate, .restingHeartRate, HKUnit.count().unitDivided(by: .minute()), today),
             (.heartRate, .heartRate, HKUnit.count().unitDivided(by: .minute()), today),
             (.respiratoryRate, .respiratoryRate, HKUnit.count().unitDivided(by: .minute()), today),
@@ -73,6 +109,17 @@ final class HealthDataController: ObservableObject {
             } catch {
                 failedQueries += 1
             }
+        }
+
+        do {
+            updated[.heartRateVariabilitySDNN] = try await averageQuantity(
+                .heartRateVariabilitySDNN,
+                unit: .secondUnit(with: .milli),
+                from: today,
+                to: now
+            )
+        } catch {
+            failedQueries += 1
         }
 
         for (metric, identifier, unit) in [
@@ -93,7 +140,57 @@ final class HealthDataController: ObservableObject {
             failedQueries += 1
         }
 
+        var updatedEnergy: [HourlyEnergyObservation] = []
+        do {
+            updatedEnergy = try await hourlyEnergy(from: today, to: now)
+        } catch {
+            failedQueries += 1
+        }
+        var updatedStages: [SleepStageObservation] = []
+        do {
+            updatedStages = try await lastNightStages(now: now)
+        } catch {
+            failedQueries += 1
+        }
+
+        let historyStart = Calendar.current.date(byAdding: .day, value: -90, to: today) ?? today
+        var updatedHistory: [HealthMetric: [DailyHealthObservation]] = [:]
+        let quantityHistories: [(
+            HealthMetric,
+            HKQuantityTypeIdentifier,
+            HKUnit,
+            HKStatisticsOptions
+        )] = [
+            (.stepCount, .stepCount, .count(), .cumulativeSum),
+            (.activeEnergyBurned, .activeEnergyBurned, .kilocalorie(), .cumulativeSum),
+            (.appleExerciseTime, .appleExerciseTime, .minute(), .cumulativeSum),
+            (.heartRateVariabilitySDNN, .heartRateVariabilitySDNN, .secondUnit(with: .milli), .discreteAverage),
+            (.restingHeartRate, .restingHeartRate, .count().unitDivided(by: .minute()), .discreteAverage)
+        ]
+
+        for (metric, identifier, unit, options) in quantityHistories {
+            do {
+                updatedHistory[metric] = try await dailyQuantityHistory(
+                    identifier,
+                    unit: unit,
+                    options: options,
+                    from: historyStart,
+                    to: today
+                )
+            } catch {
+                failedQueries += 1
+            }
+        }
+        do {
+            updatedHistory[.sleepAnalysis] = try await dailySleepHistory(from: historyStart, to: now)
+        } catch {
+            failedQueries += 1
+        }
+
         readings = updated
+        dailyHistory = updatedHistory
+        hourlyActiveEnergy = updatedEnergy
+        sleepStages = updatedStages
         lastUpdated = now
         if failedQueries > 0 {
             errorMessage = "Algunas señales no pudieron consultarse. Puedes volver a intentarlo."
@@ -159,6 +256,112 @@ final class HealthDataController: ObservableObject {
         }
     }
 
+    private func averageQuantity(
+        _ identifier: HKQuantityTypeIdentifier,
+        unit: HKUnit,
+        from start: Date,
+        to end: Date
+    ) async throws -> HealthReading? {
+        guard let type = HKObjectType.quantityType(forIdentifier: identifier) else { return nil }
+        return try await withCheckedThrowingContinuation { continuation in
+            let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [])
+            let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .discreteAverage) { _, statistics, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                guard let quantity = statistics?.averageQuantity(), quantity.is(compatibleWith: unit) else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                continuation.resume(returning: HealthReading(
+                    value: quantity.doubleValue(for: unit),
+                    measuredAt: end,
+                    sourceName: "Apple Salud · media de muestras de hoy"
+                ))
+            }
+            store.execute(query)
+        }
+    }
+
+    private func hourlyEnergy(from start: Date, to end: Date) async throws -> [HourlyEnergyObservation] {
+        guard let type = HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) else { return [] }
+        return try await withCheckedThrowingContinuation { continuation in
+            let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [])
+            let query = HKStatisticsCollectionQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: .cumulativeSum,
+                anchorDate: start,
+                intervalComponents: DateComponents(hour: 1)
+            )
+            query.initialResultsHandler = { _, collection, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                guard let collection else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                var observations: [HourlyEnergyObservation] = []
+                collection.enumerateStatistics(from: start, to: end) { statistics, _ in
+                    guard let quantity = statistics.sumQuantity() else { return }
+                    let value = quantity.doubleValue(for: .kilocalorie())
+                    guard value.isFinite, value >= 0 else { return }
+                    observations.append(HourlyEnergyObservation(hour: statistics.startDate, kilocalories: value))
+                }
+                continuation.resume(returning: observations.sorted { $0.hour < $1.hour })
+            }
+            store.execute(query)
+        }
+    }
+
+    private func lastNightStages(now: Date) async throws -> [SleepStageObservation] {
+        guard let type = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else { return [] }
+        let today = Calendar.current.startOfDay(for: now)
+        let start = today.addingTimeInterval(-6 * 60 * 60)
+        let end = min(now, today.addingTimeInterval(12 * 60 * 60))
+        guard end > start else { return [] }
+        return try await withCheckedThrowingContinuation { continuation in
+            let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [])
+            let query = HKSampleQuery(sampleType: type, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, samples, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                let mapped: [(sample: HKCategorySample, stage: SleepStageKind)] = (samples ?? []).compactMap { item in
+                    guard let sample = item as? HKCategorySample else { return nil }
+                    let stage: SleepStageKind
+                    switch sample.value {
+                    case HKCategoryValueSleepAnalysis.asleepCore.rawValue: stage = .core
+                    case HKCategoryValueSleepAnalysis.asleepDeep.rawValue: stage = .deep
+                    case HKCategoryValueSleepAnalysis.asleepREM.rawValue: stage = .rem
+                    case HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue: stage = .unspecified
+                    default: return nil
+                    }
+                    return (sample, stage)
+                }
+                guard let mostRecent = mapped.max(by: { $0.sample.endDate < $1.sample.endDate }) else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                let sourceID = mostRecent.sample.sourceRevision.source.bundleIdentifier
+                let stages = mapped
+                    .filter { $0.sample.sourceRevision.source.bundleIdentifier == sourceID }
+                    .compactMap { item -> SleepStageObservation? in
+                        let clippedStart = max(item.sample.startDate, start)
+                        let clippedEnd = min(item.sample.endDate, end)
+                        guard clippedEnd > clippedStart else { return nil }
+                        return SleepStageObservation(start: clippedStart, end: clippedEnd, stage: item.stage)
+                    }
+                    .sorted { $0.start < $1.start }
+                continuation.resume(returning: stages)
+            }
+            store.execute(query)
+        }
+    }
+
     private func lastNightSleep(now: Date) async throws -> HealthReading? {
         guard let type = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else { return nil }
         let today = Calendar.current.startOfDay(for: now)
@@ -207,6 +410,111 @@ final class HealthDataController: ObservableObject {
                     measuredAt: currentEnd,
                     sourceName: "Apple Salud · sueño registrado"
                 ))
+            }
+            store.execute(query)
+        }
+    }
+
+    private func dailyQuantityHistory(
+        _ identifier: HKQuantityTypeIdentifier,
+        unit: HKUnit,
+        options: HKStatisticsOptions,
+        from start: Date,
+        to end: Date
+    ) async throws -> [DailyHealthObservation] {
+        guard let type = HKObjectType.quantityType(forIdentifier: identifier) else { return [] }
+        return try await withCheckedThrowingContinuation { continuation in
+            let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [])
+            var calendar = Calendar.current
+            calendar.timeZone = .current
+            let anchor = calendar.startOfDay(for: start)
+            let query = HKStatisticsCollectionQuery(
+                quantityType: type,
+                quantitySamplePredicate: predicate,
+                options: options,
+                anchorDate: anchor,
+                intervalComponents: DateComponents(day: 1)
+            )
+            query.initialResultsHandler = { _, collection, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                guard let collection else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                var observations: [DailyHealthObservation] = []
+                collection.enumerateStatistics(from: start, to: end) { statistics, _ in
+                    let quantity = options.contains(.cumulativeSum)
+                        ? statistics.sumQuantity()
+                        : statistics.averageQuantity()
+                    guard let quantity, quantity.is(compatibleWith: unit) else { return }
+                    let value = quantity.doubleValue(for: unit)
+                    guard value.isFinite else { return }
+                    observations.append(DailyHealthObservation(
+                        day: calendar.startOfDay(for: statistics.startDate),
+                        value: value,
+                        sourceName: "Apple Salud · agregado diario"
+                    ))
+                }
+                continuation.resume(returning: observations.sorted { $0.day < $1.day })
+            }
+            store.execute(query)
+        }
+    }
+
+    private func dailySleepHistory(from start: Date, to end: Date) async throws -> [DailyHealthObservation] {
+        guard let type = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else { return [] }
+        return try await withCheckedThrowingContinuation { continuation in
+            let predicate = HKQuery.predicateForSamples(withStart: start, end: end, options: [])
+            let query = HKSampleQuery(
+                sampleType: type,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: true)]
+            ) { _, samples, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                    return
+                }
+                let sleepValues: Set<Int> = [
+                    HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue,
+                    HKCategoryValueSleepAnalysis.asleepCore.rawValue,
+                    HKCategoryValueSleepAnalysis.asleepDeep.rawValue,
+                    HKCategoryValueSleepAnalysis.asleepREM.rawValue
+                ]
+                var calendar = Calendar.current
+                calendar.timeZone = .current
+                let intervals = (samples ?? [])
+                    .compactMap { $0 as? HKCategorySample }
+                    .filter { sleepValues.contains($0.value) }
+                    .map { (max($0.startDate, start), min($0.endDate, end)) }
+                    .filter { $0.1 > $0.0 }
+                let grouped = Dictionary(grouping: intervals) { calendar.startOfDay(for: $0.1) }
+                let observations = grouped.compactMap { day, dayIntervals -> DailyHealthObservation? in
+                    let sorted = dayIntervals.sorted { $0.0 < $1.0 }
+                    guard let first = sorted.first else { return nil }
+                    var segmentStart = first.0
+                    var segmentEnd = first.1
+                    var seconds = 0.0
+                    for interval in sorted.dropFirst() {
+                        if interval.0 <= segmentEnd {
+                            segmentEnd = max(segmentEnd, interval.1)
+                        } else {
+                            seconds += segmentEnd.timeIntervalSince(segmentStart)
+                            segmentStart = interval.0
+                            segmentEnd = interval.1
+                        }
+                    }
+                    seconds += segmentEnd.timeIntervalSince(segmentStart)
+                    return DailyHealthObservation(
+                        day: day,
+                        value: seconds / 60,
+                        sourceName: "Apple Salud · sueño por noche"
+                    )
+                }
+                continuation.resume(returning: observations.sorted { $0.day < $1.day })
             }
             store.execute(query)
         }

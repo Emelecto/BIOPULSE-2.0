@@ -97,3 +97,7 @@ hasta configurar Groq, desplegar la función y pasar validación de seguridad.
 - Cada métrica visible tiene una fuente y definición documentadas.
 - Los resultados inferidos o predichos incluyen su etiqueta y limitaciones.
 - Las pruebas cubren parsing, cálculos principales, persistencia y casos sin datos.
+
+## Ideas de expansión e implementación
+
+La iteración 2026-10-15 incorporó al código fuente la expansión de landing, vistas iOS locales y personalización descritas en [backlog de producto](PRODUCT_BACKLOG.md). La landing pasó revisión en navegador; el iOS todavía requiere compilación y QA en Mac/Xcode, por lo que las nuevas vistas no deben considerarse verificadas ni publicadas. Widgets/complicaciones Apple Watch siguen futuros. La beta web continúa desactivada. Las restricciones de privacidad, procedencia y evidencia de esta especificación prevalecen.

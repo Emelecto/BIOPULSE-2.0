@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 struct ProfileView: View {
     @ObservedObject var health: HealthDataController
     @ObservedObject var auth: AuthSessionStore
+    @ObservedObject var personal: PersonalContextStore
     @State private var showingImporter = false
     @State private var importResult: CSVImportResult?
     @State private var importError: String?
@@ -13,7 +14,17 @@ struct ProfileView: View {
     @State private var isSigningOut = false
 
     var body: some View {
-        ScreenShell(title: "Perfil", subtitle: "Tus fuentes y tu privacidad") {
+        ScreenShell(title: "Perfil", subtitle: "Tu cuenta, tus datos y tus decisiones") {
+            DashboardCard {
+                Image(systemName: "person.crop.circle")
+                    .font(.system(size: 42, weight: .ultraLight)).foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(auth.session?.user.email ?? "Cuenta BioPulse")
+                    .font(.title3.weight(.semibold)).foregroundStyle(.white)
+                    .lineLimit(2).textSelection(.enabled)
+                Text("Sesión activa · Tu Diario local está aislado por cuenta")
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
+            }
             SectionHeading(title: "Apple Salud", subtitle: "La fuente principal de BioPulse")
             StatusPanel(
                 symbol: "heart.text.square",
@@ -59,11 +70,8 @@ struct ProfileView: View {
             }
 
             SectionHeading(title: "Tu cuenta", subtitle: "Requerida para usar BioPulse")
-            StatusPanel(
-                symbol: "person.crop.circle.badge.checkmark",
-                title: auth.session?.user.email ?? "Cuenta autenticada",
-                message: "Tu Diario local está aislado por identificador de cuenta. Iniciar sesión no activa la sincronización."
-            )
+            Text("Iniciar sesión no activa la sincronización de tus datos de salud.")
+                .font(.footnote).foregroundStyle(PulseStyle.secondary)
             if let signOutError {
                 Text(signOutError)
                     .font(.subheadline)
@@ -82,6 +90,11 @@ struct ProfileView: View {
             .disabled(isSigningOut)
 
             SectionHeading(title: "Privacidad", subtitle: "Diseñada para mantener tus datos cerca")
+            StatusPanel(
+                symbol: "arrow.triangle.2.circlepath",
+                title: "Sincronización iOS pendiente",
+                message: "Iniciar sesión no sube tus datos de salud ni tu Diario. La configuración por categoría aún no está disponible en esta app."
+            )
             Text("Las consultas de Apple Salud y la revisión del CSV se realizan en este dispositivo. Si autorizas al Coach, se enviarán métricas agregadas y contexto reciente para responder tus preguntas; no las muestras originales de HealthKit.")
                 .font(.subheadline)
                 .foregroundStyle(PulseStyle.secondary)
@@ -93,6 +106,22 @@ struct ProfileView: View {
                 subtitle: "Datos locales, contexto del Coach y permisos"
             ) {
                 PrivacyCenterView()
+            }
+
+            SectionHeading(title: "Tu experiencia", subtitle: "Enfoque, recordatorios y nivel de detalle")
+            FeatureDestinationLink(
+                symbol: "slider.horizontal.3",
+                title: "Personalizar BioPulse",
+                subtitle: "Objetivo flexible, rituales y horarios silenciosos"
+            ) {
+                PersonalizationSettingsView(personal: personal)
+            }
+            FeatureDestinationLink(
+                symbol: "chart.xyaxis.line",
+                title: "Vista técnica",
+                subtitle: "Métodos, cobertura y límites de las mediciones"
+            ) {
+                TechnicalView()
             }
         }
         .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.commaSeparatedText, .plainText]) { result in

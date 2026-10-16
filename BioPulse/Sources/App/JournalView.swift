@@ -4,21 +4,46 @@ import SwiftUI
 struct JournalView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject var journal: JournalController
+    @ObservedObject var personal: PersonalContextStore
     @State private var showingComposer = false
     @State private var editingEntry: JournalEntry?
     @State private var deletionCandidate: JournalEntry?
     @State private var showsSaveConfirmation = false
     @State private var announcedSaveRevision = 0
+    @State private var selectedDay = Calendar.current.startOfDay(for: .now)
 
     var body: some View {
-        ScreenShell(title: "Diario", subtitle: "Hábitos, síntomas y eventos en contexto") {
-            StatusPanel(
-                symbol: "lock.shield",
-                title: "Privado en este dispositivo",
-                message: "Tus registros se guardan localmente. Si autorizas al Coach, podrá recibir entradas recientes al enviarle una pregunta."
-            )
-
-            Button("Registrar contexto") { showingComposer = true }
+        ScreenShell(title: "Diario", subtitle: "Tu contexto, en tus palabras") {
+            HStack(spacing: 12) {
+                Button { shiftDay(-1) } label: {
+                    Image(systemName: "chevron.left").frame(width: 44, height: 44)
+                }
+                Spacer(minLength: 0)
+                Text(selectedDay.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                    .font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                Spacer(minLength: 0)
+                Button { shiftDay(1) } label: {
+                    Image(systemName: "chevron.right").frame(width: 44, height: 44)
+                }
+                .disabled(Calendar.current.isDateInToday(selectedDay))
+            }
+            .foregroundStyle(.white).padding(.horizontal, 8).pulseSurface()
+            DashboardCard {
+                Text(Calendar.current.isDateInToday(selectedDay) ? "¿Cómo te sientes hoy?" : "¿Cómo te sentiste?")
+                    .font(.title3.weight(.semibold))
+                Text("Tu respuesta es subjetiva y queda junto a tus datos, no como una medición.")
+                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { checkInChoices }
+                    VStack(alignment: .leading, spacing: 8) { checkInChoices }
+                }
+                .padding(.top, 7)
+                if let current = personal.checkIn(on: selectedDay) {
+                    Text("Guardado: \(current.energy.title)")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
+            }
+            Button("Añadir registro") { showingComposer = true }
                 .buttonStyle(PulseActionButtonStyle())
 
             if showsSaveConfirmation {
@@ -26,16 +51,23 @@ struct JournalView: View {
             }
 
             SectionHeading(
-                title: "Tus registros",
-                subtitle: journal.entries.isEmpty ? "Aún no has añadido contexto" : "\(journal.entries.count) guardados"
+                title: "Línea de tiempo",
+                subtitle: visibleEntries.isEmpty && visibleAnnotations.isEmpty
+                    ? "Sin registros este día"
+                    : "\(visibleEntries.count + visibleAnnotations.count) registros este día"
             )
 
             journalContent
+            StatusPanel(
+                symbol: "lock.shield",
+                title: "Privado en este dispositivo",
+                message: "Tus registros se guardan localmente. Si autorizas al Coach, podrá recibir entradas recientes al enviarle una pregunta."
+            )
         }
         .task { await journal.load() }
         .refreshable { await journal.load(force: true) }
         .sheet(isPresented: $showingComposer, onDismiss: presentSaveConfirmation) {
-            JournalEntryComposer { draft in
+            JournalEntryComposer(initialDate: Calendar.current.isDateInToday(selectedDay) ? .now : selectedDay) { draft in
                 await journal.create(draft)
             }
             .presentationDetents([.medium, .large])
@@ -75,6 +107,43 @@ struct JournalView: View {
         .onDisappear { showsSaveConfirmation = false }
     }
 
+    private var visibleEntries: [JournalEntry] {
+        journal.entries
+            .filter { Calendar.current.isDate($0.occurredAt, inSameDayAs: selectedDay) }
+            .sorted { $0.occurredAt < $1.occurredAt }
+    }
+
+    private var visibleAnnotations: [PersonalAnnotation] {
+        personal.annotations
+            .filter { Calendar.current.isDate($0.occurredAt, inSameDayAs: selectedDay) }
+            .sorted { $0.occurredAt < $1.occurredAt }
+    }
+
+    private func shiftDay(_ offset: Int) {
+        guard let next = Calendar.current.date(byAdding: .day, value: offset, to: selectedDay),
+              next <= Calendar.current.startOfDay(for: .now) else { return }
+        selectedDay = next
+    }
+
+    @ViewBuilder private var checkInChoices: some View {
+        ForEach(CheckInEnergy.allCases) { energy in
+            let isSelected = personal.checkIn(on: selectedDay)?.energy == energy
+            Button {
+                personal.saveCheckIn(energy: energy, note: "", on: selectedDay)
+            } label: {
+                Label(energy.title, systemImage: energy.symbol)
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10).frame(minHeight: 44)
+                    .background(isSelected ? PulseStyle.elevated : PulseStyle.background,
+                                in: Capsule())
+                    .overlay { Capsule().strokeBorder(.white.opacity(isSelected ? 0.65 : 0.16)) }
+            }
+            .buttonStyle(PulsePressButtonStyle())
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
+        }
+    }
+
     private func presentSaveConfirmation() {
         guard journal.saveRevision > announcedSaveRevision else { return }
         announcedSaveRevision = journal.saveRevision
@@ -92,15 +161,27 @@ struct JournalView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 110)
             .pulseSurface()
-        } else if journal.entries.isEmpty {
+        } else if visibleEntries.isEmpty && visibleAnnotations.isEmpty {
             StatusPanel(
                 symbol: "square.and.pencil",
                 title: "Empieza cuando algo importe",
                 message: "Registra un hábito, síntoma o evento. BioPulse podrá compararlo con tendencias cuando exista suficiente historial, sin afirmar causalidad."
             )
         } else {
-            ForEach(journal.entries) { entry in
+            ForEach(visibleEntries) { entry in
                 journalCard(entry)
+            }
+            ForEach(visibleAnnotations) { annotation in
+                DashboardCard {
+                    Label(annotation.kind.title, systemImage: annotation.kind.symbol)
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                    Text(annotation.title).font(.headline)
+                    if !annotation.note.isEmpty {
+                        Text(annotation.note).font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                    }
+                    Text(annotation.occurredAt.formatted(date: .omitted, time: .shortened))
+                        .font(.caption2).foregroundStyle(PulseStyle.muted)
+                }
             }
         }
     }
@@ -179,13 +260,13 @@ private struct JournalEntryComposer: View {
     private let entry: JournalEntry?
     let onSave: (JournalEntryDraft) async -> Bool
 
-    init(entry: JournalEntry? = nil, onSave: @escaping (JournalEntryDraft) async -> Bool) {
+    init(entry: JournalEntry? = nil, initialDate: Date = .now, onSave: @escaping (JournalEntryDraft) async -> Bool) {
         self.entry = entry
         self.onSave = onSave
         _category = State(initialValue: entry?.category ?? .habit)
         _title = State(initialValue: entry?.title ?? "")
         _notes = State(initialValue: entry?.notes ?? "")
-        _occurredAt = State(initialValue: entry?.occurredAt ?? .now)
+        _occurredAt = State(initialValue: entry?.occurredAt ?? initialDate)
     }
 
     private var trimmedTitle: String {

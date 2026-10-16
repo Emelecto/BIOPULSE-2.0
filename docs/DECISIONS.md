@@ -307,3 +307,27 @@
 - **Estado:** CONFIRMED para código, despliegue y configuración del UUID; sesión real del propietario pendiente de prueba.
 - **Decisión:** panel web local, autenticación de cuenta y allowlist exacta de UUID en secreto de servidor. Solo seis contadores globales; ninguna fila sanitaria ni identidad se devuelve al navegador. Sin `ADMIN_USER_ID`, denegar a todos.
 - **Verificación:** migración `20261015000200` aplicada local y remotamente, endpoint desplegado, `ADMIN_USER_ID` configurado en secretos, 67/67 pruebas pgTAP y respuesta 401 sin JWT en remoto. La UI compila; no se ha probado sesión real del propietario.
+
+## D-047 — Expansión de producto: landing, contexto personal y personalización
+
+- **Estado:** CONFIRMED para implementación de MVP local; Xcode/QA de iOS pendiente. Apple Watch continúa FUTURE.
+- **Decisión:** convertir en producto las ocho ideas de landing y las vistas locales de comparación descriptiva, gráfica con anotaciones, timeline, check-in subjetivo, experimentación personal, estados sin datos, educación contextual, resúmenes semanal/compartible y preferencias flexibles.
+- **Privacidad:** check-ins, anotaciones, experimentos y preferencias se guardan por usuario en archivo local con protección de archivo iOS; no se sincronizan por login. La exportación requiere selección explícita y previsualización. Notificaciones son opt-in y contienen texto genérico, sin valores de salud.
+- **Evidencia y límites:** comparaciones solo usan muestras agregadas disponibles, excluyen días vacíos y exigen cobertura mínima; anotaciones se marcan en el tiempo, sin causalidad. El progreso no usa rachas ni sanciona descanso. Landing no captura correos ni afirma que el ML/Watch estén disponibles.
+- **Verificación:** JavaScript y referencias HTML revisados; controles interactivos y navegación probados en navegador móvil/escritorio. Swift pasó análisis sintáctico local, pero no hubo SDK de Apple/Xcode para compilar o ejecutar la app ni sus pruebas. Esta limitación debe resolverse antes de llamar la expansión iOS lista para usuarios.
+
+## D-048 — Home futuro con color semántico por score
+
+- **Actualización 15-10-2026:** el usuario confirmó el último ajuste del grid: todas las tarjetas tienen igual ancho en dos columnas; Esfuerzo solo es más alta. El mockup definitivo de «Hoy» está en `design-explorations/2026-10-15-app-flow/01-hoy.png`. Las otras cuatro pestañas son propuestas visuales en esa misma carpeta, no implementaciones aprobadas.
+- **Estado:** CONFIRMED para dirección visual; PROPOSED para implementación y mapa cromático exacto; UNKNOWN para validez de sub-scores.
+- **Decisión:** usar el mosaico asimétrico seleccionado por el usuario, con BioScore en anillo orgánico como foco. Fondo, navegación y Coach IA quedan neutros blancos/plata sobre carbón. Cada visualización biométrica toma color de su propio score favorable normalizado: rojo cerca de 0, amarillo en 50 y verde BioPulse en 100, con matices graduales incluso ante cambios de ~2 puntos.
+- **Seguridad de interpretación:** puntuación y estado textual acompañan al color. La ausencia de datos permanece neutral. HRV, FC, sueño, actividad y esfuerzo no heredan color directamente de valores brutos ni se califican clínicamente sin una transformación individual validada. Las cifras y curvas del mockup final son simuladas.
+- **Referencia:** `design-explorations/2026-10-15-final/README.md` y `design-explorations/2026-10-15-final/biopulse-home-semantic-colors.png`. No se han modificado vistas SwiftUI ni validado el render en iOS.
+
+## D-049 — Implementación visual de las cinco pestañas
+
+- **Estado:** CONFIRMED para código y fuentes de datos; UNKNOWN para compilación/render iOS.
+- **Decisión:** aplicar la dirección del mockup a Hoy, Tendencias, Diario, Sueño y Perfil ahora. La tarjeta alta del home es energía activa registrada por hora, no «esfuerzo» inferido. La FC principal es frecuencia en reposo. HRV muestra la media de las muestras del día. Los datos faltantes muestran guiones o estados vacíos.
+- **Scores:** BioScore, Sleep Score y subscores no se calculan ni muestran como cifras hasta construir y validar sus algoritmos. El interpolador cromático continuo queda preparado, pero ningún valor bruto recibe un juicio rojo/verde.
+- **Visual:** carbón y blanco para fondo, navegación y Coach IA; anillo decorativo orgánico con Reduce Motion; tarjetas de igual ancho en dos columnas y la de energía activa doble de alta. Gráficas solo con agregados o intervalos observados. El check-in del Diario se identifica como dato subjetivo.
+- **Verificación:** los archivos Swift afectados pasan `swiftc -frontend -parse` en Windows. `swift test` no puede cargar el manifiesto por una instalación incompleta del SDK C de Swift para Windows (`stdlib.h` ausente); no equivale a error demostrado del código iOS. Compilación en Xcode y QA en iPhone pendientes.

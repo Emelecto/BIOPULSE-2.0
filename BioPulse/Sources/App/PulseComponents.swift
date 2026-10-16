@@ -2,13 +2,14 @@ import SwiftUI
 import UIKit
 
 enum PulseStyle {
-    static let background = Color(red: 0.035, green: 0.075, blue: 0.11)
-    static let surface = Color(red: 0.075, green: 0.13, blue: 0.17)
-    static let elevated = Color(red: 0.10, green: 0.18, blue: 0.21)
-    static let mint = Color(red: 0.59, green: 0.94, blue: 0.82)
-    static let secondary = Color(red: 0.73, green: 0.82, blue: 0.84)
-    static let muted = Color(red: 0.52, green: 0.65, blue: 0.68)
-    static let lavender = Color(red: 0.79, green: 0.77, blue: 0.98)
+    static let background = Color(red: 0.035, green: 0.047, blue: 0.055)
+    static let surface = Color(red: 0.09, green: 0.105, blue: 0.115)
+    static let elevated = Color(red: 0.14, green: 0.16, blue: 0.17)
+    // Navigation and controls stay neutral; only validated scores receive semantic colors.
+    static let mint = Color.white
+    static let secondary = Color(red: 0.77, green: 0.79, blue: 0.80)
+    static let muted = Color(red: 0.60, green: 0.63, blue: 0.65)
+    static let lavender = Color.white
     static let warning = Color(red: 1, green: 0.72, blue: 0.67)
 }
 
@@ -63,16 +64,7 @@ struct PulseBackdrop: View {
         GeometryReader { geometry in
             ZStack(alignment: .top) {
                 PulseStyle.background
-                if forest {
-                    Image("ForestNight")
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                        .clipped()
-                        .overlay(PulseStyle.background.opacity(0.44))
-                        .overlay(LinearGradient(colors: [.clear, PulseStyle.background.opacity(0.95)], startPoint: .top, endPoint: .bottom))
-                }
-                RadialGradient(colors: [accent.opacity(forest ? 0.12 : 0.07), .clear], center: .topLeading, startRadius: 0, endRadius: geometry.size.width)
+                RadialGradient(colors: [.white.opacity(0.045), .clear], center: .topLeading, startRadius: 0, endRadius: geometry.size.width)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
             .clipped()
@@ -224,11 +216,9 @@ struct ScreenShell<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(title).font(.largeTitle.weight(.bold))
-                    Text(subtitle).font(.subheadline).foregroundStyle(PulseStyle.secondary)
-                }
-                .padding(.top, 15)
+                DashboardPageHeader(title: title)
+                    .padding(.top, 15)
+                Text(subtitle).font(.subheadline).foregroundStyle(PulseStyle.secondary)
                 content
             }
             .padding(.horizontal, 22)
@@ -250,7 +240,7 @@ struct PulseActionButtonStyle: ButtonStyle {
             .font(.subheadline.weight(.semibold))
             .frame(maxWidth: .infinity, minHeight: 48)
             .foregroundStyle(PulseStyle.background)
-            .background(LinearGradient(colors: [Color(red: 0.76, green: 1, blue: 0.91), PulseStyle.mint], startPoint: .top, endPoint: .bottom), in: RoundedRectangle(cornerRadius: 14))
+            .background(LinearGradient(colors: [.white, Color(red: 0.86, green: 0.87, blue: 0.88)], startPoint: .top, endPoint: .bottom), in: RoundedRectangle(cornerRadius: 14))
             .shadow(color: .black.opacity(configuration.isPressed ? 0.1 : 0.24), radius: configuration.isPressed ? 2 : 8, x: 0, y: configuration.isPressed ? 1 : 5)
             .opacity(!isEnabled ? 0.5 : configuration.isPressed ? 0.85 : 1)
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.985 : 1)
@@ -370,6 +360,7 @@ extension HealthMetric {
         switch self {
         case .sleepAnalysis: return "Calculado de registros · Salud"
         case .stepCount, .activeEnergyBurned, .appleExerciseTime: return "Acumulado · Salud"
+        case .heartRateVariabilitySDNN: return "Media de hoy · Salud"
         default: return "Muestra · Salud"
         }
     }
@@ -377,7 +368,7 @@ extension HealthMetric {
     var plainDescription: String {
         switch self {
         case .heartRateVariabilitySDNN:
-            "Variación entre latidos sucesivos registrada por Apple Salud. Se muestra la última muestra del día, sin interpretarla como diagnóstico."
+            "Variación entre latidos sucesivos registrada por Apple Salud. Se muestra la media de las muestras de hoy, sin interpretarla como diagnóstico."
         case .sleepAnalysis:
             "Tiempo en etapas de sueño registradas durante la última noche. No incluye el tiempo simplemente en cama."
         case .stepCount:
@@ -396,6 +387,23 @@ extension HealthMetric {
             "Minutos de ejercicio acumulados desde el inicio del día local."
         default:
             "Medición de Apple Salud disponible cuando hay hardware, permisos y muestras compatibles."
+        }
+    }
+
+    var possibleInfluencesDescription: String {
+        switch self {
+        case .heartRateVariabilitySDNN, .restingHeartRate, .heartRate:
+            "El momento y las circunstancias del registro, el dispositivo y las muestras que llegan a Apple Salud pueden influir en el valor observado. Esta pantalla no separa esos factores ni atribuye una causa."
+        case .sleepAnalysis:
+            "El dispositivo, la cobertura y qué intervalos se registraron influyen en el tiempo mostrado. BioPulse suma etapas marcadas como sueño; no estima lo que no se registró."
+        case .stepCount, .walkingRunningDistance, .flightsClimbed:
+            "El dispositivo que llevabas, las fuentes disponibles y la cobertura del día influyen en el total. Apple Salud puede combinar fuentes compatibles."
+        case .activeEnergyBurned, .appleExerciseTime, .workout:
+            "El dispositivo, la fuente y cómo se registró la actividad pueden cambiar qué aparece en Apple Salud. Un día sin registro no equivale a inactividad."
+        case .respiratoryRate, .oxygenSaturation, .wristTemperature:
+            "La disponibilidad depende del hardware, del momento de medición y de la cobertura. BioPulse no completa lecturas ausentes ni usa una muestra aislada para concluir una causa."
+        default:
+            "La fuente, el dispositivo, el momento y la cobertura disponible pueden influir en lo que se observa. La pantalla no identifica por sí sola qué factor explica una variación."
         }
     }
 }

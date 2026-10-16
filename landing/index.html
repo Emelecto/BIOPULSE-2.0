@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#061219" />
+    <meta name="description" content="BioPulse pone tus señales de bienestar en contexto. Entiende sueño, actividad y hábitos con datos reales, transparencia y control." />
+    <title>BioPulse — bienestar, en contexto</title>
+    <link rel="preload" as="image" href="../BioPulse/Resources/Assets.xcassets/ForestNight.imageset/forest-night.png" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./site.js" defer></script>
+  </head>
+  <body>
+    <!--
+      THESIS: BioPulse makes wellbeing signals understandable by placing them beside personal context; it refuses the category's unsupported single-score promise.
+      OWN-WORLD: The iOS night-forest and mint identity, deep ink surfaces, crisp rules, and luminous but restrained signal geometry.
+      STORY: Visitors see what BioPulse connects, how it labels evidence, and what privacy boundaries are designed into the product; then they can explore launch updates when a destination exists.
+      FIRST VIEWPORT: A quiet, full-height forest field; large left-aligned thesis and explanatory copy; right-side three-source-to-context diagram; primary scroll action under the copy.
+      FORM: Persuade landing, provisional composition “one signal, three layers”; assigned surface roll 3f2246ca; no user response to composition question, so proceed with the previously recommended option.
+      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+    -->
+    <a class="skip-link" href="#main">Saltar al contenido</a>
+
+    <header class="site-header">
+      <a class="wordmark" href="#top" aria-label="BioPulse, inicio">
+        <svg class="brand-mark" viewBox="0 0 42 28" aria-hidden="true"><path d="M2 15h9l4-9 7 17 5-12 4 4h9" /></svg>
+        <span>BioPulse</span>
+      </a>
+      <nav aria-label="Navegación principal">
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#privacidad">Privacidad</a>
+        <a href="#preguntas">Preguntas</a>
+        <a class="nav-action" href="#lanzamiento">Explorar beta <span aria-hidden="true">↗</span></a>
+      </nav>
+      <button class="menu-toggle" aria-label="Abrir menú" aria-expanded="false" aria-controls="mobile-nav">
+        <span></span><span></span>
+      </button>
+    </header>
+
+    <nav class="mobile-nav" id="mobile-nav" aria-label="Navegación móvil" hidden>
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#privacidad">Privacidad</a>
+      <a href="#preguntas">Preguntas</a>
+      <a href="#lanzamiento">Explorar beta</a>
+    </nav>
+
+    <main id="main">
+      <section class="hero" id="top" aria-labelledby="hero-title">
+        <div class="hero-art" aria-hidden="true"></div>
+        <div class="hero-grain" aria-hidden="true"></div>
+        <div class="hero-content">
+          <p class="overline"><span class="live-dot"></span> PROYECTO iOS EN PREPARACIÓN</p>
+          <h1 id="hero-title">Tu cuerpo da señales.<br /><em>Entiéndelas juntas.</em></h1>
+          <p class="hero-copy">Sueño, actividad y hábitos cuentan partes distintas de tu día. Estamos creando BioPulse para ayudarte a ponerlas en contexto, sin convertir una medición en una conclusión.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#como-funciona">Descubre cómo funciona <span aria-hidden="true">↓</span></a>
+          <span class="platform-note">Para iPhone · Apple Health · beta próximamente</span>
+          </div>
+        </div>
+
+        <div class="signal-story" aria-label="Sueño, actividad y contexto personal se presentan juntos; no se muestra una puntuación inventada.">
+          <div class="story-head"><span>UNA LECTURA MÁS COMPLETA</span><span class="story-index">01 — 03</span></div>
+          <div class="signal-field" data-active="sleep">
+            <svg class="signal-lines" viewBox="0 0 620 340" preserveAspectRatio="none" aria-hidden="true">
+              <path class="line line-sleep" d="M0 82 C90 82 72 137 180 137 S270 188 360 188 S462 225 620 225" />
+              <path class="line line-move" d="M0 188 C76 188 92 113 180 113 S273 157 360 157 S455 225 620 225" />
+              <path class="line line-context" d="M0 282 C74 282 98 221 180 221 S270 188 360 188 S476 225 620 225" />
+              <circle class="merge-point" cx="360" cy="188" r="5" />
+              <circle class="end-point" cx="620" cy="225" r="7" />
+            </svg>
+            <button class="signal-label signal-sleep is-selected" type="button" data-signal="sleep" aria-pressed="true"><span class="signal-symbol moon-symbol" aria-hidden="true"></span><span><b>Sueño</b><small>descanso</small></span></button>
+            <button class="signal-label signal-move" type="button" data-signal="move" aria-pressed="false"><span class="signal-symbol move-symbol" aria-hidden="true"></span><span><b>Actividad</b><small>movimiento</small></span></button>
+            <button class="signal-label signal-context" type="button" data-signal="context" aria-pressed="false"><span class="signal-symbol context-symbol" aria-hidden="true"></span><span><b>Tu diario</b><small>contexto</small></span></button>
+            <div class="context-node" aria-live="polite"><span class="node-orbit" aria-hidden="true"></span><span class="node-center"><span class="pulse-glyph" aria-hidden="true">···</span></span><span class="node-label">EN CONTEXTO</span></div>
+          </div>
+          <div class="story-sequence" aria-label="Recorrido: señal, contexto y reflexión">
+            <button class="sequence-step is-current" type="button" data-sequence="signal">Señal</button><i aria-hidden="true"></i>
+            <button class="sequence-step" type="button" data-sequence="context">Contexto</button><i aria-hidden="true"></i>
+            <button class="sequence-step" type="button" data-sequence="reflection">Reflexión</button>
+          </div>
+          <p class="story-caption" id="story-caption" aria-live="polite">Una señal no cuenta toda la historia. El contexto ayuda a leerla mejor.</p>
+        </div>
+        <div class="hero-bottom"><span>HEALTHKIT · CONTEXTO PERSONAL · CLARIDAD</span><a href="#como-funciona" aria-label="Desplazarse a cómo funciona">DESLIZA <span aria-hidden="true">↓</span></a></div>
+      </section>
+
+      <section class="intro section-shell" id="como-funciona" aria-labelledby="intro-title">
+        <div class="section-marker"><span>01</span><span>LA IDEA</span></div>
+        <div class="intro-grid">
+          <h2 id="intro-title">No necesitas<br />otra cifra.<br /><em>Necesitas contexto.</em></h2>
+          <div class="intro-copy">
+            <p class="lead">La propuesta de BioPulse es organizar señales personales para ayudar a observar cambios y hacer mejores preguntas sobre el bienestar.</p>
+            <p>La app se está construyendo alrededor de datos disponibles en Apple Health, cuando autorizas el acceso, y del contexto que tú decidas registrar. No rellena lo que falta ni confunde una asociación con una causa.</p>
+            <a class="text-link" href="#criterios">Conoce nuestros criterios <span aria-hidden="true">↘</span></a>
+          </div>
+        </div>
+      </section>
+
+      <section class="mechanism section-shell" aria-labelledby="mechanism-title">
+        <div class="mechanism-top">
+          <div>
+            <div class="section-marker"><span>02</span><span>SEÑALES, NO VEREDICTOS</span></div>
+            <h2 id="mechanism-title">Tres piezas.<br /><em>Una imagen más humana.</em></h2>
+          </div>
+          <p>El diseño de BioPulse parte de que una sola métrica no explica cómo te sientes. La intención es mostrar las piezas disponibles, su origen y el contexto que tú decides añadir.</p>
+        </div>
+        <div class="mechanism-rail">
+          <article class="mechanism-step">
+            <span class="step-index">A</span>
+            <div class="step-visual visual-health" aria-hidden="true"><svg viewBox="0 0 180 114"><path d="M8 59h37l13-31 23 61 17-43 13 18h60"/><path class="trace" d="M8 90h164"/></svg></div>
+            <h3>Lo que se midió</h3>
+            <p>Señales de Apple Health, con fuente y cobertura identificables cuando están disponibles.</p>
+          </article>
+          <span class="rail-link" aria-hidden="true"><svg viewBox="0 0 54 18"><path d="M1 9h48m-8-7 8 7-8 7" /></svg></span>
+          <article class="mechanism-step">
+            <span class="step-index">B</span>
+            <div class="step-visual visual-diary" aria-hidden="true"><span class="journal-line long"></span><span class="journal-line"></span><span class="journal-line short"></span><span class="journal-pin"></span></div>
+            <h3>Lo que tú viviste</h3>
+            <p>Hábitos, eventos y notas que eliges registrar para dar contexto a tu día.</p>
+          </article>
+          <span class="rail-link" aria-hidden="true"><svg viewBox="0 0 54 18"><path d="M1 9h48m-8-7 8 7-8 7" /></svg></span>
+          <article class="mechanism-step">
+            <span class="step-index">C</span>
+            <div class="step-visual visual-reading" aria-hidden="true"><span></span><span></span><span></span><i></i></div>
+            <h3>Lo que puedes observar</h3>
+            <p>Tendencias explicables cuando haya historial suficiente; no diagnósticos.</p>
+          </article>
+        </div>
+        <p class="mechanism-footnote">La disponibilidad depende de tus permisos, dispositivos y datos registrados. Sin información suficiente, BioPulse lo dice.</p>
+      </section>
+
+      <section class="situations section-shell" aria-labelledby="situations-title">
+        <div class="section-marker"><span>03</span><span>EJEMPLOS ILUSTRATIVOS</span></div>
+        <div class="situations-heading">
+          <h2 id="situations-title">Preguntas reales.<br /><em>Sin promesas fáciles.</em></h2>
+          <p>Escenarios ficticios para explicar el enfoque. No son testimonios, datos de clientes ni resultados de BioPulse.</p>
+        </div>
+        <div class="situation-row">
+          <span class="situation-index">A</span>
+          <h3>“Mi descanso se siente distinto”</h3>
+          <p>Explorar qué noches tienen registros disponibles y añadir contexto personal —por ejemplo, viaje o cambio de horario— antes de sacar conclusiones.</p>
+          <span class="situation-tag">Sueño + contexto</span>
+        </div>
+        <div class="situation-row">
+          <span class="situation-index">B</span>
+          <h3>“Quiero entender mi rutina”</h3>
+          <p>Ver actividad y anotaciones en una línea de tiempo para observar coincidencias, sin afirmar que una rutina causó cómo te sentiste.</p>
+          <span class="situation-tag">Actividad + Diario</span>
+        </div>
+      </section>
+
+      <section class="honesty section-shell" id="criterios" aria-labelledby="honesty-title">
+        <div class="honesty-art" aria-hidden="true">
+          <div class="honesty-surface"><span class="surface-label">BIOPULSE / CRITERIO</span><span class="surface-rule"></span><span class="surface-word">Sin<br />atajos.</span><span class="surface-coordinates">OBSERVAR<br />·<br />EXPLICAR<br />·<br />RECONOCER LÍMITES</span></div>
+        </div>
+        <div class="honesty-copy">
+          <div class="section-marker"><span>04</span><span>TRANSPARENCIA</span></div>
+          <h2 id="honesty-title">La ausencia de un dato<br /><em>también importa.</em></h2>
+          <p>Una experiencia de bienestar debe ser honesta tanto con lo que sabe como con lo que todavía no puede concluir.</p>
+          <ul class="principles">
+            <li><span class="principle-mark">01</span><span><b>Medido</b><small>Identificamos su fuente y momento.</small></span></li>
+            <li><span class="principle-mark">02</span><span><b>Derivado</b><small>Explicamos que viene de un cálculo.</small></span></li>
+            <li><span class="principle-mark">03</span><span><b>No disponible</b><small>No inventamos ni completamos datos.</small></span></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="privacy section-shell" id="privacidad" aria-labelledby="privacy-title">
+        <div class="privacy-heading">
+          <div class="section-marker"><span>05</span><span>PRIVACIDAD POR DISEÑO</span></div>
+          <h2 id="privacy-title">Tus datos.<br /><em>Tus decisiones.</em></h2>
+        </div>
+        <div class="privacy-body">
+          <p class="lead">Iniciar sesión no significa aceptar que tus datos se sincronicen.</p>
+          <p>La lectura de Apple Health requiere tu permiso. La sincronización en la nube está diseñada como una opción separada por categorías; su integración en iOS todavía está en desarrollo. Las muestras originales de HealthKit no se envían a la nube por defecto.</p>
+          <a class="text-link" href="#lanzamiento">La app sigue en preparación <span aria-hidden="true">↘</span></a>
+          <div class="privacy-boundaries" aria-label="Estado de permisos y almacenamiento">
+            <div class="privacy-boundary">
+              <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 27 8v8c0 7-4 11-11 14C9 27 5 23 5 16V8l11-5Z"/><path d="m11 16 3 3 7-7"/></svg>
+              <span><b>Apple Health</b><small>Permiso de lectura elegido por ti</small></span>
+              <strong>PERMISO</strong>
+            </div>
+            <div class="privacy-boundary">
+              <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="6" y="13" width="20" height="15" rx="2"/><path d="M10 13V9a6 6 0 0 1 12 0v4M16 18v5"/></svg>
+              <span><b>En el dispositivo</b><small>Diario, check-ins, contexto y muestras originales por defecto</small></span>
+              <strong>LOCAL</strong>
+            </div>
+            <div class="privacy-boundary is-pending">
+              <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 23h15a5 5 0 0 0 .5-10A8 8 0 0 0 8 11a6 6 0 0 0 0 12Z"/><path d="M16 12v10m-4-4 4 4 4-4"/></svg>
+              <span><b>Sincronización iOS</b><small>Transporte cloud todavía no implementado</small></span>
+              <strong>DESPUÉS</strong>
+            </div>
+          </div>
+          <p class="privacy-footnote">La cuenta es necesaria para entrar; no activa el envío de datos de salud.</p>
+        </div>
+      </section>
+
+      <section class="road-ahead section-shell" aria-labelledby="road-title">
+        <div class="road-heading">
+          <div class="section-marker"><span>06</span><span>AHORA / DESPUÉS</span></div>
+          <h2 id="road-title">Una visión amplia.<br /><em>Un estado honesto.</em></h2>
+        </div>
+        <div class="road-copy">
+          <p>Lo que mostramos como actual tiene base en la app. El resto conserva su etiqueta de trabajo pendiente o posibilidad futura.</p>
+          <div class="road-column">
+            <p class="road-label">YA TIENE BASE EN LA APP</p>
+            <div class="road-status is-current"><span class="status-rule"></span><span><b>Cuenta y acceso</b><small>El acceso autenticado es requisito para usar BioPulse.</small></span></div>
+            <div class="road-status is-current"><span class="status-rule"></span><span><b>Apple Health y Diario local</b><small>Lecturas con permiso y registros personales en el dispositivo.</small></span></div>
+          </div>
+          <div class="road-column">
+            <p class="road-label">EN DESARROLLO</p>
+            <div class="road-status"><span class="status-rule"></span><span><b>Contexto personal y tendencias iOS</b><small>Comparación, anotaciones y timeline en código; pendiente de compilar y validar en Xcode.</small></span></div>
+            <div class="road-status"><span class="status-rule"></span><span><b>Coach de bienestar con IA</b><small>Requiere consentimiento antes de compartir métricas agregadas y contexto.</small></span></div>
+            <div class="road-status"><span class="status-rule"></span><span><b>Sincronización cloud en iOS</b><small>Diseñada por categoría y opt-in; el transporte sigue pendiente.</small></span></div>
+          </div>
+          <div class="road-column">
+            <p class="road-label">IDEAS FUTURAS · NO DISPONIBLES</p>
+            <div class="road-status is-future"><span class="status-rule"></span><span><b>Widgets y complicaciones Apple Watch</b><small>Etapa posterior; aún no hay integración Watch.</small></span></div>
+            <div class="road-status is-future"><span class="status-rule"></span><span><b>Modelos de sueño, recuperación y rendimiento</b><small>Investigación primero; no hay modelo validado ni activo en la app.</small></span></div>
+            <div class="road-status is-future"><span class="status-rule"></span><span><b>Riesgo o anomalías clínicas</b><small>No se presentarán como diagnóstico; faltan etiquetas independientes y validación externa.</small></span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="faq section-shell" id="preguntas" aria-labelledby="faq-title">
+        <div class="faq-heading">
+          <div class="section-marker"><span>07</span><span>LO IMPORTANTE, SIN LETRA PEQUEÑA</span></div>
+          <h2 id="faq-title">Preguntas<br /><em>concretas.</em></h2>
+          <p>BioPulse organiza señales y contexto para ayudarte a observar; no reemplaza una consulta médica.</p>
+        </div>
+        <div class="faq-content">
+          <details><summary>¿Qué necesita Apple Health?</summary><p>La app solicita permiso para leer solo las categorías que utiliza. Puedes cambiar esos permisos en cualquier momento desde Salud o Ajustes de iOS. La disponibilidad depende de tu dispositivo y de los datos que existan.</p></details>
+          <details><summary>¿Necesito un Apple Watch?</summary><p>No necesariamente. Apple Health puede tener datos de iPhone u otras fuentes compatibles. Algunas señales, como sueño o HRV, pueden requerir un dispositivo o una rutina de registro concreta; BioPulse no completa lo que falta.</p></details>
+          <details><summary>¿Por qué necesito una cuenta?</summary><p>La cuenta es obligatoria para entrar a BioPulse. Iniciar sesión no significa que aceptas sincronizar tu Diario o tus datos de Salud.</p></details>
+          <details><summary>¿Qué datos salen del iPhone?</summary><p>Diario, check-ins, anotaciones, preferencias y las muestras originales de HealthKit permanecen en el dispositivo por defecto. Compartir contexto con el Coach requiere autorización explícita. La sincronización general en la nube para iOS todavía no está implementada.</p></details>
+          <details><summary>¿Cómo me apunto a la beta?</summary><p>La captura de correos todavía está desactivada. La habilitaremos cuando definamos el destino, el aviso de privacidad y el proceso para retirar el consentimiento.</p></details>
+          <details><summary>¿BioPulse diagnostica o recomienda tratamientos?</summary><p>No. BioPulse no diagnostica ni recomienda tratamientos. Ante síntomas graves o urgentes, busca atención de un profesional o de los servicios de emergencia de tu zona.</p></details>
+          <div class="science-note">
+            <h3>Criterio y ciencia</h3>
+            <p>Una publicación puede orientar una pregunta de investigación; no valida automáticamente BioPulse, sus sensores ni un modelo. Antes de hablar de predicción hacen falta etiquetas independientes, evaluación por persona y tiempo, validación externa y límites transparentes.</p>
+            <p class="science-links">Lecturas de referencia: <a href="https://www.nature.com/articles/s41551-020-00640-6" target="_blank" rel="noreferrer">Mishra et al. · Nature Biomedical Engineering</a>, <a href="https://www.nature.com/articles/s41591-020-1123-x" target="_blank" rel="noreferrer">Quer et al. · Nature Medicine</a> y <a href="https://www.sciencedirect.com/science/article/pii/S2666389923001599" target="_blank" rel="noreferrer">Kapoor &amp; Narayanan · Patterns</a>. Estos estudios no validan BioPulse.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="launch section-shell" id="lanzamiento" aria-labelledby="launch-title">
+        <div class="launch-backdrop" aria-hidden="true"></div>
+        <div class="launch-content">
+          <div class="section-marker"><span>08</span><span>PRÓXIMO PASO</span></div>
+          <h2 id="launch-title">BioPulse está<br /><em>tomando forma.</em></h2>
+          <p>Estamos preparando la experiencia y los detalles de lanzamiento. La lista para recibir novedades todavía no está habilitada; esta página no recopila ni envía tu correo.</p>
+          <button class="launch-cta" type="button" disabled aria-describedby="launch-reason">Avisarme cuando abra la beta <span aria-hidden="true">↗</span></button>
+          <span class="launch-note"><span class="live-dot"></span> Captura desactivada · no se guarda ningún correo</span>
+          <small class="launch-reason" id="launch-reason">Se activará al definir destino de correo, consentimiento y gestión de bajas.</small>
+        </div>
+        <div class="launch-orbit" aria-hidden="true"><span></span><i></i><b></b></div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <a class="wordmark" href="#top"><svg class="brand-mark" viewBox="0 0 42 28" aria-hidden="true"><path d="M2 15h9l4-9 7 17 5-12 4 4h9" /></svg><span>BioPulse</span></a>
+      <p>Bienestar, en contexto.</p>
+      <span class="footer-state">iOS · EN PREPARACIÓN</span>
+      <a href="#top" class="back-top">Volver arriba ↑</a>
+      <small>© <span id="year"></span> BioPulse. Información general; no sustituye la atención de un profesional de salud. Antes del lanzamiento público faltan contacto de soporte, revisión legal de políticas y enlace oficial de App Store.</small>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,505 @@
+{
+ "version": 1,
+ "at": "2026-10-15T23:33:32.646Z",
+ "seed": 190,
+ "redraws": 0,
+ "input": {
+  "brief": "BioPulse iOS app for personal wellbeing, sleep, activity, journal and privacy",
+  "sector": "health",
+  "tone": null,
+  "have": [
+   "illustration"
+  ],
+  "keep": [],
+  "avoid": [],
+  "sections": [
+   "intro",
+   "features",
+   "showcase"
+  ],
+  "direction": "editorial-report"
+ },
+ "imagery": "atmosphere",
+ "allow": [],
+ "direction": {
+  "id": "editorial-report",
+  "name": "The printed annual",
+  "sectors": [
+   "culture",
+   "nonprofit",
+   "education",
+   "finance",
+   "saas",
+   "ai-product",
+   "health",
+   "agency",
+   "other"
+  ],
+  "tones": [
+   "editorial",
+   "bold"
+  ],
+  "needs": [],
+  "idea": "Lay the page out like a well-designed printed report or magazine feature: a masthead image, a tight oversized title, text held to a strict column line, and colour used in solid blocks the way a two-colour print job would. It gives weight and authority to subjects that are really about content: findings, a manifesto, a programme, a serious product. The reader should feel that someone edited this.",
+  "composition": "A fixed vertical axis at about 42% of the viewport width organises everything: headings begin on it, body columns hang from it, and the 0–42% zone holds small side notes, figures or stays empty. Masthead: a wide image band (photographic mosaic or a single crop) across the top 45% of the first screen; below it the title at 7–9vw starting on the axis, with a two-sentence standfirst at 20–24px. Sections alternate between text pages (title on the axis, body in one or two columns of 34–40ch to its right) and full-bleed colour pages carrying one large figure, quotation or image mosaic. Mosaics are gutterless: photographs and flat colour tiles butted together in a 4- or 6-cell grid. Page numbers, running heads and other print furniture are left out.",
+  "typography": "A tight heavy grotesk or a sharp serif for titles; an excellent text face for reading at 18–20px with leading near 1.5. Headings in sentence case, tracked tight.",
+  "typeClasses": [
+   "grotesk-tight",
+   "serif-display",
+   "serif-text"
+  ],
+  "colour": "Paper, ink and two or three solid block colours. A colour page is a whole section in one flat colour.",
+  "paletteTags": [
+   "flat-loud",
+   "two-tone",
+   "mono-accent"
+  ],
+  "imagery": "Photographs used as blocks in mosaics alongside flat colour tiles; mixed subjects are fine if cropped tight and converted to one treatment.",
+  "photoTreatment": "Give all photographs in a mosaic one treatment: greyscale via `filter: grayscale(1) contrast(1.05)`, or all full colour. Do not mix.",
+  "sectionTags": [
+   "type-led",
+   "colour-field",
+   "dense",
+   "poster"
+  ],
+  "motion": "masked-headline",
+  "richness": "The column line, the mosaics and whole pages of colour give structure and variety without ornaments.",
+  "pitfalls": "The axis must be exact and reused everywhere or it reads as random indentation. Keep paragraphs to a real reading measure. On a phone the axis collapses to the left margin and side notes move inline above their paragraph.",
+  "seenIn": [
+   "aww-ai-in-design-report-2026",
+   "opl-applied-imagination",
+   "opl-the-queue",
+   "opl-artem-taradash",
+   "opl-belgrade-architecture"
+  ],
+  "allow": []
+ },
+ "hero": {
+  "id": "two-by-two-board",
+  "name": "Two-by-two board",
+  "archetype": "tiles",
+  "directions": [
+   "dense-tiles",
+   "editorial-report"
+  ],
+  "needs": [],
+  "blueprint": "A board with 8px outer margins and 8px gaps throughout; every tile is a filled rectangle with one shared radius (0 or 8px). A 60px top row is itself made of tiles: a square ink tile with the logo mark, a wide ground-tone tile holding four text links that begin at the centre line, and an ink tile at the right end holding the single action. Below it the rest of the viewport is a two-by-two grid. Top-left: a paper tile with the name, or its first word, at clamp(96px, 12.5vw, 190px), medium weight, tracking -0.05em, sitting bottom-left on 24px padding. Top-right and bottom-left: photographs covering their tiles (object-fit: cover), both greyscale so they read as one picture continued across the board. Bottom-right is divided into two tiles side by side: a dark tile with one sentence at 24px, top-left aligned, and a tile in the accent colour with a second short statement at 24px, also top-left. Text never centres inside a tile. No tile is empty and none is outlined.",
+  "mobile": "The board becomes one column of tiles with 6px gaps: a top row with the logo tile and a menu tile; the name tile at 30% of the screen height with the name at 22vw bottom-left; one photograph tile at 4:3; then the dark tile and the accent tile side by side as two squares. The second photograph moves below the first screen.",
+  "headline": "The name, or its first word, up to 8 characters at 12.5vw; the two 24px statements are one sentence each.",
+  "motion": "shutter-image",
+  "seenIn": [
+   "aww-aspen-search"
+  ]
+ },
+ "type": {
+  "id": "imbue-albert",
+  "name": "Imbue / Albert Sans",
+  "class": "serif-display",
+  "display": {
+   "family": "Imbue",
+   "source": "google",
+   "weights": [
+    400
+   ],
+   "italic": false,
+   "settings": "weight 400 with optical sizing on · tracking -0.01em · leading 0.9 · uppercase, sized so one short word fills its column (6–12vw)",
+   "css": "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Imbue:wght@400&family=Albert+Sans:wght@400;500&display=swap\" rel=\"stylesheet\">"
+  },
+  "text": {
+   "family": "Albert Sans",
+   "source": "google",
+   "weights": [
+    400,
+    500
+   ],
+   "italic": false,
+   "settings": "400 for body, 500 for emphasis · leading 1.55 · tracking 0",
+   "css": "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Imbue:wght@400&family=Albert+Sans:wght@400;500&display=swap\" rel=\"stylesheet\">"
+  },
+  "standsInFor": [
+   "Ambroise Francois"
+  ],
+  "note": "A tall, condensed high-contrast serif whose capitals read like a masthead or a shop fascia. Suits residences, hotels, restaurants and wine, where a short name can stand floor to ceiling.",
+  "seenIn": [
+   "aww-era-residence",
+   "opl-le-petit-bleu"
+  ],
+  "links": [
+   "https://fonts.googleapis.com/css2?family=Imbue:wght@400&family=Albert+Sans:wght@400;500&display=swap"
+  ],
+  "scale": {
+   "step-small": "clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem)",
+   "step-body": "clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem)",
+   "step-lead": "clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem)",
+   "step-head": "clamp(2rem, 1.3rem + 3.2vw, 4rem)"
+  }
+ },
+ "palette": {
+  "id": "oxblood-grey",
+  "name": "Oxblood and grey",
+  "tags": [
+   "two-tone"
+  ],
+  "bg": "#e2e2e2",
+  "surface": "#d6d6d6",
+  "ink": "#7d0c14",
+  "muted": "#7a4a4e",
+  "accent": "#7d0c14",
+  "accentInk": "#e2e2e2",
+  "fields": [
+   {
+    "bg": "#7d0c14",
+    "ink": "#e2e2e2"
+   }
+  ],
+  "note": "Deep red text on grey paper holds most of the page, then pale grey text on a solid red field takes one long section and the footer. Photographs are desaturated so nothing breaks the pair, and the button is a solid red block.",
+  "seenIn": [
+   "opl-belgrade-architecture"
+  ]
+ },
+ "photos": {
+  "set": "fog-and-quiet",
+  "title": "Fog and quiet",
+  "note": "misty, muted, minimal landscapes and empty horizons; calm areas for text",
+  "treatment": "Give all photographs in a mosaic one treatment: greyscale via `filter: grayscale(1) contrast(1.05)`, or all full colour. Do not mix.",
+  "others": [
+   "people",
+   "coast",
+   "mountain",
+   "forest"
+  ],
+  "photos": [
+   {
+    "id": 634,
+    "alt": "Pine forest dissolving into fog beneath a pale pink sky",
+    "tone": "mid",
+    "colours": [
+     "dark green",
+     "pale pink",
+     "white"
+    ],
+    "mono": false,
+    "calm": "top",
+    "quality": 5,
+    "ratio": 1.5,
+    "by": "Jay Mantri",
+    "page": "https://unsplash.com/photos/TFyi0QOx08c"
+   },
+   {
+    "id": 994,
+    "alt": "Silky long-exposure sea beneath a blue and orange sunset sky",
+    "tone": "mid",
+    "colours": [
+     "soft blue",
+     "peach",
+     "grey"
+    ],
+    "mono": false,
+    "calm": "all",
+    "quality": 5,
+    "ratio": 1.5,
+    "by": "Jonathan Bean",
+    "page": "https://unsplash.com/photos/ywnnwzcdR5o"
+   },
+   {
+    "id": 926,
+    "alt": "Lone figure standing on a hilltop in thick beige fog",
+    "tone": "light",
+    "colours": [
+     "warm beige",
+     "olive grey"
+    ],
+    "mono": false,
+    "calm": "top",
+    "quality": 5,
+    "ratio": 1.78,
+    "by": "Harman Abiwardani",
+    "page": "https://unsplash.com/photos/mU_aX6JBYmg"
+   },
+   {
+    "id": 228,
+    "alt": "Single round hay bale in a field under dense fog",
+    "tone": "mid",
+    "colours": [
+     "grey green",
+     "golden tan"
+    ],
+    "mono": false,
+    "calm": "top",
+    "quality": 5,
+    "ratio": 1.33,
+    "by": "Michal Kubicek",
+    "page": "https://unsplash.com/photos/0AbVUUorULU"
+   },
+   {
+    "id": 989,
+    "alt": "Low cloud covering a forested lakeshore under a pale sky",
+    "tone": "light",
+    "colours": [
+     "pale grey",
+     "dark teal",
+     "soft blue"
+    ],
+    "mono": false,
+    "calm": "top",
+    "quality": 5,
+    "ratio": 1.5,
+    "by": "Paul Jarvis",
+    "page": "https://unsplash.com/photos/eBDdgbM5dSo"
+   },
+   {
+    "id": 70,
+    "alt": "Road lined with tall trees fading into thick fog",
+    "tone": "mid",
+    "colours": [
+     "grey",
+     "dark green"
+    ],
+    "mono": false,
+    "calm": "centre",
+    "quality": 5,
+    "ratio": 1.51,
+    "by": "Dorothy Lin",
+    "page": "https://unsplash.com/photos/OokBLPrkCNk"
+   },
+   {
+    "id": 172,
+    "alt": "Stone jetty stretching into still water and dense grey fog",
+    "tone": "mid",
+    "colours": [
+     "grey",
+     "warm grey"
+    ],
+    "mono": false,
+    "calm": "top",
+    "quality": 5,
+    "ratio": 1.51,
+    "by": "Aleksi Tappura",
+    "page": "https://unsplash.com/photos/TQeX8khR54I"
+   },
+   {
+    "id": 552,
+    "alt": "Tiny sailboat on a calm sea with distant hills, black and white",
+    "tone": "mid",
+    "colours": [
+     "grey",
+     "white",
+     "black"
+    ],
+    "mono": true,
+    "calm": "all",
+    "quality": 5,
+    "ratio": 1.5,
+    "by": "Hugo Kerr",
+    "page": "https://unsplash.com/photos/Ke96snCJ1m0"
+   }
+  ]
+ },
+ "motion": {
+  "id": "shutter-image",
+  "name": "Shutter image",
+  "description": "The one hero or showcase image opens from an edge with a clip-path over about 1.1 seconds while the picture inside settles from 1.12 scale to rest. Use it once, on the image that matters most; later images simply are there. Recipe: 'Image shutter' in references/motion.md."
+ },
+ "sections": [
+  {
+   "id": "intro-right-half-paragraph",
+   "role": "intro",
+   "name": "Right-half paragraph, lone photo",
+   "shape": "split",
+   "tags": [
+    "type-led",
+    "quiet"
+   ],
+   "directions": [
+    "uneven-photographs",
+    "dark-room",
+    "place-carries-it",
+    "editorial-report",
+    "name-as-monument"
+   ],
+   "needs": [],
+   "blueprint": "No heading. On a 12-column grid with 5vw margins, one statement paragraph of 45–70 words occupies columns 7–12 only, set at clamp(24px, 2.2vw, 34px) with leading 1.25 and a first-line indent of 3em. Its top edge sits 18vh below the section top. Columns 1–6 stay empty except for a single square photograph, 20vw wide, in columns 1–3, placed so its top aligns with the paragraph's last line and it hangs below the text by most of its height. A five-line note at 14px, 180px wide, sits in columns 1–2, 96px beneath the photograph. Section padding is 160px top and bottom. Nothing is centred: the paragraph's left edge is the midpoint of the page, and later text blocks on the page may reuse that line. Holds one paragraph, one photograph and one note.",
+   "mobile": "The paragraph comes first at 22px, full width with 20px margins and no indent. The photograph follows at 62% width, pushed to the right margin, in a 4:5 crop instead of square. The small note sits to its left, bottom-aligned with the photograph, in the remaining 30% of the width.",
+   "seenIn": [
+    "aww-tengile-malamala-collection",
+    "aww-normal-is-boring",
+    "aww-px-push",
+    "aww-monolog"
+   ]
+  },
+  {
+   "id": "features-pinned-heading-passing-rows",
+   "role": "features",
+   "name": "Pinned heading, passing rows",
+   "shape": "pinned",
+   "tags": [
+    "colour-field",
+    "type-led"
+   ],
+   "directions": [
+    "pinned-poster",
+    "loud-flat-poster",
+    "colour-chapters",
+    "split-stage",
+    "editorial-report"
+   ],
+   "needs": [],
+   "blueprint": "One flat saturated field, full-bleed, as tall as its content. Columns 1–5: the heading, two or three words, at clamp(56px, 6.6vw, 104px) in the heaviest weight, position: sticky; top: 32px, so it holds while the right side travels. Columns 7–12: four to six capability blocks stacked with 120px between them. Each block is a title at 28px bold, then a two-part row: a portrait photograph at 3:4, 180–220px wide with square corners, and beside it, top-aligned, a plain list of four to six short lines at 18px with 14px between lines. Photographs alternate between the left and the right of their list, so the column does not read as a ladder. One ink colour, chosen for contrast on the field. The heading releases when the bottom of the last block reaches it.",
+   "mobile": "The heading becomes a sticky bar at the top of the section: one line at 9vw on the field colour with 12px padding, holding while blocks pass under it. Each block stacks its title, a full-width 4:3 photograph, then the list at 17px. 72px between blocks.",
+   "seenIn": [
+    "opl-protip-marketing",
+    "aww-cerebrium",
+    "aww-sharplink"
+   ]
+  },
+  {
+   "id": "showcase-one-image-across-tiles",
+   "role": "showcase",
+   "name": "One image across tiles",
+   "shape": "mosaic",
+   "tags": [
+    "photo-led",
+    "dense"
+   ],
+   "directions": [
+    "dense-tiles",
+    "contact-sheet",
+    "editorial-report",
+    "colour-chapters"
+   ],
+   "needs": [],
+   "blueprint": "One photograph is cut across a board of tiles. A grid of six columns and four rows with 8px gaps spans the full width between 12px margins; every tile is square (aspect-ratio: 1). Each tile shows its own piece of the same image: set the photograph as every tile's background at background-size: 600% 400% and step background-position by column and row, so the picture reads whole through the gaps. Five of the twenty-four tiles are swapped for flat colour tiles from the palette, never two adjacent: one holds the heading (two to four words at 2.6vw, top-left, 16px padding), three hold one fact each at 18px, one holds the action. On hover a tile's piece scales to 108% inside its own clip. Choose a photograph with one clear subject, so the board is legible at a glance.",
+   "mobile": "Three columns by six rows with 6px gaps, the photograph re-cut at background-size 300% 600% from a portrait crop. Four colour tiles only; the heading tile spans two columns in the top row with the heading at 6vw. Facts drop to 15px.",
+   "seenIn": [
+    "aww-produx-design",
+    "aww-ai-in-design-report-2026"
+   ]
+  }
+ ],
+ "references": [
+  {
+   "id": "opl-applied-imagination",
+   "name": "Applied Imagination",
+   "url": "https://applied-imagination.gpc.consulting",
+   "source": "One Page Love",
+   "kind": "other",
+   "score": 8.3,
+   "idea": "An essay conceived on a flight is read as a descent: an altimeter ticks from 30,000 ft to zero while you scroll down through halftone clouds to mountains at ground level.",
+   "mood": [
+    "airy",
+    "witty",
+    "editorial",
+    "dreamlike"
+   ],
+   "archetype": "type-poster",
+   "hero": "A pale blue sky fading to warm cream fills the viewport, with white clouds shaded in halftone dots. A tiny serif logotype sits top-centre; no nav. The title, two centred lines of black wedge-serif at 8.9vw, occupies the middle half of the screen and about 73% of its width; a cloud layer passes in front of the second line's baseline so the feet of the letters dissolve into dots. A two-line centred deck at 24px sits beneath. A mono byline strip is centred on the bottom edge with a scroll cue bottom-right. On the left edge at mid-height, a short vertical rule carries a two-line mono altitude readout.",
+   "type": "fsKim, a sturdy wedge-serif display face, regular weight at 128px with -0.01em tracking for the title and pull quotes; gtAmerica at 24px for the deck and about 16px for essay body; gtAmericaMono uppercase around 11px with wide tracking for byline, altitude and tape labels.",
+   "colour": "#cbe4f2 #f1e3b5 #0a0a0a #ffc013 #8e2f8f #f04e23 — Sky blue melting into sand yellow is the constant ground and text is black. Saturated magenta, orange and yellow arrive only in collage objects, tape labels and the footer contact card.",
+   "imagery": "Photo-collage cut-outs (parachutes carrying a treasure chest and a burning dumpster, a pair of legs, mountains) given a coarse halftone dot screen, layered in front of and behind the type against painted clouds.",
+   "layout": "A narrow text column about 38% wide for essay passages, interrupted by full-width display pull quotes and collage objects floating at the edges. One continuous sky instead of sections, with a fixed left-edge altimeter. Nearly 23 screens, ending on a ground-level landscape.",
+   "sections": [
+    {
+     "role": "intro",
+     "description": "Sky background, no container. A three-line pull quote in black wedge-serif at about 7vw is centred and tightly leaded. Two cut-out parachutes hang over it: a magenta one from the top-left carrying a chest spilling coins, an orange one at lower right carrying a burning dumpster, each overlapping letterforms. Small mono labels on tilted strips of coloured tape are stuck to the objects. Words in the quote turn from grey to black as they are reached."
+    },
+    {
+     "role": "other",
+     "description": "Running essay text in about 16px grotesk, black, in a single column roughly 38% of the viewport wide, positioned left of centre with large sky margins on both sides. Paragraphs are separated by a blank line; serif sub-statements at about 28px introduce passages. The next display quote is seen rising from below, its letters partly hidden behind cloud and blurred."
+    },
+    {
+     "role": "contact",
+     "description": "Ground level: halftone-screened mountains in green and brown rise from both sides, and the title returns at huge scale, cropped by the top edge and tucked behind the peaks. Centred below is a square-cornered two-panel card: a cream left panel with a short form of two fields and a small orange button, and a magenta right panel with a round portrait, name and a yellow subscribe button. Yellow tape-strip credits sit on the bottom edge."
+    }
+   ],
+   "steal": [
+    "Tie a persistent numeric readout to scroll position (altitude falling to zero) so the reader's progress becomes part of the story.",
+    "Layer an illustration element in front of the bottom of a giant title so the letters sink into the scene instead of sitting on top.",
+    "Apply one coarse halftone dot screen to every photo cut-out so collage pieces from different sources read as one illustration set."
+   ]
+  },
+  {
+   "id": "opl-the-queue",
+   "name": "The Queue",
+   "url": "https://sheets.works/data-viz/the-queue/",
+   "source": "One Page Love",
+   "kind": "culture",
+   "score": 8.1,
+   "idea": "An essay on queueing where the queue is the ornament: a line of drawn figures stands along the bottom of the hero and returns between chapters in changing period dress.",
+   "mood": [
+    "literary",
+    "quiet",
+    "wry",
+    "bookish"
+   ],
+   "archetype": "centred-statement-media-below",
+   "hero": "Pinkish warm-grey page. A 12px mono breadcrumb sits top-left; there is no other navigation. The two-word title is set in a light serif at 200px (14vw), centred, its middle slightly above the viewport centre, spanning about 60% of the width with tight tracking. One centred line of grey 20px serif sits 40px beneath. The lower third stays empty until a single row of about 25 small greyscale drawn figures, each around 110px tall, stands on a hairline rule 20px above the bottom edge and runs the full width like a frieze.",
+   "type": "Newsreader does everything: Light at 200px with -0.05em tracking for the title, regular near 30px for chapter headings, 18px body with open leading, and pale ghost numerals around 22vw. A monospace appears only in the breadcrumb and footer labels.",
+   "colour": "#ebe4e0 #2b2622 #6f6763 #d9d2ce #16a05a — One warm rosy-grey ground throughout, brown-black text, mid-grey secondary lines, greyscale drawings. A single green appears only in the breadcrumb and one footer button.",
+   "imagery": "Hand-drawn greyscale figures with fine outlines, standing in single file on a hairline; each band changes era costume and spacing. No boxes or backgrounds: figures sit directly on the page colour, full width.",
+   "layout": "After the centred hero, text runs in one narrow column about 40% of the viewport wide, starting 30% from the left; the right third holds only a huge pale chapter numeral. Chapters are separated by full-width bands of figures on hairlines.",
+   "sections": [
+    {
+     "role": "other",
+     "description": "Chapter block. A 30px serif question heads a text column about 590px wide, offset 30% from the left. Behind it in the top-right corner sits a chapter numeral roughly 22vw tall in a tint barely darker than the page, cropped by the section's top edge. Body is 18px serif at about 1.8 leading; bold run-in phrases open key paragraphs in place of subheads. No pull quotes, side notes or images inside the text."
+    },
+    {
+     "role": "gallery",
+     "description": "Divider band between chapters: a full-width strip about 180px tall in which 10 to 15 drawn figures stand at uneven intervals on a 1px rule, with 120px of empty page above. The number and spacing of figures follow the story (few and scattered early, an evenly spaced orderly line later), so the divider carries part of the argument instead of acting as a spacer."
+    },
+    {
+     "role": "footer",
+     "description": "The ending switches voice. A white rounded promo bar with a blue pill button, then a heavy sans heading with a short grey paragraph and one green button, then a hairline, a mono uppercase label, and four small white cards in a row (thumbnail, mono number, bold title). It is narrower than the page and sits on a different axis from the essay column, so it reads as site furniture attached afterwards."
+    }
+   ],
+   "steal": [
+    "Turn the subject into the section divider: a frieze of small figures on a hairline, redrawn for each chapter, in place of rules or spacers.",
+    "Set one serif family at three far-apart sizes (200px title, 30px heading, 18px body) and mark chapters with a pale 22vw numeral cropped off the corner.",
+    "Hold body text to a narrow column offset left of centre and leave the right third empty instead of filling it with sidebars."
+   ]
+  },
+  {
+   "id": "opl-zara-webb",
+   "name": "Zara Webb",
+   "url": "https://zperinatal.com",
+   "source": "One Page Love",
+   "kind": "health",
+   "score": 8,
+   "idea": "A one-woman newborn-care practice presented like a hand-made keepsake: a mascot rabbit, scalloped and flower-shaped cut-outs, candid film photographs.",
+   "mood": [
+    "tender",
+    "whimsical",
+    "calm",
+    "personal"
+   ],
+   "archetype": "split-text-media",
+   "hero": "Split exactly in half. Left, on cream: two-line mono caps nav stacks sit at the column's top-left and top-right with a handwritten script logo centred between them. Centred below, a five-line headline in a condensed serif, each line broken to one to three words so the block forms a ragged lozenge; then a three-line 16px sans paragraph and an outlined pill button in mono caps. A line-drawn rabbit on a skateboard rides a hairline at the column's bottom-right. Right: a candid flash photograph bleeds off the top and right edges and stops at 92% height; a lilac pill button and a round chat icon overlay its top-right corner.",
+   "type": "Instrument Serif Regular for headings (52 to 57px, plus a 9.4vw footer wordmark), its italic for subheads and service names; Inter Tight for small body copy; PT Mono uppercase for nav, buttons and tiny captions; a script logo. Parenthesised italic numerals number the services.",
+   "colour": "#fffdf1 #403630 #ece4d2 #e2c9f7 #cfe195 #f6e7e4 — Warm cream page with cocoa-brown text and two brown panels. Lilac marks the main pill button and footer wordmark; a sage-green pill marks a secondary action. Warm throughout.",
+   "imagery": "Candid flash and film photos of babies and carers, some grainy black-and-white, cropped into non-rectangular masks (four-petal flower, scalloped egg) or small rounded portraits; plus black line doodles with halftone-dot fills: a recurring rabbit, flowers, a rattle, a bottle.",
+   "layout": "20px margins. Centred serif statements with small centred paragraphs alternate with split or inset blocks: a brown rounded panel, a half-photo half-beige block. Services run as a two-column hairline list. Doodles are tucked beside headlines; the footer's top edge is scalloped.",
+   "sections": [
+    {
+     "role": "about",
+     "description": "A dark brown panel with about 11px radius, inset 20px from the page. Left half: a three-line cream serif statement at about 56px and below it a photograph masked into a four-lobed flower about 540px across, cropped by the panel's bottom, with two tiny mono captions floating beside its lobes. Right, from 63%: two blocks, each an italic serif subhead over a four-line small paragraph, then two flower doodles, a caps line and a lilac pill button."
+    },
+    {
+     "role": "list",
+     "description": "A centred two-line serif heading and a four-line centred paragraph. Below, a two-column list inset to the middle 72% of the width; each item opens with a hairline, then a parenthesised italic numeral, the service name in italic serif at about 32px and a three-line small description. Rows are tall with generous empty space; the final cell swaps to a faded question prompt with the rabbit doodle."
+    },
+    {
+     "role": "other",
+     "description": "A half-and-half block. Left: a grainy black-and-white extreme close-up of a baby's eye and cheek, full-bleed, overlapped from the bottom by a cream cut-out shaped like an egg with a scalloped top; it holds an italic serif subhead, a five-line centred paragraph, a caps line and a sage pill button. Right: a flat beige field with a centred two-line serif heading and a small rounded portrait about 230px wide flanked by two tiny mono captions."
+    },
+    {
+     "role": "footer",
+     "description": "Dark brown, its top edge cut into a row of twelve semicircular scallops about 120px wide. A centred three-line serif statement in cream with bottle and flower doodles at its shoulders and a waving rabbit beneath; two small centred text blocks at far left and right; contact lines and four social icons; then the name in lilac serif at 9.4vw, cropped by the bottom edge, with tiny mono legal text in both corners."
+    }
+   ],
+   "steal": [
+    "Mask photographs into soft custom shapes (a four-petal flower, a scalloped egg) and let their container crop them.",
+    "Cut a section's top edge into a row of semicircles so a plain colour change becomes a motif.",
+    "Break a centred serif headline into very short lines so it forms a deliberate ragged shape, and anchor it with one small line drawing sitting on a hairline."
+   ]
+  }
+ ]
+}

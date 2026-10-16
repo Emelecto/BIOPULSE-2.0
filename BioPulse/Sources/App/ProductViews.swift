@@ -1,3 +1,4 @@
+import BioPulseDomain
 import SwiftUI
 
 struct BreathingSessionView: View {
@@ -101,20 +102,174 @@ struct EnergyMapView: View {
 }
 
 struct WeeklySummaryView: View {
+    @ObservedObject var health: HealthDataController
+    @ObservedObject var journal: JournalController
+    @ObservedObject var personal: PersonalContextStore
+
+    private let metrics: [HealthMetric] = [
+        .sleepAnalysis, .stepCount, .heartRateVariabilitySDNN,
+        .restingHeartRate, .appleExerciseTime
+    ]
+
     var body: some View {
         ScreenShell(title: "Resumen semanal", subtitle: "Cambios, cobertura y contexto") {
             StatusPanel(
                 symbol: "calendar.badge.clock",
-                title: "Aún no hay una semana completa",
-                message: "El resumen aparecerá cuando exista historial real suficiente. Incluirá cambios, datos ausentes y contexto del diario."
+                title: "Últimos 7 días completos",
+                message: "Cada señal resume solo los días con registros. Se necesitan al menos 4 días de 7 para mostrar un promedio; los días ausentes no se rellenan."
             )
+            ForEach(metrics) { metric in weeklyMetricRow(metric) }
+
+            SectionHeading(title: "Contexto de la semana", subtitle: "Registros y autoinformes, separados de HealthKit")
+            if weeklyContext.isEmpty {
+                StatusPanel(
+                    symbol: "square.and.pencil",
+                    title: "No hay contexto registrado en este periodo",
+                    message: "Si quieres, añade una nota al Diario, una anotación o un check-in. No es necesario registrar algo cada día."
+                )
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(weeklyContext.prefix(12).enumerated()), id: \.element.id) { index, item in
+                        HStack(alignment: .top, spacing: 11) {
+                            Image(systemName: item.symbol).foregroundStyle(PulseStyle.mint).frame(width: 24)
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack(alignment: .firstTextBaseline) {
+                                    Text(item.title).font(.subheadline.weight(.medium))
+                                    Spacer(minLength: 8)
+                                    Text(item.date.formatted(date: .abbreviated, time: .shortened))
+                                        .font(.caption2).foregroundStyle(PulseStyle.muted)
+                                }
+                                if !item.detail.isEmpty {
+                                    Text(item.detail).font(.caption).foregroundStyle(PulseStyle.secondary)
+                                }
+                                Text(item.provenance).font(.caption2).foregroundStyle(PulseStyle.muted)
+                            }
+                        }
+                        .padding(.vertical, 13)
+                        if index < min(weeklyContext.count, 12) - 1 {
+                            Rectangle().fill(.white.opacity(0.1)).frame(height: 1).padding(.leading, 35)
+                        }
+                    }
+                }
+                .padding(.horizontal, 15).pulseSurface()
+                if weeklyContext.count > 12 {
+                    Text("Se muestran 12 registros. El Diario conserva el historial completo en este dispositivo.")
+                        .font(.caption).foregroundStyle(PulseStyle.muted)
+                }
+            }
+
             StatusPanel(
                 symbol: "checkmark.shield",
                 title: "Sin conclusiones automáticas",
-                message: "BioPulse describirá asociaciones y variaciones; no convertirá una coincidencia semanal en causalidad o diagnóstico."
+                message: "Las variaciones y los registros se presentan lado a lado. Una coincidencia semanal no demuestra causalidad ni constituye un diagnóstico."
             )
         }
+        .task { await journal.load() }
+        .refreshable {
+            await health.reload()
+            await journal.load(force: true)
+        }
     }
+
+    private func weeklyMetricRow(_ metric: HealthMetric) -> some View {
+        let observations = weeklyObservations(for: metric)
+        let count = observations.count
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 9) {
+                Image(systemName: metric.symbol).foregroundStyle(metric == .sleepAnalysis ? PulseStyle.lavender : PulseStyle.mint)
+                Text(metric.displayName).font(.subheadline.weight(.semibold))
+                Spacer(minLength: 6)
+                Text("Apple Salud").font(.caption2).foregroundStyle(PulseStyle.muted)
+            }
+            if count >= 4 {
+                let average = observations.map(\.value).reduce(0, +) / Double(count)
+                let reading = HealthReading(value: average, measuredAt: weekEnd, sourceName: "Apple Salud · media de agregados diarios")
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(metric.formattedValue(reading)).font(.title3.weight(.semibold)).foregroundStyle(.white)
+                    Text("promedio diario del periodo").font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
+                Text("Cobertura: \(count)/7 días con registro")
+                    .font(.caption2).foregroundStyle(PulseStyle.muted)
+            } else {
+                Label("No se calcula: faltan registros suficientes", systemImage: "circle.dashed")
+                    .font(.caption.weight(.medium)).foregroundStyle(PulseStyle.secondary)
+                Text("Cobertura: \(count)/7 días · mínimo 4/7. Revisa permisos o disponibilidad en Apple Salud.")
+                    .font(.caption2).foregroundStyle(PulseStyle.muted)
+            }
+        }
+        .padding(15).frame(maxWidth: .infinity, alignment: .leading).pulseSurface()
+    }
+
+    private var today: Date { Calendar.current.startOfDay(for: .now) }
+
+    private var weekStart: Date {
+        Calendar.current.date(byAdding: .day, value: -7, to: today) ?? today
+    }
+
+    private var weekEnd: Date {
+        Calendar.current.date(byAdding: .second, value: -1, to: today) ?? today
+    }
+
+    private func weeklyObservations(for metric: HealthMetric) -> [DailyHealthObservation] {
+        (health.dailyHistory[metric] ?? []).filter { $0.day >= weekStart && $0.day < today }
+    }
+
+    private var weeklyContext: [WeeklyContextItem] {
+        let notes = journal.entries
+            .filter { $0.occurredAt >= weekStart && $0.occurredAt < today }
+            .map {
+                WeeklyContextItem(
+                    id: $0.id,
+                    date: $0.occurredAt,
+                    title: $0.title,
+                    detail: $0.notes,
+                    symbol: journalSymbol(for: $0.category),
+                    provenance: $0.provenance == .importedCSV ? "Importado desde CSV" : "Registrado por ti"
+                )
+            }
+        let annotations = personal.annotations
+            .filter { $0.occurredAt >= weekStart && $0.occurredAt < today }
+            .map {
+                WeeklyContextItem(
+                    id: $0.id,
+                    date: $0.occurredAt,
+                    title: $0.title,
+                    detail: $0.note.isEmpty ? $0.kind.title : $0.note,
+                    symbol: $0.kind.symbol,
+                    provenance: "Anotación tuya"
+                )
+            }
+        let checkIns = personal.checkIns
+            .filter { $0.recordedAt >= weekStart && $0.recordedAt < today }
+            .map {
+                WeeklyContextItem(
+                    id: $0.id,
+                    date: $0.recordedAt,
+                    title: "Check-in: \($0.energy.title)",
+                    detail: $0.note,
+                    symbol: $0.energy.symbol,
+                    provenance: "Autoinforme · registrado por ti"
+                )
+            }
+        return (notes + annotations + checkIns).sorted { $0.date > $1.date }
+    }
+
+    private func journalSymbol(for category: JournalCategory) -> String {
+        switch category {
+        case .habit: "leaf"
+        case .symptom: "cross.case"
+        case .event: "calendar"
+        }
+    }
+}
+
+private struct WeeklyContextItem: Identifiable {
+    let id: UUID
+    let date: Date
+    let title: String
+    let detail: String
+    let symbol: String
+    let provenance: String
 }
 
 struct TechnicalView: View {
