@@ -14,7 +14,7 @@ major_version = 17
 [auth]
 enabled = true
 site_url = "https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email"
-additional_redirect_urls = ["https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email", "biopulse://auth-callback"]
+additional_redirect_urls = ["https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email", "biopulse://auth-callback", "http://127.0.0.1:4173/app", "http://localhost:4173/app"]
 enable_signup = true
 enable_anonymous_sign_ins = false
 
@@ -31,3 +31,6 @@ verify_jwt = false
 
 [functions.admin-ops]
 verify_jwt = true
+
+[functions.health-bridge]
+verify_jwt = false
