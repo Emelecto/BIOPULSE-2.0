@@ -16,7 +16,6 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 **/xcuserdata/
-BioPulse/BioPulse.xcodeproj/
 node_modules/
 dist/
 .venv/

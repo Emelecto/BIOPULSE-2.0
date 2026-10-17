@@ -39,6 +39,20 @@ jobs:
           CODE_SIGNING_ALLOWED=NO
           build
 
+      - name: Test BioPulse domain
+        working-directory: BioPulse
+        run: swift test
+
+      - name: Build for iOS device without signing
+        run: >-
+          xcodebuild
+          -project BioPulse/BioPulse.xcodeproj
+          -scheme BioPulse
+          -configuration Debug
+          -destination 'generic/platform=iOS'
+          CODE_SIGNING_ALLOWED=NO
+          build
+
       - name: Save generated Xcode project
         if: always()
         uses: actions/upload-artifact@v4

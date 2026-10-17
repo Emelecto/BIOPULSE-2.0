@@ -1,0 +1,460 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		013F560C86A7F4889BC10B52 /* CoachService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 419DE8F0F7CBE5DCDBA1F308 /* CoachService.swift */; };
+		1012E14F3034034BD8AA26BB /* PulseComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3947452D1285EB8B5D415814 /* PulseComponents.swift */; };
+		1E3BCED5E8DC6D8B4C2B0DCB /* PersonalizationSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25C930A31F738AAD9D2441D1 /* PersonalizationSettingsView.swift */; };
+		27A66C783D106689138E76AE /* CoachView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0419BC1F92903C269070721 /* CoachView.swift */; };
+		3062CB777F8D3B32CC71BC7A /* BioPulseApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E82D075661F5555B947368F /* BioPulseApp.swift */; };
+		3699BD96AE1FF09B822B04A3 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2743EAD321E296F5EE264F60 /* RootView.swift */; };
+		44B669817889092671563171 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B183C7A5EAF0E4991D6349C9 /* ProfileView.swift */; };
+		53F03E58764EC61BF2F10854 /* ProductViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44F87E740E0677CB60206937 /* ProductViews.swift */; };
+		573A616B1FDE62469F58BC94 /* HealthKitCapabilityCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D8343BFF0ACCD1F3D4DB8C8 /* HealthKitCapabilityCatalog.swift */; };
+		5DBC63BC07B45F6337F20D9F /* HealthDataController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6313C57D5A326E9C3F1D1B91 /* HealthDataController.swift */; };
+		6131427DFF087E55AE6A109B /* JournalController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADE0B1C8413CD58B67D58BB3 /* JournalController.swift */; };
+		63965ABEF74B6F7565A805C4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B7F89E32DDDCB6047D001320 /* Assets.xcassets */; };
+		6853FC18E7A159724B65261B /* HealthMetric.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA4474E4A679162F5272F3C7 /* HealthMetric.swift */; };
+		7711E0FAE88078018AB8393B /* WellnessScoreAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60FAEC62BFD5A37A0F4B397A /* WellnessScoreAdapter.swift */; };
+		811F92A4254C56AE725C075F /* AuthSessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0274684B4D33A95E9A668D49 /* AuthSessionStore.swift */; };
+		84B2E60501732A98DC0F093F /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D69425A2B7FB24014375E43 /* TodayView.swift */; };
+		89A0ED524E8F3BB04D92E22C /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = C318940E8C42BD241DB37172 /* Supabase */; };
+		931A4D8C1B0AA0F90269A83E /* PersonalContextStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EE2F76B2F03ECF59183C6E0 /* PersonalContextStore.swift */; };
+		971962AD7ADC7B07A532401E /* ExploreViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECACC8AFA5B59C136C112965 /* ExploreViews.swift */; };
+		982265EA6F964CB25961C08D /* PersonalInsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 329E8461BD56B7221EDF3447 /* PersonalInsightsView.swift */; };
+		C24E8FF437A399D79F5E757D /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9A21CAE83B463F4D569270 /* AuthView.swift */; };
+		C372B78F5F98943323ED8301 /* DashboardVisuals.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEE4BA49A4F5E7C3303F9E72 /* DashboardVisuals.swift */; };
+		D0C52E8A8AAF0FC055AA8215 /* BioPulseDomain in Frameworks */ = {isa = PBXBuildFile; productRef = BCC52AC38DC80E2D849BDB42 /* BioPulseDomain */; };
+		F3A0971427621C78C16C8DB5 /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4606B22A213814F37F239A99 /* JournalView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0274684B4D33A95E9A668D49 /* AuthSessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionStore.swift; sourceTree = "<group>"; };
+		0E82D075661F5555B947368F /* BioPulseApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BioPulseApp.swift; sourceTree = "<group>"; };
+		0EE2F76B2F03ECF59183C6E0 /* PersonalContextStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalContextStore.swift; sourceTree = "<group>"; };
+		1B9A21CAE83B463F4D569270 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
+		25C930A31F738AAD9D2441D1 /* PersonalizationSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalizationSettingsView.swift; sourceTree = "<group>"; };
+		2743EAD321E296F5EE264F60 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		2D8343BFF0ACCD1F3D4DB8C8 /* HealthKitCapabilityCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitCapabilityCatalog.swift; sourceTree = "<group>"; };
+		329E8461BD56B7221EDF3447 /* PersonalInsightsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonalInsightsView.swift; sourceTree = "<group>"; };
+		3947452D1285EB8B5D415814 /* PulseComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseComponents.swift; sourceTree = "<group>"; };
+		419DE8F0F7CBE5DCDBA1F308 /* CoachService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachService.swift; sourceTree = "<group>"; };
+		44F87E740E0677CB60206937 /* ProductViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductViews.swift; sourceTree = "<group>"; };
+		4606B22A213814F37F239A99 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
+		60FAEC62BFD5A37A0F4B397A /* WellnessScoreAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WellnessScoreAdapter.swift; sourceTree = "<group>"; };
+		6313C57D5A326E9C3F1D1B91 /* HealthDataController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthDataController.swift; sourceTree = "<group>"; };
+		8CA2A8B4CA318206E4B37365 /* BioPulse.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = BioPulse.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D3CD2FEED275B3C7BCF742D /* BioPulse */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BioPulse; path = .; sourceTree = SOURCE_ROOT; };
+		8D69425A2B7FB24014375E43 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		ADE0B1C8413CD58B67D58BB3 /* JournalController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalController.swift; sourceTree = "<group>"; };
+		B183C7A5EAF0E4991D6349C9 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		B7F89E32DDDCB6047D001320 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C0419BC1F92903C269070721 /* CoachView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachView.swift; sourceTree = "<group>"; };
+		DEE4BA49A4F5E7C3303F9E72 /* DashboardVisuals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardVisuals.swift; sourceTree = "<group>"; };
+		ECACC8AFA5B59C136C112965 /* ExploreViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreViews.swift; sourceTree = "<group>"; };
+		FA4474E4A679162F5272F3C7 /* HealthMetric.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthMetric.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		39BEF6C64548631E471163E3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D0C52E8A8AAF0FC055AA8215 /* BioPulseDomain in Frameworks */,
+				89A0ED524E8F3BB04D92E22C /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		200A94FB301A6FC37F8E68FB = {
+			isa = PBXGroup;
+			children = (
+				EA85CE0F9A64FA9F8F67CC63 /* App */,
+				7982B530D8B5D352E55BE82B /* HealthKit */,
+				B9F55D6C83993AF253EF3DF9 /* Packages */,
+				85766FF651B9B9900A0F8130 /* Resources */,
+				B4FF420921E747F87EF6970D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7982B530D8B5D352E55BE82B /* HealthKit */ = {
+			isa = PBXGroup;
+			children = (
+				2D8343BFF0ACCD1F3D4DB8C8 /* HealthKitCapabilityCatalog.swift */,
+				FA4474E4A679162F5272F3C7 /* HealthMetric.swift */,
+			);
+			name = HealthKit;
+			path = Sources/HealthKit;
+			sourceTree = "<group>";
+		};
+		85766FF651B9B9900A0F8130 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B7F89E32DDDCB6047D001320 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		B4FF420921E747F87EF6970D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				8CA2A8B4CA318206E4B37365 /* BioPulse.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		B9F55D6C83993AF253EF3DF9 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				8D3CD2FEED275B3C7BCF742D /* BioPulse */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		EA85CE0F9A64FA9F8F67CC63 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				0274684B4D33A95E9A668D49 /* AuthSessionStore.swift */,
+				1B9A21CAE83B463F4D569270 /* AuthView.swift */,
+				0E82D075661F5555B947368F /* BioPulseApp.swift */,
+				419DE8F0F7CBE5DCDBA1F308 /* CoachService.swift */,
+				C0419BC1F92903C269070721 /* CoachView.swift */,
+				DEE4BA49A4F5E7C3303F9E72 /* DashboardVisuals.swift */,
+				ECACC8AFA5B59C136C112965 /* ExploreViews.swift */,
+				6313C57D5A326E9C3F1D1B91 /* HealthDataController.swift */,
+				ADE0B1C8413CD58B67D58BB3 /* JournalController.swift */,
+				4606B22A213814F37F239A99 /* JournalView.swift */,
+				0EE2F76B2F03ECF59183C6E0 /* PersonalContextStore.swift */,
+				329E8461BD56B7221EDF3447 /* PersonalInsightsView.swift */,
+				25C930A31F738AAD9D2441D1 /* PersonalizationSettingsView.swift */,
+				44F87E740E0677CB60206937 /* ProductViews.swift */,
+				B183C7A5EAF0E4991D6349C9 /* ProfileView.swift */,
+				3947452D1285EB8B5D415814 /* PulseComponents.swift */,
+				2743EAD321E296F5EE264F60 /* RootView.swift */,
+				8D69425A2B7FB24014375E43 /* TodayView.swift */,
+				60FAEC62BFD5A37A0F4B397A /* WellnessScoreAdapter.swift */,
+			);
+			name = App;
+			path = Sources/App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CDF08E8209150E75702429AF /* BioPulse */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DF6228120497C9F488DBE73A /* Build configuration list for PBXNativeTarget "BioPulse" */;
+			buildPhases = (
+				FC7500782823DABA70CCD404 /* Sources */,
+				9106BDAE01D09719DCA24810 /* Resources */,
+				39BEF6C64548631E471163E3 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BioPulse;
+			packageProductDependencies = (
+				BCC52AC38DC80E2D849BDB42 /* BioPulseDomain */,
+				C318940E8C42BD241DB37172 /* Supabase */,
+			);
+			productName = BioPulse;
+			productReference = 8CA2A8B4CA318206E4B37365 /* BioPulse.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		78B941FCF8C8E17A491A5287 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = 1CF33F6338671683566AF792 /* Build configuration list for PBXProject "BioPulse" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 200A94FB301A6FC37F8E68FB;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1B5BCC7C263A5E7BEE759752 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				8ECB756292001D2356C596C7 /* XCLocalSwiftPackageReference "." */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = B4FF420921E747F87EF6970D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CDF08E8209150E75702429AF /* BioPulse */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9106BDAE01D09719DCA24810 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				63965ABEF74B6F7565A805C4 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FC7500782823DABA70CCD404 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				811F92A4254C56AE725C075F /* AuthSessionStore.swift in Sources */,
+				C24E8FF437A399D79F5E757D /* AuthView.swift in Sources */,
+				3062CB777F8D3B32CC71BC7A /* BioPulseApp.swift in Sources */,
+				013F560C86A7F4889BC10B52 /* CoachService.swift in Sources */,
+				27A66C783D106689138E76AE /* CoachView.swift in Sources */,
+				C372B78F5F98943323ED8301 /* DashboardVisuals.swift in Sources */,
+				971962AD7ADC7B07A532401E /* ExploreViews.swift in Sources */,
+				5DBC63BC07B45F6337F20D9F /* HealthDataController.swift in Sources */,
+				573A616B1FDE62469F58BC94 /* HealthKitCapabilityCatalog.swift in Sources */,
+				6853FC18E7A159724B65261B /* HealthMetric.swift in Sources */,
+				6131427DFF087E55AE6A109B /* JournalController.swift in Sources */,
+				F3A0971427621C78C16C8DB5 /* JournalView.swift in Sources */,
+				931A4D8C1B0AA0F90269A83E /* PersonalContextStore.swift in Sources */,
+				982265EA6F964CB25961C08D /* PersonalInsightsView.swift in Sources */,
+				1E3BCED5E8DC6D8B4C2B0DCB /* PersonalizationSettingsView.swift in Sources */,
+				53F03E58764EC61BF2F10854 /* ProductViews.swift in Sources */,
+				44B669817889092671563171 /* ProfileView.swift in Sources */,
+				1012E14F3034034BD8AA26BB /* PulseComponents.swift in Sources */,
+				3699BD96AE1FF09B822B04A3 /* RootView.swift in Sources */,
+				84B2E60501732A98DC0F093F /* TodayView.swift in Sources */,
+				7711E0FAE88078018AB8393B /* WellnessScoreAdapter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		038D7FE940FCDE067BBDBDDA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		2267C4EBED4FA314C05F74B4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_ENTITLEMENTS = BioPulse.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.biopulse.app;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		243153E60CDC599054BE87D1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		E478056A317A8EC3D0C308B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_ENTITLEMENTS = BioPulse.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.biopulse.app;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		1CF33F6338671683566AF792 /* Build configuration list for PBXProject "BioPulse" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				243153E60CDC599054BE87D1 /* Debug */,
+				038D7FE940FCDE067BBDBDDA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DF6228120497C9F488DBE73A /* Build configuration list for PBXNativeTarget "BioPulse" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2267C4EBED4FA314C05F74B4 /* Debug */,
+				E478056A317A8EC3D0C308B2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		8ECB756292001D2356C596C7 /* XCLocalSwiftPackageReference "." */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = .;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1B5BCC7C263A5E7BEE759752 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift.git";
+			requirement = {
+				kind = exactVersion;
+				version = 2.49.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		BCC52AC38DC80E2D849BDB42 /* BioPulseDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BioPulseDomain;
+		};
+		C318940E8C42BD241DB37172 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1B5BCC7C263A5E7BEE759752 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 78B941FCF8C8E17A491A5287 /* Project object */;
+}
