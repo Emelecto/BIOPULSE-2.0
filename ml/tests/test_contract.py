@@ -30,6 +30,17 @@ class ContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "independently established"):
                 load_dataset(folder / "missing.csv", metadata, "disease_event")
 
+    def test_rejects_score_derived_wellness_label(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder = Path(temp)
+            metadata = folder / "metadata.json"
+            metadata.write_text(json.dumps({
+                "dataset_name": "test", "license": "private", "source": "test", "consent_basis": "test",
+                "label_source": "derived_rule", "label_horizon": "next day",
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "independent observations"):
+                load_dataset(folder / "missing.csv", metadata, "next_day_recovery")
+
     def test_research_pipeline_smoke_with_artificial_fixture(self):
         # Fabricated rows validate software mechanics only; no scientific claim.
         with tempfile.TemporaryDirectory() as temp:
@@ -55,6 +66,8 @@ class ContractTests(unittest.TestCase):
             self.assertGreater(result["train_rows"], 50)
             self.assertGreater(result["test_rows"], 20)
             self.assertIn("baseline", result["scores"])
+            self.assertIn("linear", result["scores"])
+            self.assertIn("candidate", result["scores"])
 
 
 if __name__ == "__main__":

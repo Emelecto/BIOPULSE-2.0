@@ -22,3 +22,4 @@ dist/
 .venv/
 __pycache__/
 *.pyc
+.codex-ml-research/

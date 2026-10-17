@@ -86,3 +86,40 @@ El consejo clínico y las predicciones clínicas sí permanecen fuera del produc
 - **Apple Watch:** widgets y complicaciones siguen intencionalmente para después y no se anuncian como disponibles.
 
 El desglose, límites funcionales y criterios de verificación están en el [backlog de producto](PRODUCT_BACKLOG.md). La investigación ML y sus puertas de evidencia no cambian; ninguna predicción médica se ha activado.
+
+## Estado consolidado para entrega académica — 2026-10-17
+
+Esta sección reemplaza los estados anteriores cuando hay contradicciones. «Implementado en código» no equivale a «compilado o verificado en iOS».
+
+### Se puede cerrar sin Mac
+
+- **CONFIRMED en fuente:** app iOS con cinco secciones, ingesta HealthKit local, Diario, tendencias/contexto, índices exploratorios versionados, importación/revisión CSV, privacidad local, cuenta y preferencias.
+- **CONFIRMED en fuente:** backend Supabase con migraciones, políticas RLS y funciones Coach/puente Health Auto Export; las pruebas locales documentadas pasan. El transporte nativo de sincronización iOS sigue sin implementar.
+- **CONFIRMED en fuente:** Coach base e interfaz; queda pendiente respuesta real de Groq, evaluación de respuestas y QA iOS. No habilitarlo como función final hasta cubrir esas puertas.
+- **CONFIRMED:** la web 2.0 ya responde públicamente en `https://biopulse-20.vercel.app/` y el QR del pitch actualizado apunta allí. El despliegue de `10d2474` incluye los índices exploratorios `personal-v1`. La beta de la landing independiente permanece apagada; antes de ampliarla siguen pendientes contacto y textos de privacidad revisados.
+- **CONFIRMED:** se ejecutó una evaluación de ML sobre PMData con 1.268 observaciones y 16 personas, usando un corte por persona y fecha. Ningún candidato superó al predictor trivial en el conjunto de prueba; no se activa un modelo. No hay etiqueta clínica independiente ni validación específica de Apple Watch. Véase `ml/ACTIVATION_REVIEW_2026-10-17.md`.
+- Preparar guion de demo, cuentas/datos de prueba no sensibles, respaldo en video/capturas y explicación de límites del producto.
+
+### Verificación realizada en Windows — 2026-10-17
+
+- **CONFIRMED:** los 38 archivos Swift de fuentes y pruebas pasan el parser de sintaxis de Swift. Esto no es compilación ni validación de tipos.
+- **BLOCKED por entorno:** `swift test` no puede cargar el manifiesto porque el toolchain de Windows no encuentra `stdlib.h`; `xcodebuild` no está instalado. Ningún código iOS queda certificado para Xcode con esta revisión.
+- **CONFIRMED:** `npm run build` completa TypeScript y Vite; las 10 pruebas Vitest de web pasan.
+- **CONFIRMED:** las cuatro pruebas Python del contrato ML pasan con el fixture sintético de software. Esto comprueba el pipeline como código, no la calidad predictiva de un modelo.
+- **CONFIRMED:** las 10 pruebas unitarias de política del Coach pasan. No se probó una respuesta real de Groq ni el flujo integrado en iPhone.
+- **BLOCKED por entorno:** no se pudo ejecutar Supabase local/pgTAP porque Docker Desktop no tiene un daemon activo en este equipo.
+
+Los modelos del repositorio son algoritmos candidatos dentro de un pipeline de investigación; no hay pesos entrenados ni un modelo de BioPulse desplegado. El CSV heredado no cumple las condiciones de procedencia y etiqueta independiente para afirmar validez clínica.
+
+### Requiere Mac/Xcode o dispositivo Apple
+
+1. Generar proyecto, resolver cualquier error de compilación y ejecutar pruebas del paquete/dominio.
+2. Ejecutar la app en simulador y iPhone; comprobar cuenta, navegación, estados vacíos, persistencia, exportación y cambio de sesión.
+3. Autorizar HealthKit y comprobar métricas, cobertura, días sin muestras y zonas horarias con datos reales.
+4. Revisar Dynamic Type, VoiceOver, contraste y notificaciones.
+5. Probar Coach en dispositivo con respuesta real, consentimiento, revocación, errores y límites.
+6. Registrar hallazgos y actualizar cada capacidad a «verificada» solo después de pasar esas comprobaciones.
+
+### Criterio realista de «listo para la exposición»
+
+La exposición puede presentar un prototipo funcional cuando el flujo elegido se demuestra en iPhone con datos autorizados o en una grabación reproducible, y el resto se identifica como código pendiente o trabajo futuro. No afirmar disponibilidad en App Store, sincronización nativa, superioridad frente a otros wearables ni eficacia clínica sin evidencia. La revisión en Mac sigue siendo el bloqueo principal para llamar a la app compilada y verificada.

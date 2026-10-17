@@ -11,11 +11,15 @@ from pathlib import Path
 import numpy as np
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier, HistGradientBoostingRegressor
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.metrics import (
     average_precision_score, brier_score_loss, mean_absolute_error,
     r2_score, roc_auc_score,
 )
 from sklearn.model_selection import GroupShuffleSplit
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 FEATURES = (
     "resting_heart_rate", "hrv_sdnn", "respiratory_rate", "sleep_duration_min",
@@ -39,10 +43,12 @@ def load_dataset(csv_path: Path, metadata_path: Path, target: str):
         raise ValueError("Dataset metadata incomplete")
     if any("unknown" in metadata[key].lower() or "synthetic" in metadata[key].lower() for key in REQUIRED_METADATA):
         raise ValueError("Unknown or synthetic provenance cannot establish model validity")
-    if target in ("disease_event", "anomaly_event") and metadata["label_source"] not in (
-        "clinician_adjudicated", "laboratory_confirmed", "independent_record",
-    ):
+    clinical_sources = ("clinician_adjudicated", "laboratory_confirmed", "independent_record")
+    wellness_sources = (*clinical_sources, "user_self_report", "device_observation")
+    if target in ("disease_event", "anomaly_event") and metadata["label_source"] not in clinical_sources:
         raise ValueError("Risk/anomaly labels must be independently established")
+    if target not in ("disease_event", "anomaly_event") and metadata["label_source"] not in wellness_sources:
+        raise ValueError("Wellness labels must be independent observations or self reports")
 
     with csv_path.open(newline="", encoding="utf-8-sig") as stream:
         reader = csv.DictReader(stream)
@@ -86,9 +92,10 @@ def evaluate(csv_path: Path, metadata_path: Path, target: str, cutoff: date) -> 
         if len(set(train_y)) < 2 or len(set(test_y)) < 2:
             raise ValueError("Both classes required in training and untouched test")
         baseline = DummyClassifier(strategy="prior").fit(X[train], train_y)
+        linear = make_pipeline(SimpleImputer(strategy="median", keep_empty_features=True), StandardScaler(), LogisticRegression(max_iter=500, random_state=42)).fit(X[train], train_y)
         candidate = HistGradientBoostingClassifier(max_iter=100, max_leaf_nodes=8, l2_regularization=1.0, random_state=42).fit(X[train], train_y)
         scores = {}
-        for name, model in (("baseline", baseline), ("candidate", candidate)):
+        for name, model in (("baseline", baseline), ("linear", linear), ("candidate", candidate)):
             prediction = model.predict_proba(X[test])[:, 1]
             scores[name] = {
                 "roc_auc": round(float(roc_auc_score(test_y, prediction)), 4),
@@ -97,9 +104,10 @@ def evaluate(csv_path: Path, metadata_path: Path, target: str, cutoff: date) -> 
             }
     else:
         baseline = DummyRegressor(strategy="median").fit(X[train], train_y)
+        linear = make_pipeline(SimpleImputer(strategy="median", keep_empty_features=True), StandardScaler(), Ridge(alpha=10.0)).fit(X[train], train_y)
         candidate = HistGradientBoostingRegressor(max_iter=100, max_leaf_nodes=8, l2_regularization=1.0, random_state=42).fit(X[train], train_y)
         scores = {}
-        for name, model in (("baseline", baseline), ("candidate", candidate)):
+        for name, model in (("baseline", baseline), ("linear", linear), ("candidate", candidate)):
             prediction = model.predict(X[test])
             scores[name] = {
                 "mae": round(float(mean_absolute_error(test_y, prediction)), 4),
