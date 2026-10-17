@@ -1,12 +1,19 @@
 import Charts
+import BioPulseDomain
 import SwiftUI
 
 struct TodayView: View {
     @Environment(\.dynamicTypeSize) private var typeSize
     @ObservedObject var health: HealthDataController
+    @ObservedObject var personal: PersonalContextStore
     let openJournal: () -> Void
     @State private var selectedMetric: HealthMetric?
     @State private var showingScore = false
+
+    private var score: WellnessScore {
+        let day = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now
+        return WellnessScores.bio(health.wellnessValues, day: day, targetMinutes: personal.sleepTargetMinutes)
+    }
 
     var body: some View {
         ScrollView {
@@ -16,10 +23,10 @@ struct TodayView: View {
                     .font(.subheadline).foregroundStyle(PulseStyle.secondary)
                 Button { showingScore = true } label: {
                     VStack(spacing: 4) {
-                        PendingScoreHero(title: "BioScore")
-                        Text("Bienestar general · cálculo en desarrollo")
+                        PendingScoreHero(title: "BioScore", score: score.value.map(Double.init), subtitle: score.value == nil ? "Datos insuficientes" : "Índice exploratorio · ayer")
+                        Text(score.value == nil ? score.reason : "Índice personal · ayer · \(score.version)")
                             .font(.subheadline).foregroundStyle(PulseStyle.secondary)
-                        Label("Cómo funcionará", systemImage: "arrow.up.right")
+                        Label("Ver componentes", systemImage: "arrow.up.right")
                             .font(.caption.weight(.semibold)).foregroundStyle(.white).padding(.top, 6)
                     }
                     .frame(maxWidth: .infinity)
@@ -27,7 +34,7 @@ struct TodayView: View {
                 .buttonStyle(PulsePressButtonStyle())
 
                 if !health.hasRequestedAccess {
-                    StatusPanel(symbol: "heart.text.square", title: "Conecta Apple Salud", message: "Elige qué señales compartir para ver tus mediciones. BioScore permanece pendiente.")
+                    StatusPanel(symbol: "heart.text.square", title: "Conecta Apple Salud", message: "Elige qué señales compartir para ver tus mediciones y, con historial suficiente, tu índice personal.")
                     Button("Elegir datos de Salud") { Task { await health.requestAccess() } }
                         .buttonStyle(PulseActionButtonStyle()).disabled(!health.isAvailable)
                 }
@@ -82,7 +89,7 @@ struct TodayView: View {
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showingScore) {
-            NavigationStack { ScoreExplanationView(health: health) }
+            NavigationStack { ScoreExplanationView(health: health, personal: personal) }
                 .presentationDetents([.medium, .large])
         }
     }

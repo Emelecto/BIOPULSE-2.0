@@ -25,9 +25,9 @@ Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple 
 - **Aislamiento local implementado para el Diario:** el archivo nuevo usa una carpeta por UUID de usuario. El archivo antiguo sin ámbito no se carga ni se borra automáticamente.
 - La URL y clave publishable del proyecto Supabase están configuradas en el `Info.plist` generado desde `project.yml`; nunca debe añadirse una clave `service_role` a la app.
 - Apple Salud: solicita acceso de lectura solo para las señales utilizadas por la interfaz; muestra muestras recibidas o ausencia explícita. El permiso de lectura no puede confirmarse directamente mediante HealthKit.
-- Hoy: destaca sueño, HRV, pasos observados y contexto del Diario, con detalle y procedencia. El BioScore permanece secundario y sin número porque aún no existe una fórmula validada.
-- Tendencias: muestra las mediciones actuales; el historial y la referencia personal todavía no están conectados a esta vista.
-- Sueño: suma las etapas dormidas registradas durante la noche y evita intervalos superpuestos.
+- Hoy: destaca BioScore exploratorio para el último día completo cuando hay historial suficiente, más sueño, HRV, pasos y contexto del Diario. Fórmula y límites en `docs/SCORE_ALGORITHMS.md`.
+- Tendencias: muestra mediciones e historial y una señal de cambio personal que exige persistencia en varias métricas; no expresa probabilidad de enfermedad.
+- Sueño: suma intervalos dormidos sin duplicar superposiciones y calcula un Sleep Score exploratorio de duración y constancia si hay al menos siete noches previas. La meta personal se guarda por cuenta en este iPhone.
 - Perfil: permite actualizar mediciones, abrir Ajustes y revisar localmente un CSV tidy/wide. Esta revisión no persiste el archivo ni incorpora sus registros al dashboard.
 - Diario: guarda hábitos, síntomas y eventos exclusivamente en el dispositivo. Las entradas admiten crear, editar, eliminar y recargar; las revisiones impiden sobrescrituras silenciosas dentro del repositorio local. Aún falta validarlo en un iPhone con Xcode.
 

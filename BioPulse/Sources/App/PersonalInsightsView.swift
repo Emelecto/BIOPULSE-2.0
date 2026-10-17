@@ -87,7 +87,7 @@ struct PersonalInsightsView: View {
             switch personal.preferences.focus {
             case .sleep:
                 FeatureDestinationLink(symbol: "moon.stars", title: "Revisar sueño registrado", subtitle: "Fuente y límites de la última noche") {
-                    SleepView(health: health)
+                    SleepView(health: health, personal: personal)
                 }
             case .activity:
                 FeatureDestinationLink(symbol: "figure.walk", title: "Revisar pasos de hoy", subtitle: "Dato disponible y procedencia") {

@@ -72,9 +72,10 @@ Los scores, previsiones y asociaciones solo podrán mostrarse cuando sus entrada
 fórmulas y criterios de calidad estén documentados. Una función puede estar
 presente en la interfaz sin mostrar un resultado si no existen datos suficientes.
 
-`BioScore` y `Sleep Score` estarán visibles desde el MVP. Mientras sus fórmulas
-o datos reales no estén listos, deben mostrar estado pendiente, entradas
-necesarias y limitaciones, nunca una cifra de demostración presentada como real.
+`BioScore` y `Sleep Score` tienen ahora fórmulas exploratorias versionadas en
+`SCORE_ALGORITHMS.md`. Si faltan datos reales o historial previo, muestran el
+motivo y un guion. Las cifras no tienen validación clínica y nunca se sustituyen
+por un valor de demostración presentado como real.
 
 ## No objetivos de la primera fase técnica
 

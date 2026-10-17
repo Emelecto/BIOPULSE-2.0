@@ -158,9 +158,11 @@ final class PersonalContextStore: ObservableObject {
     @Published private(set) var experiments: [PersonalExperiment] = []
     @Published private(set) var preferences = PersonalizationPreferences()
     @Published private(set) var persistenceMessage: String?
+    @Published private(set) var sleepTargetMinutes = 480
 
     private static let schemaVersion = 1
     private let fileURL: URL
+    private let sleepTargetKey: String
     private var allowsWrites = true
 
     init(userID: UUID) {
@@ -172,7 +174,16 @@ final class PersonalContextStore: ObservableObject {
             .appendingPathComponent("Accounts", isDirectory: true)
             .appendingPathComponent(userID.uuidString.lowercased(), isDirectory: true)
             .appendingPathComponent("personal-context-v1.json", isDirectory: false)
+        sleepTargetKey = "BioPulse.sleepTarget.\(userID.uuidString.lowercased())"
+        let storedTarget = UserDefaults.standard.integer(forKey: sleepTargetKey)
+        if (360...600).contains(storedTarget) { sleepTargetMinutes = storedTarget }
         load()
+    }
+
+    func updateSleepTarget(_ minutes: Int) {
+        guard (360...600).contains(minutes), minutes.isMultiple(of: 30) else { return }
+        sleepTargetMinutes = minutes
+        UserDefaults.standard.set(minutes, forKey: sleepTargetKey)
     }
 
     var activeExperiments: [PersonalExperiment] {

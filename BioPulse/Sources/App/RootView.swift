@@ -22,7 +22,7 @@ struct RootView: View {
     var body: some View {
             TabView(selection: $selectedTab) {
                 NavigationStack {
-                    TodayView(health: health) { selectedTab = .journal }
+                    TodayView(health: health, personal: personal) { selectedTab = .journal }
                         .safeAreaInset(edge: .bottom, spacing: 0) { coachDock }
                 }
                     .tabItem { Label("Hoy", systemImage: "house.fill") }
@@ -33,7 +33,7 @@ struct RootView: View {
                 NavigationStack { JournalView(journal: journal, personal: personal).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
                     .tabItem { Label("Diario", systemImage: "square.and.pencil") }
                     .tag(Tab.journal)
-                NavigationStack { SleepView(health: health).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
+                NavigationStack { SleepView(health: health, personal: personal).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
                     .tabItem { Label("Sueño", systemImage: "moon.stars.fill") }
                     .tag(Tab.sleep)
                 NavigationStack { ProfileView(health: health, auth: auth, personal: personal).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }

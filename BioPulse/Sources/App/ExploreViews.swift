@@ -1,4 +1,5 @@
 import Charts
+import BioPulseDomain
 import SwiftUI
 
 struct TrendsView: View {
@@ -17,6 +18,16 @@ struct TrendsView: View {
 
     var body: some View {
         ScreenShell(title: "Tendencias", subtitle: "Cambios observados en tus registros") {
+            let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now
+            let signal = WellnessScores.change(health.wellnessValues, day: yesterday)
+            DashboardCard {
+                Text("SEÑAL DE CAMBIO PERSONAL").font(.caption.weight(.semibold)).foregroundStyle(PulseStyle.secondary)
+                Text(signal.value.map { $0 == 0 ? "Sin cambio persistente" : "\($0)/100" } ?? "—")
+                    .font(.title2.weight(.semibold)).foregroundStyle(.white)
+                Text(signal.reason).font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                Text("Ayer · \(signal.version) · magnitud de cambio, no probabilidad de enfermedad")
+                    .font(.caption2).foregroundStyle(PulseStyle.muted)
+            }
             DashboardCard {
                 Text("Tu historia, día a día").font(.headline)
                 Text("Solo se muestran días con datos de Apple Salud; los huecos no se rellenan.")
@@ -103,17 +114,37 @@ struct TrendsView: View {
 
 struct SleepView: View {
     @ObservedObject var health: HealthDataController
+    @ObservedObject var personal: PersonalContextStore
+
+    private var score: WellnessScore {
+        let day = health.dailyHistory[.sleepAnalysis]?.last?.day ?? Calendar.current.startOfDay(for: .now)
+        return WellnessScores.sleep(health.wellnessValues, day: day, targetMinutes: personal.sleepTargetMinutes)
+    }
 
     var body: some View {
         ScreenShell(title: "Sueño", subtitle: "Tu última noche registrada") {
             DashboardCard {
-                PendingScoreHero(title: "Sleep Score", subtitle: "Cálculo en preparación")
+                PendingScoreHero(title: "Sleep Score", score: score.value.map(Double.init), subtitle: score.value == nil ? "Datos insuficientes" : "Índice exploratorio")
                 Text("Tiempo dormido").font(.subheadline).foregroundStyle(PulseStyle.secondary)
                 Text(HealthMetric.sleepAnalysis.formattedValue(health.readings[.sleepAnalysis]))
                     .font(.largeTitle.weight(.semibold)).monospacedDigit().foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Tiempo observado en Apple Salud, no una puntuación.")
+                Text(score.reason)
                     .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+            }
+            DashboardCard {
+                Text("Meta personal de sueño").font(.headline)
+                Picker("Duración objetivo", selection: Binding(
+                    get: { personal.sleepTargetMinutes },
+                    set: { personal.updateSleepTarget($0) }
+                )) {
+                    ForEach(Array(stride(from: 360, through: 600, by: 30)), id: \.self) { minutes in
+                        Text("\(Double(minutes) / 60, specifier: "%.1f") horas").tag(minutes)
+                    }
+                }
+                .pickerStyle(.menu)
+                Text("Se guarda en este iPhone para tu cuenta. La fórmula usa duración y constancia.")
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
             }
             DashboardCard {
                 Text("Etapas de la noche").font(.headline)
@@ -145,7 +176,7 @@ struct SleepView: View {
             } else {
                 StatusPanel(symbol: "moon.zzz", title: "Aún no hay una noche registrada", message: "Cuando Apple Salud tenga registros de sueño compartidos con BioPulse, aparecerán aquí. Revisa los permisos y desliza hacia abajo para actualizar.")
             }
-            Text("Sleep Score requiere una fórmula validada y datos suficientes. BioPulse no estima etapas ausentes.")
+            Text("Fórmula \(score.version) · parámetros exploratorios pendientes de evaluación; BioPulse no estima etapas ausentes.")
                 .font(.footnote).foregroundStyle(PulseStyle.secondary)
         }
         .refreshable { await health.reload() }
@@ -163,20 +194,33 @@ struct SleepView: View {
 
 struct ScoreExplanationView: View {
     @ObservedObject var health: HealthDataController
+    @ObservedObject var personal: PersonalContextStore
+
+    private var score: WellnessScore {
+        let day = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now
+        return WellnessScores.bio(health.wellnessValues, day: day, targetMinutes: personal.sleepTargetMinutes)
+    }
 
     var body: some View {
         ScreenShell(title: "BioScore", subtitle: "Bienestar general") {
-            StatusPanel(
-                symbol: "circle.dashed",
-                title: "Puntuación aún no disponible",
-                message: "Estamos definiendo cómo combinar estas señales de forma fiable. Aquí puedes consultar las mediciones disponibles y su procedencia."
-            )
+            StatusPanel(symbol: score.value == nil ? "circle.dashed" : "waveform.path.ecg",
+                        title: score.value.map { "BioScore \($0)/100 · ayer" } ?? "Datos insuficientes",
+                        message: score.reason)
+            if let _ = score.value {
+                DashboardCard {
+                    Text("Componentes · \(score.version)").font(.headline)
+                    Text("Sueño \(Int(score.components["sleep"] ?? 0))/100 · recuperación \(Int(score.components["recovery"] ?? 0))/100 · actividad habitual \(Int(score.components["activityBalance"] ?? 0))/100")
+                        .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                    Text("Pesos propuestos: 40 % sueño, 35 % recuperación y 25 % actividad. Compara solo con tu propio historial.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
+            }
 
-            SectionHeading(title: "Señales consideradas", subtitle: "Disponibilidad de datos, no puntuación")
+            SectionHeading(title: "Señales consideradas", subtitle: "Mediciones y procedencia")
             ForEach([HealthMetric.sleepAnalysis, .heartRateVariabilitySDNN, .restingHeartRate, .stepCount]) { metric in
                 MetricListRow(metric: metric, reading: health.readings[metric], showsChevron: false)
             }
-            Text("Un dato disponible no implica que sea suficiente para calcular bienestar general. No mostraremos una cifra inventada.")
+            Text("Este índice personal es exploratorio. No equivale a un diagnóstico ni confirma un estado de salud.")
                 .font(.footnote)
                 .foregroundStyle(PulseStyle.secondary)
         }
