@@ -354,3 +354,10 @@
 - **Decisión:** no activar un modelo entrenado. Sobre 1.268 pares día→readiness del día siguiente de 16 personas, el holdout fijo incluyó 482 filas de 12 personas antes del 2020-01-15 y 199 filas de cuatro personas no vistas desde esa fecha. MAE: predictor mediano 1,4824; regresión lineal 1,7064; boosting 2,0065. La persistencia de readiness anterior dio MAE 1,4824. Los candidatos no mejoraron las referencias.
 - **Fuente:** [PMData de Simula](https://datasets.simula.no/pmdata/), Fitbit Versa 2 y autorreporte PMSys. La página actual indica CC BY 4.0, mientras el [artículo original](https://web-backend.simula.no/sites/default/files/publications/files/3339825.3394926.pdf) indica CC BY-NC 4.0; resolver antes de cualquier reutilización comercial. No hay participantes Apple Watch ni etiqueta de enfermedad.
 - **Límites:** un solo holdout pequeño; cuatro de las siete features del contrato no estaban disponibles; ninguna prueba de eficacia clínica ni de utilidad para usuarios iOS. Detalles y comandos en `ml/ACTIVATION_REVIEW_2026-10-17.md`.
+
+## D-053 — Proyecto Xcode versionado y compilación en CI macOS
+
+- **Estado:** CONFIRMED para generación del proyecto, compilación iOS sin firma y pruebas Swift; UNKNOWN para firma, instalación y funcionamiento en el iPhone del usuario.
+- **Decisión:** versionar `BioPulse/BioPulse.xcodeproj` junto con `project.yml` para que una descarga del repositorio pueda abrirse directamente en Xcode sin Homebrew ni XcodeGen local. El workflow manual `.github/workflows/ios-project.yml` regenera el proyecto en macOS y verifica build de simulador, `swift test` y build de dispositivo sin firma.
+- **Verificación:** [run 39053219208](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) con Xcode 26.6: ambos builds correctos y 26 pruebas Swift aprobadas. El proyecto generado coincide byte por byte con el versionado.
+- **Siguiente puerta:** elegir Apple Team en Xcode y probar instalación, HealthKit, cuenta, render y flujos críticos en iPhone. Un build de dispositivo sin firma no cubre esa puerta.

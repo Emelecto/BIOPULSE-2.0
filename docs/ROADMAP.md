@@ -89,7 +89,7 @@ El desglose, límites funcionales y criterios de verificación están en el [bac
 
 ## Estado consolidado para entrega académica — 2026-10-17
 
-Esta sección reemplaza los estados anteriores cuando hay contradicciones. «Implementado en código» no equivale a «compilado o verificado en iOS».
+Esta sección reemplaza los estados anteriores cuando hay contradicciones. «Compilado en CI» no equivale a «instalado y verificado en un iPhone».
 
 ### Se puede cerrar sin Mac
 
@@ -103,7 +103,7 @@ Esta sección reemplaza los estados anteriores cuando hay contradicciones. «Imp
 ### Verificación realizada en Windows — 2026-10-17
 
 - **CONFIRMED:** los 38 archivos Swift de fuentes y pruebas pasan el parser de sintaxis de Swift. Esto no es compilación ni validación de tipos.
-- **BLOCKED por entorno:** `swift test` no puede cargar el manifiesto porque el toolchain de Windows no encuentra `stdlib.h`; `xcodebuild` no está instalado. Ningún código iOS queda certificado para Xcode con esta revisión.
+- **CONFIRMED en CI macOS:** el proyecto de Xcode está versionado. [Run 39053219208](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) con Xcode 26.6 compiló el target iOS para simulador y dispositivo sin firma, y pasó 26 pruebas Swift del dominio. El proyecto generado en ese run coincide byte por byte con el versionado. En Windows, `swift test` sigue bloqueado por el SDK C incompleto, pero ya no impide verificar la compilación en macOS.
 - **CONFIRMED:** `npm run build` completa TypeScript y Vite; las 10 pruebas Vitest de web pasan.
 - **CONFIRMED:** las cuatro pruebas Python del contrato ML pasan con el fixture sintético de software. Esto comprueba el pipeline como código, no la calidad predictiva de un modelo.
 - **CONFIRMED:** las 10 pruebas unitarias de política del Coach pasan. No se probó una respuesta real de Groq ni el flujo integrado en iPhone.
@@ -113,8 +113,8 @@ Los modelos del repositorio son algoritmos candidatos dentro de un pipeline de i
 
 ### Requiere Mac/Xcode o dispositivo Apple
 
-1. Generar proyecto, resolver cualquier error de compilación y ejecutar pruebas del paquete/dominio.
-2. Ejecutar la app en simulador y iPhone; comprobar cuenta, navegación, estados vacíos, persistencia, exportación y cambio de sesión.
+1. Abrir el proyecto versionado, seleccionar el Apple Team y comprobar firma e instalación en el iPhone del usuario.
+2. Ejecutar la app en simulador o iPhone; comprobar cuenta, navegación, estados vacíos, persistencia, exportación y cambio de sesión.
 3. Autorizar HealthKit y comprobar métricas, cobertura, días sin muestras y zonas horarias con datos reales.
 4. Revisar Dynamic Type, VoiceOver, contraste y notificaciones.
 5. Probar Coach en dispositivo con respuesta real, consentimiento, revocación, errores y límites.
@@ -122,4 +122,4 @@ Los modelos del repositorio son algoritmos candidatos dentro de un pipeline de i
 
 ### Criterio realista de «listo para la exposición»
 
-La exposición puede presentar un prototipo funcional cuando el flujo elegido se demuestra en iPhone con datos autorizados o en una grabación reproducible, y el resto se identifica como código pendiente o trabajo futuro. No afirmar disponibilidad en App Store, sincronización nativa, superioridad frente a otros wearables ni eficacia clínica sin evidencia. La revisión en Mac sigue siendo el bloqueo principal para llamar a la app compilada y verificada.
+La exposición puede presentar un prototipo funcional cuando el flujo elegido se demuestra en iPhone con datos autorizados o en una grabación reproducible, y el resto se identifica como código pendiente o trabajo futuro. No afirmar disponibilidad en App Store, sincronización nativa, superioridad frente a otros wearables ni eficacia clínica sin evidencia. La compilación en macOS está confirmada; la instalación, firma y QA de uso real en iPhone siguen pendientes.

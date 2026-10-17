@@ -2,7 +2,7 @@
 
 ## Implementación actual
 
-La app SwiftUI usa una interfaz oscura y atmosférica, con fondo nocturno, superficies elevadas y acentos de color por tipo de señal. Las exploraciones visuales bajo `design-explorations/` documentan la evolución del diseño; el código actual y su futura revisión en Xcode determinan lo que realmente está implementado.
+La app SwiftUI usa una interfaz oscura y atmosférica, con fondo nocturno, superficies elevadas y acentos de color por tipo de señal. Las exploraciones visuales bajo `design-explorations/` documentan la evolución del diseño; la revisión visual en un dispositivo determinará su apariencia real.
 
 **CONFIRMED en el código fuente:**
 
@@ -14,7 +14,7 @@ La app SwiftUI usa una interfaz oscura y atmosférica, con fondo nocturno, super
 - Cuenta obligatoria; el inicio de sesión no concede consentimiento para sincronizar datos.
 - Coach conversacional en español con consentimiento específico y límites informativos/no diagnósticos. La respuesta real del proveedor y la experiencia en dispositivo siguen pendientes de QA.
 
-**UNKNOWN:** compilación actual con Xcode, apariencia en dispositivos reales, permisos HealthKit efectivos, VoiceOver, Dynamic Type y notificaciones. La presencia de una vista en el código no confirma por sí sola su funcionamiento en iOS.
+**CONFIRMED:** [CI en macOS con Xcode 26.6](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) compiló el target iOS para simulador y dispositivo sin firma y pasó 26 pruebas Swift del dominio. **UNKNOWN:** apariencia y funcionamiento en dispositivos reales, permisos HealthKit efectivos, VoiceOver, Dynamic Type y notificaciones. La compilación no confirma por sí sola el comportamiento visual o funcional de cada pantalla.
 
 ## Reglas visuales y de información
 
@@ -25,9 +25,9 @@ La app SwiftUI usa una interfaz oscura y atmosférica, con fondo nocturno, super
 5. Los ejemplos de las exploraciones visuales son ilustrativos; no constituyen datos reales ni resultados de BioPulse.
 6. Recordatorios opt-in y fáciles de desactivar. Las exportaciones requieren selección visible y revisión del contenido antes de compartir.
 
-## Validación pendiente en Mac/Xcode
+## Validación pendiente en dispositivo
 
-- Generar el proyecto desde `BioPulse/project.yml`, compilar y ejecutar en simulador o iPhone.
+- Abrir `BioPulse/BioPulse.xcodeproj`, configurar firma y ejecutar en iPhone; repetir flujos críticos en simulador si conviene.
 - Revisar solicitudes y consultas de HealthKit con datos reales autorizados, historial, cobertura y días sin datos.
 - Revisar Dynamic Type, VoiceOver, contraste, navegación y áreas táctiles.
 - Revisar persistencia y aislamiento al cerrar sesión/cambiar de cuenta, importación CSV, exportación, permisos y notificaciones.

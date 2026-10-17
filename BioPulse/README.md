@@ -1,12 +1,13 @@
 # BioPulse 2.0 para iOS
 
-Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple Salud, el paquete de dominio y una especificación de proyecto para XcodeGen. La app ya se abrió en el simulador del usuario; los cambios posteriores todavía requieren una nueva compilación en la Mac.
+Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple Salud, el paquete de dominio y un proyecto de Xcode listo para abrir. `BioPulse.xcodeproj` está incluido en el repositorio; no necesitas Homebrew ni XcodeGen para abrir esta versión.
 
 ## Archivos iniciales
 
 - `Sources/App`: cinco secciones navegables (`Hoy`, `Tendencias`, `Diario`, `Sueño`, `Perfil`), pantalla de acceso, Coach, detalle y procedencia de señales, estados vacíos y lectura local de Apple Salud.
 - `Resources/Assets.xcassets/ForestNight.imageset`: fondo nocturno del inicio; recurso decorativo, sin datos de salud.
 - `project.yml`: especificación reproducible del proyecto iOS 17 para XcodeGen.
+- `BioPulse.xcodeproj`: proyecto generado y versionado para abrir directamente en Xcode.
 - `Sources/HealthKit/HealthMetric.swift`: catálogo tipado de métricas y estados de capacidad.
 - `Sources/HealthKit/HealthKitCapabilityCatalog.swift`: mapea métricas a tipos HealthKit y evita confundir permiso denegado con ausencia de datos.
 - `Package.swift` y `Sources/BioPulseDomain`: paquete Foundation-only con contratos de métricas diarias, calidad, procedencia y baseline personal robusto.
@@ -31,11 +32,14 @@ Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple 
 - Perfil: permite actualizar mediciones, abrir Ajustes y revisar localmente un CSV tidy/wide. Esta revisión no persiste el archivo ni incorpora sus registros al dashboard.
 - Diario: guarda hábitos, síntomas y eventos exclusivamente en el dispositivo. Las entradas admiten crear, editar, eliminar y recargar; las revisiones impiden sobrescrituras silenciosas dentro del repositorio local. Aún falta validarlo en un iPhone con Xcode.
 
-## Actualizar la copia de macOS
+## Abrir en la Mac
 
-1. Descargar la versión actualizada del repositorio o actualizar la copia local.
-2. Desde la carpeta `BioPulse` que contiene `project.yml`, ejecutar `xcodegen generate` y abrir `BioPulse.xcodeproj` generado. Regenerar el proyecto restablece cambios hechos solamente en la interfaz de Xcode; la configuración necesaria ya está en `project.yml`.
-3. Seleccionar un simulador de iPhone y ejecutar la app con ⌘R. Comprobar que el título y los campos de acceso no se recortan a los lados.
+1. Descargar la versión más reciente de la rama `main` o actualizar la copia local; un ZIP descargado antes de la inclusión de `BioPulse.xcodeproj` no lo tendrá.
+2. Descomprimir el ZIP y abrir `BioPulse/BioPulse.xcodeproj` con Xcode. No hace falta ejecutar comandos.
+3. Para probar en tu iPhone: conectar y desbloquear el dispositivo, seleccionarlo como destino, abrir el target **BioPulse → Signing & Capabilities**, elegir tu **Team** y pulsar **Run** (⌘R). Si Xcode indica que el identificador del paquete ya está ocupado para tu equipo, cambiarlo allí antes de repetir Run.
+4. Si prefieres el simulador, seleccionar uno de iPhone y pulsar ⌘R. Revisar navegación y que el texto de acceso no se recorte.
+
+Solo hace falta regenerar el proyecto con XcodeGen si cambias `project.yml` o agregas archivos que requieran modificar la estructura del proyecto. En ese caso, vuelve a versionar el `.xcodeproj` generado.
 
 ## Confirmación de correo en Supabase remoto
 
@@ -49,4 +53,4 @@ Apple y Google requieren además la configuración de sus proveedores en Supabas
 
 ## Verificación actual
 
-En Windows no es posible compilar esta interfaz para iOS ni capturar el simulador. La compilación y apertura anteriores fueron reportadas por el usuario; los cambios actuales de diseño y configuración aún deben comprobarse en la Mac.
+**CONFIRMED:** [GitHub Actions en macOS, Xcode 26.6](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) generó el proyecto, compiló para simulador y para dispositivo iOS sin firma, y pasó las 26 pruebas Swift del dominio. El artefacto generado coincide byte por byte con el `.xcodeproj` versionado. **UNKNOWN:** firma con tu Apple Team, instalación y ejecución en tu iPhone, permisos reales de HealthKit, navegación visual, accesibilidad y flujos de cuenta/Coach en dispositivo. La compilación para dispositivo en CI no firma ni instala la app.
