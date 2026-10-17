@@ -55,6 +55,9 @@ public enum TrendCalculator {
         guard let currentMetric = current.metric(metric) else {
             return unavailable(metric: metric, day: current.day, reason: .missingCurrentMeasurement)
         }
+        guard currentMetric.source != .testFixture || includeTestFixtures else {
+            return unavailable(metric: metric, day: current.day, reason: .testFixtureExcluded)
+        }
         let currentQualityIsEligible = currentMetric.quality.isEligibleForBaseline || (
             includeTestFixtures && currentMetric.quality == .simulatedForTest
         )
@@ -63,9 +66,6 @@ public enum TrendCalculator {
         }
         guard currentMetric.coverage >= minimumCoverage else {
             return unavailable(metric: metric, day: current.day, reason: .currentCoverageTooLow)
-        }
-        guard currentMetric.source != .testFixture || includeTestFixtures else {
-            return unavailable(metric: metric, day: current.day, reason: .testFixtureExcluded)
         }
         guard sensitivityMultiplier > 0 else {
             return unavailable(metric: metric, day: current.day, reason: .insufficientHistoricalObservations)
