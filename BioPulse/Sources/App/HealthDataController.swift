@@ -98,12 +98,13 @@ final class HealthDataController: ObservableObject {
         var updated: [HealthMetric: HealthReading] = [:]
         var failedQueries = 0
 
-        for (metric, identifier, unit, start) in [
+        let latestMetrics: [(HealthMetric, HKQuantityTypeIdentifier, HKUnit, Date)] = [
             (.restingHeartRate, .restingHeartRate, HKUnit.count().unitDivided(by: .minute()), today),
             (.heartRate, .heartRate, HKUnit.count().unitDivided(by: .minute()), today),
             (.respiratoryRate, .respiratoryRate, HKUnit.count().unitDivided(by: .minute()), today),
             (.oxygenSaturation, .oxygenSaturation, HKUnit.percent(), today)
-        ] {
+        ]
+        for (metric, identifier, unit, start) in latestMetrics {
             do {
                 updated[metric] = try await latestQuantity(identifier, unit: unit, from: start, to: now)
             } catch {
