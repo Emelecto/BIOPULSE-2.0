@@ -13,6 +13,19 @@ jobs:
       - name: Check out BioPulse
         uses: actions/checkout@v4
 
+      - name: Report Xcode version
+        run: xcodebuild -version
+
+      - name: Build checked-in project for iOS Simulator without signing
+        run: >-
+          xcodebuild
+          -project BioPulse/BioPulse.xcodeproj
+          -scheme BioPulse
+          -configuration Debug
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
+
       - name: Install XcodeGen 2.46.0
         run: |
           curl --fail --location --silent --show-error \
@@ -26,18 +39,8 @@ jobs:
         run: |
           "$RUNNER_TEMP/xcodegen/bin/xcodegen" generate
 
-      - name: Report Xcode version
-        run: xcodebuild -version
-
-      - name: Build for iOS Simulator without signing
-        run: >-
-          xcodebuild
-          -project BioPulse/BioPulse.xcodeproj
-          -scheme BioPulse
-          -configuration Debug
-          -destination 'generic/platform=iOS Simulator'
-          CODE_SIGNING_ALLOWED=NO
-          build
+      - name: Confirm generated files match the repository
+        run: git diff --exit-code -- BioPulse/BioPulse.xcodeproj BioPulse/Info.plist
 
       - name: Test BioPulse domain
         working-directory: BioPulse
