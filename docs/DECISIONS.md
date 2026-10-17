@@ -362,3 +362,10 @@
 - **Verificación:** [run 39053219208](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) con Xcode 26.6: ambos builds correctos y 26 pruebas Swift aprobadas. El proyecto generado coincide byte por byte con el versionado.
 - **Siguiente puerta:** elegir Apple Team en Xcode y probar instalación, HealthKit, cuenta, render y flujos críticos en iPhone. Un build de dispositivo sin firma no cubre esa puerta.
 - **Corrección 2026-10-17:** el primer `.xcodeproj` versionado referenciaba `BioPulse/Info.plist`, pero XcodeGen lo creaba solo en CI y el archivo faltaba en la descarga. Se versionó el `Info.plist` generado. El [run 39056797219](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39056797219) compiló el proyecto desde un checkout limpio antes de ejecutar XcodeGen, comprobó que la generación no altera los archivos versionados, pasó 26 pruebas y compiló para dispositivo sin firma. La puerta de firma/instalación física sigue UNKNOWN.
+
+## D-054 — Declarar pantalla de inicio para tamaño de pantalla iOS
+
+- **Estado:** CONFIRMED para la clave `UILaunchScreen` y la compilación en CI; UNKNOWN para la resolución visual en el iPhone hasta reinstalar y revisar allí.
+- **Decisión:** declarar `UILaunchScreen` en `project.yml` y versionar la misma propiedad en `BioPulse/Info.plist`. El video del usuario mostraba la interfaz ocupando solo una región central con barras negras; la configuración anterior no declaraba pantalla de inicio.
+- **Verificación:** [run 39064452025](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39064452025) compiló el checkout versionado para simulador, verificó que XcodeGen reproduce los archivos, pasó 26 pruebas Swift y compiló el target iOS para dispositivo sin firma.
+- **Pendiente:** descargar la versión actualizada, reinstalar con Xcode y confirmar en el iPhone que el contenido ocupa el área esperada.
