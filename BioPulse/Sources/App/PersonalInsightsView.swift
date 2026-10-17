@@ -611,12 +611,12 @@ struct PersonalInsightsView: View {
     private func formatted(_ value: Double, metric: HealthMetric) -> String {
         let number = value.formatted(.number.precision(.fractionLength(0...1)))
         switch metric {
-        case .sleepAnalysis: "\(number) min"
-        case .stepCount: "\(number) pasos"
-        case .heartRateVariabilitySDNN: "\(number) ms"
-        case .restingHeartRate: "\(number) lpm"
-        case .appleExerciseTime: "\(number) min"
-        default: number
+        case .sleepAnalysis: return "\(number) min"
+        case .stepCount: return "\(number) pasos"
+        case .heartRateVariabilitySDNN: return "\(number) ms"
+        case .restingHeartRate: return "\(number) lpm"
+        case .appleExerciseTime: return "\(number) min"
+        default: return number
         }
     }
 
