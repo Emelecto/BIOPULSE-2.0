@@ -1,0 +1,47 @@
+name: Generate and build iOS project
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  simulator-build:
+    runs-on: macos-latest
+    steps:
+      - name: Check out BioPulse
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen 2.46.0
+        run: |
+          curl --fail --location --silent --show-error \
+            https://github.com/yonaskolb/XcodeGen/releases/download/2.46.0/xcodegen.zip \
+            --output "$RUNNER_TEMP/xcodegen.zip"
+          unzip -q "$RUNNER_TEMP/xcodegen.zip" -d "$RUNNER_TEMP"
+          "$RUNNER_TEMP/xcodegen/bin/xcodegen" --version
+
+      - name: Generate Xcode project
+        working-directory: BioPulse
+        run: "$RUNNER_TEMP/xcodegen/bin/xcodegen" generate
+
+      - name: Report Xcode version
+        run: xcodebuild -version
+
+      - name: Build for iOS Simulator without signing
+        run: >-
+          xcodebuild
+          -project BioPulse/BioPulse.xcodeproj
+          -scheme BioPulse
+          -configuration Debug
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+          build
+
+      - name: Save generated Xcode project
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BioPulse-xcodeproj
+          path: BioPulse/BioPulse.xcodeproj
+          if-no-files-found: warn
