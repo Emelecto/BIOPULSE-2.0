@@ -53,10 +53,12 @@ jobs:
           CODE_SIGNING_ALLOWED=NO
           build
 
-      - name: Save generated Xcode project
+      - name: Save generated Xcode project and Info.plist
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: BioPulse-xcodeproj
-          path: BioPulse/BioPulse.xcodeproj
+          path: |
+            BioPulse/BioPulse.xcodeproj
+            BioPulse/Info.plist
           if-no-files-found: warn
