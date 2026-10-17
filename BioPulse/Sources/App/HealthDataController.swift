@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 import HealthKit
+import BioPulseDomain
 
 struct HealthReading: Equatable {
     let value: Double
@@ -52,11 +53,78 @@ final class HealthDataController: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var lastUpdated: Date?
     @Published private(set) var hasRequestedAccess = UserDefaults.standard.bool(forKey: "BioPulse.hasRequestedHealthAccess")
+    @Published private(set) var isCSVImported = false
+    @Published private(set) var csvLastDay: Date?
 
     private let store = HKHealthStore()
     private let catalog = HealthKitCapabilityCatalog()
 
     var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
+    var displayedDataDay: Date { csvLastDay ?? Calendar.current.startOfDay(for: .now) }
+
+    func useCSV(_ result: CSVImportResult) -> Bool {
+        guard !result.records.isEmpty else { return false }
+        let mapped: [(MetricKind, HealthMetric)] = [
+            (.heartRate, .heartRate), (.restingHeartRate, .restingHeartRate),
+            (.heartRateVariabilitySDNN, .heartRateVariabilitySDNN), (.sleepDuration, .sleepAnalysis),
+            (.stepCount, .stepCount), (.walkingRunningDistance, .walkingRunningDistance),
+            (.activeEnergyBurned, .activeEnergyBurned), (.exerciseDuration, .appleExerciseTime),
+            (.flightsClimbed, .flightsClimbed)
+        ]
+        var history: [HealthMetric: [DailyHealthObservation]] = [:]
+        for (domainMetric, appMetric) in mapped {
+            let grouped = Dictionary(grouping: result.records.filter { $0.metric == domainMetric }, by: \.day)
+            let points = grouped.compactMap { day, records -> DailyHealthObservation? in
+                guard let date = date(for: day), !records.isEmpty else { return nil }
+                let values = records.map(\.value).sorted()
+                let value: Double
+                switch domainMetric {
+                case .stepCount, .walkingRunningDistance, .activeEnergyBurned, .exerciseDuration, .flightsClimbed, .sleepDuration:
+                    value = values.reduce(0, +)
+                case .heartRateRecoveryOneMinute:
+                    value = values.last ?? 0
+                default:
+                    let middle = values.count / 2
+                    value = values.count.isMultiple(of: 2) ? (values[middle - 1] + values[middle]) / 2 : values[middle]
+                }
+                return DailyHealthObservation(day: date, value: value, sourceName: "CSV · agregado diario")
+            }.sorted { $0.day < $1.day }
+            if !points.isEmpty { history[appMetric] = points }
+        }
+
+        var latest: [HealthMetric: HealthReading] = [:]
+        for (metric, points) in history {
+            guard let point = points.last else { continue }
+            latest[metric] = HealthReading(value: point.value, measuredAt: point.day, sourceName: "CSV · último día disponible")
+        }
+        readings = latest
+        dailyHistory = history
+        hourlyActiveEnergy = []
+        sleepStages = []
+        csvLastDay = result.records.compactMap { date(for: $0.day) }.max()
+        isCSVImported = true
+        errorMessage = nil
+        lastUpdated = .now
+        return true
+    }
+
+    func clearCSV() {
+        isCSVImported = false
+        csvLastDay = nil
+        readings = [:]
+        dailyHistory = [:]
+        hourlyActiveEnergy = []
+        sleepStages = []
+        lastUpdated = nil
+        Task { await reload() }
+    }
+
+    private func date(for day: LocalDay) -> Date? {
+        guard let timeZone = TimeZone(identifier: day.timeZoneIdentifier) else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = timeZone
+        return calendar.date(from: DateComponents(year: day.year, month: day.month, day: day.day))
+    }
 
     func requestAccess() async {
         guard isAvailable else {
@@ -88,6 +156,7 @@ final class HealthDataController: ObservableObject {
     }
 
     func reload() async {
+        guard !isCSVImported else { return }
         guard isAvailable, hasRequestedAccess else { return }
         isLoading = true
         errorMessage = nil

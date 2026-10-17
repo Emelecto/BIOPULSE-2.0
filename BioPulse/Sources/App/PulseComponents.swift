@@ -357,6 +357,7 @@ extension HealthMetric {
 
     func provenanceLabel(_ reading: HealthReading?) -> String {
         guard reading != nil else { return "Sin dato reciente" }
+        if reading?.sourceName.hasPrefix("CSV") == true { return "Agregado diario · CSV" }
         switch self {
         case .sleepAnalysis: return "Calculado de registros · Salud"
         case .stepCount, .activeEnergyBurned, .appleExerciseTime: return "Acumulado · Salud"

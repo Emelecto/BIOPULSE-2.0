@@ -94,6 +94,7 @@ public enum CSVImporter {
         var warnings: [CSVImportWarning] = []
         var rejectedRows: [CSVRejectedRow] = []
         var mappedColumns: [String: MetricKind] = [:]
+        var unsupportedTypes = Set<String>()
 
         for (offset, row) in rows.enumerated() {
             let rowNumber = offset + 2
@@ -109,23 +110,26 @@ public enum CSVImporter {
             let rawValue = value(named: "value", from: row, indexes: columnIndex)
 
             guard let metric = metricKind(for: type) else {
-                warnings.append(CSVImportWarning(rowNumber: rowNumber, column: "type", message: "Tipo no soportado en esta versión; no se importó."))
+                if unsupportedTypes.insert(type).inserted {
+                    warnings.append(CSVImportWarning(rowNumber: rowNumber, column: "type", message: "El tipo \(type) no está soportado; sus filas no se importaron."))
+                }
                 continue
             }
             mappedColumns["type"] = metric
 
             guard let day = localDay(fromISO8601: startDate, fallbackTimeZone: timeZone) else {
-                rejectedRows.append(CSVRejectedRow(rowNumber: rowNumber, column: "startDate", reason: "La fecha debe ser ISO 8601 con zona horaria."))
+                rejectedRows.append(CSVRejectedRow(rowNumber: rowNumber, column: "startDate", reason: "La fecha debe incluir día y zona horaria reconocibles."))
                 continue
             }
-            guard let numericValue = Double(rawValue), numericValue.isFinite else {
+            guard let sourceValue = Double(rawValue), sourceValue.isFinite else {
                 rejectedRows.append(CSVRejectedRow(rowNumber: rowNumber, column: "value", reason: "El valor debe ser numérico y finito."))
                 continue
             }
-            guard let metricUnit = metricUnit(for: unit), metricUnit == metric.expectedUnit else {
+            guard let metricUnit = metricUnit(for: unit, metric: metric), metricUnit == metric.expectedUnit else {
                 rejectedRows.append(CSVRejectedRow(rowNumber: rowNumber, column: "unit", reason: "La unidad no coincide con la métrica canónica."))
                 continue
             }
+            let numericValue = normalizedValue(sourceValue, unit: unit, metric: metric)
 
             do {
                 let record = try DailyMetric(
@@ -144,6 +148,10 @@ public enum CSVImporter {
             } catch {
                 rejectedRows.append(CSVRejectedRow(rowNumber: rowNumber, reason: "No se pudo normalizar la métrica: \(error)."))
             }
+        }
+
+        if !records.isEmpty {
+            warnings.append(CSVImportWarning(message: "Los totales de actividad se suman por día a partir de las filas del archivo. Si el CSV contiene muestras solapadas de varios dispositivos, el total puede diferir del agregado de Apple Salud."))
         }
 
         return CSVImportResult(
@@ -250,6 +258,7 @@ public enum CSVImporter {
         case "wristtemperaturedeviation": .wristTemperatureDeviation
         case "stepcount", "hkquantitytypeidentifierstepcount": .stepCount
         case "walkingrunningdistance", "hkquantitytypeidentifierdistancewalkingrunning": .walkingRunningDistance
+        case "walkingheartrateaverage", "hkquantitytypeidentifierwalkingheartrateaverage": .heartRate
         case "activeenergyburned", "hkquantitytypeidentifieractiveenergyburned": .activeEnergyBurned
         case "appleexercisetime", "hkquantitytypeidentifierappleexercisetime": .exerciseDuration
         case "flightsclimbed", "hkquantitytypeidentifierflightsclimbed": .flightsClimbed
@@ -259,7 +268,7 @@ public enum CSVImporter {
         }
     }
 
-    private static func metricUnit(for rawUnit: String) -> MetricUnit? {
+    private static func metricUnit(for rawUnit: String, metric: MetricKind) -> MetricUnit? {
         switch rawUnit.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
         case "count/min", "bpm": .beatsPerMinute
         case "ms": .milliseconds
@@ -269,10 +278,18 @@ public enum CSVImporter {
         case "degc", "°c", "celsius-delta": .celsiusDelta
         case "count": .count
         case "m": .meters
+        case "km": metric == .walkingRunningDistance ? .meters : nil
         case "kcal": .kilocalories
         case "ml/(kg*min)", "ml/kg/min": .millilitersPerKilogramPerMinute
         default: nil
         }
+    }
+
+    private static func normalizedValue(_ value: Double, unit: String, metric: MetricKind) -> Double {
+        if metric == .walkingRunningDistance, unit.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "km" {
+            return value * 1_000
+        }
+        return value
     }
 
     private static func defaultAggregation(for metric: MetricKind) -> MetricAggregation {
@@ -287,6 +304,9 @@ public enum CSVImporter {
     }
 
     private static func localDay(fromISO8601 string: String, fallbackTimeZone: TimeZone) -> LocalDay? {
+        if !string.contains("T"), let date = appleExportDate(string) {
+            return LocalDay(date: date, timeZone: fallbackTimeZone)
+        }
         let formatters = [
             ISO8601DateFormatter(),
             ISO8601DateFormatter()
@@ -300,6 +320,27 @@ public enum CSVImporter {
             }
         }
         return nil
+    }
+
+    private static func appleExportDate(_ string: String) -> Date? {
+        let fields = string.split(separator: " ")
+        guard fields.count >= 3 else { return nil }
+        let dateFields = fields[0].split(separator: "-").compactMap { Int($0) }
+        let timeFields = fields[1].split(separator: ":").compactMap { Int($0) }
+        let offset = String(fields[2])
+        guard dateFields.count == 3, timeFields.count == 3,
+              offset.count == 5, let sign = offset.first,
+              sign == "+" || sign == "-",
+              let offsetHours = Int(offset.dropFirst().prefix(2)),
+              let offsetMinutes = Int(offset.suffix(2)) else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0) ?? .gmt
+        guard let wallClockAsUTC = calendar.date(from: DateComponents(
+            year: dateFields[0], month: dateFields[1], day: dateFields[2],
+            hour: timeFields[0], minute: timeFields[1], second: timeFields[2]
+        )) else { return nil }
+        let seconds = (offsetHours * 60 + offsetMinutes) * 60 * (sign == "+" ? 1 : -1)
+        return wallClockAsUTC.addingTimeInterval(TimeInterval(-seconds))
     }
 
     private static func localDay(fromDateOnly string: String, timeZone: TimeZone) -> LocalDay? {
@@ -320,6 +361,7 @@ public enum CSVImporter {
     private static func normalizeHeader(_ value: String) -> String {
         value
             .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{FEFF}", with: "")
             .lowercased()
             .replacingOccurrences(of: "_", with: "")
             .replacingOccurrences(of: " ", with: "")
@@ -334,35 +376,35 @@ public enum CSVImporter {
     }
 
     private static func parseRows(_ text: String) throws -> [[String]] {
-        let characters = Array(text.unicodeScalars)
-        guard !characters.isEmpty else { return [] }
+        let bytes = Array(text.utf8)
+        guard !bytes.isEmpty else { return [] }
 
         var rows: [[String]] = []
         var row: [String] = []
-        var field = ""
+        var field: [UInt8] = []
         var isInsideQuotes = false
         var index = 0
 
-        while index < characters.count {
-            let character = characters[index]
+        while index < bytes.count {
+            let byte = bytes[index]
 
-            if character == "\"" {
-                if isInsideQuotes, index + 1 < characters.count, characters[index + 1] == "\"" {
-                    field.append("\"")
+            if byte == 34 {
+                if isInsideQuotes, index + 1 < bytes.count, bytes[index + 1] == 34 {
+                    field.append(34)
                     index += 1
                 } else {
                     isInsideQuotes.toggle()
                 }
-            } else if character == ",", !isInsideQuotes {
-                row.append(field)
-                field = ""
-            } else if character == "\n", !isInsideQuotes {
-                row.append(field)
+            } else if byte == 44, !isInsideQuotes {
+                row.append(String(decoding: field, as: UTF8.self))
+                field.removeAll(keepingCapacity: true)
+            } else if byte == 10, !isInsideQuotes {
+                row.append(String(decoding: field, as: UTF8.self))
                 rows.append(row)
                 row = []
-                field = ""
-            } else if character != "\r" {
-                field.unicodeScalars.append(character)
+                field.removeAll(keepingCapacity: true)
+            } else if byte != 13 {
+                field.append(byte)
             }
 
             index += 1
@@ -370,7 +412,7 @@ public enum CSVImporter {
 
         guard !isInsideQuotes else { throw CSVImportError.malformedQuotedField }
         if !row.isEmpty || !field.isEmpty {
-            row.append(field)
+            row.append(String(decoding: field, as: UTF8.self))
             rows.append(row)
         }
         return rows

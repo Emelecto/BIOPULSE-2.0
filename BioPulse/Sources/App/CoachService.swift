@@ -290,6 +290,10 @@ final class CoachViewModel: ObservableObject {
     }
 
     private func requestReply() async {
+        guard !health.isCSVImported else {
+            errorMessage = "El Coach se pausa mientras hay datos CSV importados. Quita el archivo desde Perfil antes de compartir contexto con el Coach."
+            return
+        }
         guard let accessToken = auth.session?.accessToken else {
             errorMessage = "Tu sesión venció. Inicia sesión de nuevo para continuar."
             return

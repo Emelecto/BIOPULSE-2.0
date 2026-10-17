@@ -54,7 +54,7 @@ struct RootView: View {
         HStack {
             Spacer(minLength: 0)
             Button { showingCoach = true } label: {
-                Label("Coach IA", systemImage: "sparkles")
+                Label(health.isCSVImported ? "Coach pausado con CSV" : "Coach IA", systemImage: health.isCSVImported ? "lock.fill" : "sparkles")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 20)
@@ -70,6 +70,7 @@ struct RootView: View {
                     .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
             }
             .buttonStyle(PulsePressButtonStyle())
+            .disabled(health.isCSVImported)
             .accessibilityLabel("Abrir Coach BioPulse")
         }
         .padding(.horizontal, 22).padding(.vertical, 8)

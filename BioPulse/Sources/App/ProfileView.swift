@@ -10,6 +10,7 @@ struct ProfileView: View {
     @State private var showingImporter = false
     @State private var importResult: CSVImportResult?
     @State private var importError: String?
+    @State private var isImportingCSV = false
     @State private var signOutError: String?
     @State private var isSigningOut = false
 
@@ -52,18 +53,38 @@ struct ProfileView: View {
             SectionHeading(title: "CSV", subtitle: "Revisa un archivo antes de incorporarlo")
             StatusPanel(
                 symbol: "doc.text.magnifyingglass",
-                title: "Vista previa local",
-                message: "Acepta los formatos tidy y wide documentados. Esta revisión no guarda registros ni reemplaza mediciones de Apple Salud."
+                title: health.isCSVImported ? "CSV activo en esta sesión" : "Importación privada en este iPhone",
+                message: health.isCSVImported
+                    ? "Las señales del archivo aparecen en Hoy y Tendencias. Se conservan en memoria hasta cerrar la app y no se envían a servicios externos."
+                    : "Carga un CSV de Apple Salud para ver tendencias. El archivo se procesa en el iPhone; no se sube ni se escribe en Apple Salud."
             )
-            Button("Revisar archivo CSV") { showingImporter = true }
+            Button(isImportingCSV ? "Procesando CSV…" : "Revisar archivo CSV") { showingImporter = true }
                 .buttonStyle(PulseSecondaryButtonStyle())
+                .disabled(isImportingCSV)
+            if isImportingCSV {
+                ProgressView("Leyendo muestras en este iPhone…")
+                    .font(.footnote).tint(PulseStyle.mint)
+            }
 
             if let result = importResult {
                 StatusPanel(
                     symbol: "checkmark.doc",
                     title: "Archivo revisado",
-                    message: "\(result.records.count) registros válidos · \(result.rejectedRows.count) filas rechazadas · \(result.warnings.count) advertencias. \(result.rejectedRows.first?.reason ?? "Los datos aún no se han guardado.")"
+                    message: "\(result.records.count) muestras compatibles · \(result.rejectedRows.count) filas rechazadas · \(result.warnings.count) advertencias. Se mostrarán como agregados por día. \(result.warnings.last?.message ?? "")"
                 )
+                if !result.records.isEmpty {
+                    Button("Usar estos datos en BioPulse") {
+                        if !health.useCSV(result) { importError = "El archivo no contiene señales compatibles para mostrar." }
+                    }
+                    .buttonStyle(PulseActionButtonStyle())
+                }
+            }
+            if health.isCSVImported {
+                Button("Quitar CSV y volver a Apple Salud", role: .destructive) {
+                    health.clearCSV()
+                    importResult = nil
+                }
+                .buttonStyle(PulseSecondaryButtonStyle())
             }
             if let importError {
                 StatusPanel(symbol: "exclamationmark.triangle", title: "No se pudo leer el CSV", message: importError)
@@ -127,15 +148,23 @@ struct ProfileView: View {
         .fileImporter(isPresented: $showingImporter, allowedContentTypes: [.commaSeparatedText, .plainText]) { result in
             switch result {
             case .success(let url):
-                let permitted = url.startAccessingSecurityScopedResource()
-                defer { if permitted { url.stopAccessingSecurityScopedResource() } }
-                do {
-                    let content = try String(contentsOf: url, encoding: .utf8)
-                    importResult = try CSVImporter.import(content, timeZone: .current)
-                    importError = nil
-                } catch {
-                    importResult = nil
-                    importError = "Comprueba que el archivo sea UTF-8 y use un encabezado tidy o wide válido."
+                isImportingCSV = true
+                Task {
+                    let timeZone = TimeZone.current
+                    do {
+                        let parsed = try await Task.detached(priority: .userInitiated) { () throws -> CSVImportResult in
+                            let permitted = url.startAccessingSecurityScopedResource()
+                            defer { if permitted { url.stopAccessingSecurityScopedResource() } }
+                            let content = try String(contentsOf: url, encoding: .utf8)
+                            return try CSVImporter.import(content, timeZone: timeZone)
+                        }.value
+                        importResult = parsed
+                        importError = nil
+                    } catch {
+                        importResult = nil
+                        importError = "Comprueba que el archivo sea UTF-8 y use un encabezado tidy o wide válido."
+                    }
+                    isImportingCSV = false
                 }
             case .failure:
                 importError = "No se pudo abrir el archivo seleccionado."

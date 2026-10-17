@@ -369,3 +369,12 @@
 - **Decisión:** declarar `UILaunchScreen` en `project.yml` y versionar la misma propiedad en `BioPulse/Info.plist`. El video del usuario mostraba la interfaz ocupando solo una región central con barras negras; la configuración anterior no declaraba pantalla de inicio.
 - **Verificación:** [run 39064452025](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39064452025) compiló el checkout versionado para simulador, verificó que XcodeGen reproduce los archivos, pasó 26 pruebas Swift y compiló el target iOS para dispositivo sin firma.
 - **Pendiente:** descargar la versión actualizada, reinstalar con Xcode y confirmar en el iPhone que el contenido ocupa el área esperada.
+
+## D-055 — Importación local de exportaciones Apple Salud en CSV
+
+- **Estado:** CONFIRMED para la ruta de importación, formatos mapeados y procesamiento local en código; UNKNOWN para compilación/QA en iPhone.
+- **Decisión:** Perfil permite revisar un CSV tidy o wide y activarlo en Hoy/Tendencias durante la sesión. Se agregan por día frecuencia cardiaca, HRV, frecuencia en reposo, pasos, distancia, energía activa, ejercicio y pisos cuando las unidades son compatibles. Se admiten fechas de exportación Apple Salud con offset, conversión de kilómetros a metros y ficheros UTF-8 con BOM.
+- **Privacidad:** no se guarda ni sube el CSV, no se escribe en HealthKit. El Coach se pausa mientras haya una importación activa porque podría enviar métricas a un proveedor externo. Al cerrar BioPulse se pierde la importación; Perfil permite quitarla y volver a consultar Apple Salud.
+- **Límite de agregación:** las métricas acumulativas se suman desde las filas recibidas. Cuando el archivo incluye muestras superpuestas de iPhone y Watch, los totales pueden diferir de los agregados deduplicados por Apple Salud. Solo se importan tipos/unidades mapeados; los demás se reportan en advertencias. No se infieren muestras de sueño a partir de este CSV.
+- **Fuente inspeccionada:** el archivo aportado por el usuario tenía 233.495 filas y ~31 MB, con formato tidy `type,sourceName,unit,startDate,endDate,value`, fechas con offset `-0500` y valores en varias unidades. No se copió al repositorio.
+- **Verificación:** análisis sintáctico Swift 6.4.1 en Windows pasó. La compilación con SDK de Apple, pruebas en simulador e importación en iPhone siguen pendientes de macOS/Xcode.

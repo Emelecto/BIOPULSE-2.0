@@ -11,20 +11,20 @@ struct TodayView: View {
     @State private var showingScore = false
 
     private var score: WellnessScore {
-        let day = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now
+        let day = health.isCSVImported ? health.displayedDataDay : (Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now)
         return WellnessScores.bio(health.wellnessValues, day: day, targetMinutes: personal.sleepTargetMinutes)
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                DashboardPageHeader(title: "Hoy")
-                Text(Date.now.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                DashboardPageHeader(title: health.isCSVImported ? "Tus datos" : "Hoy")
+                Text((health.isCSVImported ? health.displayedDataDay : Date.now).formatted(.dateTime.weekday(.wide).day().month(.wide)) + (health.isCSVImported ? " · fecha del CSV" : ""))
                     .font(.subheadline).foregroundStyle(PulseStyle.secondary)
                 Button { showingScore = true } label: {
                     VStack(spacing: 4) {
-                        PendingScoreHero(title: "BioScore", score: score.value.map(Double.init), subtitle: score.value == nil ? "Datos insuficientes" : "Índice exploratorio · ayer")
-                        Text(score.value == nil ? score.reason : "Índice personal · ayer · \(score.version)")
+                        PendingScoreHero(title: "BioScore", score: score.value.map(Double.init), subtitle: score.value == nil ? "Datos insuficientes" : "Índice exploratorio · \(health.isCSVImported ? "día importado" : "ayer")")
+                        Text(score.value == nil ? score.reason : "Índice personal · \(health.isCSVImported ? "día importado" : "ayer") · \(score.version)")
                             .font(.subheadline).foregroundStyle(PulseStyle.secondary)
                         Label("Ver componentes", systemImage: "arrow.up.right")
                             .font(.caption.weight(.semibold)).foregroundStyle(.white).padding(.top, 6)
@@ -33,7 +33,7 @@ struct TodayView: View {
                 }
                 .buttonStyle(PulsePressButtonStyle())
 
-                if !health.hasRequestedAccess {
+                if !health.hasRequestedAccess && !health.isCSVImported {
                     StatusPanel(symbol: "heart.text.square", title: "Conecta Apple Salud", message: "Elige qué señales compartir para ver tus mediciones y, con historial suficiente, tu índice personal.")
                     Button("Elegir datos de Salud") { Task { await health.requestAccess() } }
                         .buttonStyle(PulseActionButtonStyle()).disabled(!health.isAvailable)
@@ -44,23 +44,23 @@ struct TodayView: View {
                 }
                 if let error = health.errorMessage { PulseFeedback(message: error, isError: true) }
 
-                SectionHeading(title: "Señales de hoy", subtitle: "Datos observados, no puntuaciones")
+                SectionHeading(title: health.isCSVImported ? "Señales del CSV" : "Señales de hoy", subtitle: "Datos observados, no puntuaciones")
                 let layout = typeSize >= .xxxLarge
                     ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
                     : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
                 layout {
                     energyCard.frame(maxWidth: .infinity).frame(height: 328)
                     VStack(spacing: 12) {
-                        metricCard("HRV media", metric: .heartRateVariabilitySDNN, note: "Media de hoy", symbol: "waveform.path.ecg")
+                        metricCard(health.isCSVImported ? "HRV mediana" : "HRV media", metric: .heartRateVariabilitySDNN, note: health.isCSVImported ? "Mediana diaria" : "Media de hoy", symbol: "waveform.path.ecg")
                             .frame(height: 158)
-                        metricCard("FC en reposo", metric: .restingHeartRate, note: "Última de hoy", symbol: "heart")
+                        metricCard("FC en reposo", metric: .restingHeartRate, note: health.isCSVImported ? "Mediana diaria" : "Última de hoy", symbol: "heart")
                             .frame(height: 158)
                     }.frame(maxWidth: .infinity)
                 }
                 layout {
-                    metricCard("Sueño", metric: .sleepAnalysis, note: "Última noche", symbol: "moon.stars")
+                    metricCard("Sueño", metric: .sleepAnalysis, note: health.isCSVImported ? "No incluido en el CSV" : "Última noche", symbol: "moon.stars")
                         .frame(maxWidth: .infinity).frame(height: 158)
-                    metricCard("Pasos", metric: .stepCount, note: "Acumulado de hoy", symbol: "figure.walk")
+                    metricCard("Pasos", metric: .stepCount, note: health.isCSVImported ? "Total del día importado" : "Acumulado de hoy", symbol: "figure.walk")
                         .frame(maxWidth: .infinity).frame(height: 158)
                 }
 
@@ -117,9 +117,9 @@ struct TodayView: View {
                     .chartXAxis { AxisMarks(values: .stride(by: .hour, count: 6)) { _ in AxisValueLabel(format: .dateTime.hour()) } }
                     .chartYAxis(.hidden)
                     .frame(height: 156)
-                    .accessibilityLabel("Energía activa registrada por hora en Apple Salud")
+                    .accessibilityLabel(health.isCSVImported ? "Energía activa agregada del día en el CSV" : "Energía activa registrada por hora en Apple Salud")
                 }
-                Text("Registrada por hora · Apple Salud")
+                Text(health.isCSVImported ? "Agregado diario · CSV" : "Registrada por hora · Apple Salud")
                     .font(.caption2).foregroundStyle(PulseStyle.muted)
             }
         }
