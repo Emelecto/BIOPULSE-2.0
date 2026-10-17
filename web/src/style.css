@@ -734,6 +734,7 @@ summary:focus-visible {
 .journal-editor textarea:focus,
 .journal-editor select:focus,
 .filter-row select:focus,
+.sleep-target-card select:focus,
 .chat-compose input:focus {
   border-color: #eee;
 }
@@ -893,7 +894,7 @@ summary:focus-visible {
 .ring-layer {
   position: absolute;
   inset: 20px;
-  border: 3px solid #dce9e4;
+  border: 3px solid currentColor;
   border-radius: 47% 53% 49% 51%;
   box-shadow:
     0 0 17px #bfe4d526,
@@ -903,14 +904,14 @@ summary:focus-visible {
 .ring-b {
   inset: 15px 24px 23px 13px;
   opacity: 0.52;
-  border-color: #8ca9a0;
+  border-color: currentColor;
   animation-duration: 22s;
   animation-direction: reverse;
 }
 .ring-c {
   inset: 24px 15px 14px 23px;
   opacity: 0.32;
-  border-color: #fff;
+  border-color: currentColor;
   animation-duration: 28s;
 }
 .score-center {
@@ -1222,6 +1223,36 @@ summary:focus-visible {
 .filter-row select {
   width: 100%;
   font-size: 13px;
+}
+.signal-card {
+  display: grid;
+  gap: 9px;
+  margin: 18px 0;
+}
+.signal-card strong {
+  font: 700 23px Manrope, sans-serif;
+  color: #fff;
+}
+.signal-card p, .signal-card small, .sleep-target-card small {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sleep-target-card {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.sleep-target-card label { font-weight: 650; }
+.sleep-target-card select {
+  border: 1px solid #525c61;
+  background: #0c1012;
+  color: #fff;
+  border-radius: 11px;
+  min-height: 46px;
+  padding: 10px 13px;
+  max-width: 220px;
 }
 .chart-card > .bar-chart {
   margin: 18px 0 25px;

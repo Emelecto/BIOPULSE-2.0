@@ -1,6 +1,6 @@
 # BioPulse web + Health Auto Export
 
-**CONFIRMED:** implementación local; build, normalizador, 80 pruebas pgTAP y flujo HTTP local del puente pasan. La migración `20261015000400` figura aplicada en Supabase remoto y la función `health-bridge` figura activa; la petición remota sin sesión recibe `401`. El código está en GitHub. **UNKNOWN:** recepción de un export real desde iPhone, login OAuth, QA con una cuenta real y despliegue Vercel. El sitio todavía no tiene URL pública confirmada.
+**CONFIRMED:** implementación local; build, normalizador, 80 pruebas pgTAP y flujo HTTP local del puente pasan. La migración `20261015000400` figura aplicada en Supabase remoto y la función `health-bridge` figura activa; la petición remota sin sesión recibe `401`. El usuario confirmó que el login web y el puente real desde su iPhone ya funcionan. La web 2.0 responde en `https://biopulse-20.vercel.app/` (HTTP 200 el 17-10-2026). **UNKNOWN:** verificación independiente del flujo del iPhone, login OAuth y QA de iOS con los índices nuevos. La versión exacta de cada cambio se determina por el despliegue de Vercel.
 
 ## Ejecutar localmente
 
@@ -36,7 +36,7 @@ No publicar sin revisar aviso de privacidad, contacto de soporte y políticas le
 
 El enlace incluye un token de escritura de duración indefinida hasta revocación; no compartirlo, capturarlo ni enviarlo por chat. Se guarda solo su hash SHA-256 en el servidor. El navegador solo conserva el token en memoria de la pantalla de configuración. Dos automatizaciones usan un token y flujos separados. El servidor rechaza tipos no permitidos, unidades incompatibles, segmentos originales de sueño, valores no agregados y duplicados dentro de la carga. Reenvíos idénticos no crean duplicados ni actualizan revisiones de métricas sin cambios. La carga original no se almacena.
 
-**Limitaciones:** la web no accede directamente a HealthKit; el puente es de terceros y requiere acciones del usuario. No implementamos carga CSV/XML. Una automatización de sueño agregado entrega duraciones por fase, **no la secuencia temporal exacta**. BioScore/Sleep Score y color clínico siguen pendientes de un algoritmo validado; la UI muestra «—» en vez de inventar resultados. Diario web se guarda en la nube solo tras consentimiento propio; el Diario local de iOS todavía no se sincroniza automáticamente.
+**Limitaciones:** la web no accede directamente a HealthKit; el puente es de terceros y requiere acciones del usuario. No implementamos carga CSV/XML. Una automatización de sueño agregado entrega duraciones por fase, **no la secuencia temporal exacta**. BioScore, Sleep Score y señal de cambio personal usan fórmulas exploratorias documentadas en `docs/SCORE_ALGORITHMS.md`: aparecen solo con historial suficiente y no tienen validación clínica. Diario web se guarda en la nube solo tras consentimiento propio; el Diario local de iOS todavía no se sincroniza automáticamente.
 
 ## Fuentes de integración
 

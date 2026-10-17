@@ -55,6 +55,7 @@ import {
   type Journal,
   type Sleep,
 } from "./data";
+import { bioScore, changeSignal, scoreColor, sleepScore, type ScoreResult } from "./scoring";
 import "./style.css";
 
 type Tab = "Hoy" | "Tendencias" | "Diario" | "Sueño" | "Perfil";
@@ -321,7 +322,7 @@ function Landing() {
               <h3>Revocable</h3>
               <p>
                 Puedes detener la conexión desde BioPulse y eliminar los
-                resúmenes recibidos. No mostramos un score sin validar.
+                resúmenes recibidos. Los índices personales requieren historial suficiente y muestran cómo se calcularon.
               </p>
             </div>
           </div>
@@ -384,8 +385,8 @@ function Landing() {
             <details>
               <summary>¿BioScore está disponible?</summary>
               <p>
-                Aún no. El espacio visual está preparado, pero no mostramos
-                puntuaciones hasta validar el algoritmo y su interpretación.
+                Sí, como índice exploratorio cuando hay suficientes días observados.
+                Puedes consultar los componentes y la fecha; todavía no tiene validación clínica.
               </p>
             </details>
             <details>
@@ -672,19 +673,22 @@ function BarChart({
 function Ring({
   title,
   compact = false,
+  score,
 }: {
   title: string;
   compact?: boolean;
+  score?: ScoreResult;
 }) {
+  const tint = scoreColor(score?.value ?? null);
   return (
-    <div className={`score-ring ${compact ? "ring-compact" : ""}`}>
+    <div className={`score-ring ${compact ? "ring-compact" : ""}`} role="img" style={tint ? { color: tint } : undefined} aria-label={score?.value === null ? `${title}: ${score.reason}` : `${title}: ${score?.value ?? "sin datos"} de 100`}>
       <div className="ring-layer ring-a" />
       <div className="ring-layer ring-b" />
       <div className="ring-layer ring-c" />
       <div className="score-center">
         <span>{title}</span>
-        <strong>—</strong>
-        <small>cálculo pendiente</small>
+        <strong>{score?.value ?? "—"}</strong>
+        <small>{score?.value === null ? "datos insuficientes" : score ? `Índice exploratorio · ${dateLabel(score.date)}` : "cálculo pendiente"}</small>
       </div>
     </div>
   );
@@ -739,14 +743,17 @@ function Today({
   onJournal,
   onMetric,
   onConnect,
+  targetMinutes,
 }: {
   daily: Daily[];
   hourly: Hourly[];
   onJournal: () => void;
   onMetric: (kind: string) => void;
   onConnect: () => void;
+  targetMinutes: number;
 }) {
   const date = today();
+  const score = bioScore(daily, daysAgo(1), targetMinutes);
   const hourRows = hourly
     .filter((r) => r.local_date === date && r.metric_kind === "active_energy")
     .map((r) => ({
@@ -773,10 +780,10 @@ function Today({
         type="button"
         onClick={() => onMetric("bioscore")}
       >
-        <Ring title="BIO SCORE" />
-        <span>Bienestar general · cálculo en desarrollo</span>
+        <Ring title="BIO SCORE" score={score} />
+        <span>{score.value === null ? score.reason : `Índice personal · ${dateLabel(score.date)} · versión ${score.version}`}</span>
         <small>
-          Cómo funcionará <ArrowRight size={13} />
+          Ver componentes <ArrowRight size={13} />
         </small>
       </button>
       {daily.length === 0 && (
@@ -876,6 +883,7 @@ function Trends({
 }) {
   const [kind, setKind] = useState("hrv_sdnn");
   const [period, setPeriod] = useState(7);
+  const signal = changeSignal(daily, daysAgo(1));
   const rows = daily
     .filter((r) => r.metric_kind === kind && r.local_date >= daysAgo(period))
     .sort((a, b) => a.local_date.localeCompare(b.local_date));
@@ -895,6 +903,12 @@ function Trends({
         title="Tendencias"
         subtitle="Cambios observados en tus registros"
       />
+      <Card className="signal-card">
+        <span className="card-topline">SEÑAL DE CAMBIO PERSONAL</span>
+        <strong>{signal.value === null ? "—" : signal.value === 0 ? "Sin cambio persistente" : `${signal.value}/100`}</strong>
+        <p>{signal.reason}</p>
+        <small>{dateLabel(signal.date)} · {signal.version} · magnitud de cambio, no probabilidad de enfermedad</small>
+      </Card>
       <Card className="chart-card">
         <div className="card-topline">
           <span>UNA SEÑAL EN EL TIEMPO</span>
@@ -998,8 +1012,9 @@ function Trends({
   );
 }
 
-function SleepPage({ daily, sleep }: { daily: Daily[]; sleep: Sleep[] }) {
+function SleepPage({ daily, sleep, targetMinutes, onTargetChange }: { daily: Daily[]; sleep: Sleep[]; targetMinutes: number; onTargetChange: (value: number) => void }) {
   const row = daily.find((r) => r.metric_kind === "sleep_duration");
+  const score = sleepScore(daily, row?.local_date ?? today(), targetMinutes);
   const stages = sleep.filter(
     (r) =>
       r.local_date === row?.local_date &&
@@ -1010,7 +1025,7 @@ function SleepPage({ daily, sleep }: { daily: Daily[]; sleep: Sleep[] }) {
     <>
       <Header title="Sueño" subtitle="Tu última noche registrada" />
       <Card className="sleep-hero">
-        <Ring title="SLEEP SCORE" compact />
+        <Ring title="SLEEP SCORE" compact score={score} />
         <div>
           <span>TIEMPO DORMIDO</span>
           <strong>{formatMetric(row)}</strong>
@@ -1018,7 +1033,14 @@ function SleepPage({ daily, sleep }: { daily: Daily[]; sleep: Sleep[] }) {
             {row ? dateLabel(row.local_date) : "Sin datos disponibles"}
           </small>
         </div>
-        <p>Tiempo observado en Apple Salud, no una puntuación de sueño.</p>
+        <p>{score.reason} {score.value === null ? "" : `Duración ${score.components.duration}/100 · constancia ${score.components.consistency}/100.`}</p>
+      </Card>
+      <Card className="sleep-target-card">
+        <label htmlFor="sleep-target">Meta personal de sueño</label>
+        <select id="sleep-target" value={targetMinutes} onChange={event => onTargetChange(Number(event.target.value))}>
+          {[360,390,420,450,480,510,540,570,600].map(minutes => <option key={minutes} value={minutes}>{minutes / 60} horas</option>)}
+        </select>
+        <small>Se guarda en este navegador para tu cuenta. La fórmula usa duración y constancia, no etapas estimadas.</small>
       </Card>
       <div className="section-title">
         <h2>Etapas de la noche</h2>
@@ -1069,7 +1091,7 @@ function SleepPage({ daily, sleep }: { daily: Daily[]; sleep: Sleep[] }) {
       </Card>
       <div className="section-title">
         <h2>Historial</h2>
-        <p>Duración registrada, sin puntuaciones estimadas</p>
+        <p>Duración observada de noches anteriores</p>
       </div>
       <Card>
         <BarChart
@@ -1827,6 +1849,15 @@ function AppShell({ session }: { session: Session }) {
   const [coach, setCoach] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
   const userId = session.user.id;
+  const [targetMinutes, setTargetMinutes] = useState(() => {
+    const stored = Number(localStorage.getItem(`biopulse.sleepTarget.${session.user.id}`));
+    return Number.isInteger(stored) && stored >= 360 && stored <= 600 ? stored : 480;
+  });
+  const updateTarget = (value: number) => {
+    if (!Number.isInteger(value) || value < 360 || value > 600) return;
+    localStorage.setItem(`biopulse.sleepTarget.${userId}`, String(value));
+    setTargetMinutes(value);
+  };
   const refreshMetrics = useCallback(async () => {
     try {
       setMetrics(await loadMetrics(userId));
@@ -1871,6 +1902,7 @@ function AppShell({ session }: { session: Session }) {
         .reverse(),
     [metrics.daily, detail],
   );
+  const currentBio = useMemo(() => bioScore(metrics.daily, daysAgo(1), targetMinutes), [metrics.daily, targetMinutes]);
   function navigate(next: Tab) {
     setTab(next);
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -1927,6 +1959,7 @@ function AppShell({ session }: { session: Session }) {
                 onJournal={() => navigate("Diario")}
                 onMetric={setDetail}
                 onConnect={() => navigate("Perfil")}
+                targetMinutes={targetMinutes}
               />
             ) : tab === "Tendencias" ? (
               <Trends daily={metrics.daily} onMetric={setDetail} />
@@ -1937,7 +1970,7 @@ function AppShell({ session }: { session: Session }) {
                 onReload={refreshJournal}
               />
             ) : tab === "Sueño" ? (
-              <SleepPage daily={metrics.daily} sleep={metrics.sleep} />
+              <SleepPage daily={metrics.daily} sleep={metrics.sleep} targetMinutes={targetMinutes} onTargetChange={updateTarget} />
             ) : (
               <Profile
                 email={session.user.email ?? "Cuenta"}
@@ -2007,12 +2040,14 @@ function AppShell({ session }: { session: Session }) {
             <h2>{detail === "bioscore" ? "BioScore" : metricNames[detail]}</h2>
             {detail === "bioscore" ? (
               <>
-                <Ring title="BIO SCORE" compact />
+                <Ring title="BIO SCORE" compact score={currentBio} />
                 <p>
-                  La fórmula aún está en investigación. No mostramos una
-                  puntuación hasta verificarla con datos suficientes y
-                  evaluación adecuada.
+                  {currentBio.reason}
                 </p>
+                {currentBio.value !== null && <p>
+                  Sueño {currentBio.components.sleep}/100 · recuperación {currentBio.components.recovery}/100 · actividad habitual {currentBio.components.activityBalance}/100.
+                  Fórmula {currentBio.version}; datos del {dateLabel(currentBio.date)}.
+                </p>}
               </>
             ) : (
               <>
