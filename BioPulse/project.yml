@@ -31,6 +31,7 @@ targets:
           - CFBundleURLName: com.biopulse.app.auth
             CFBundleURLSchemes:
               - biopulse
+        UILaunchScreen: {}
         NSHealthShareUsageDescription: "BioPulse lee las mediciones que autorices para mostrarte tus señales y tendencias de bienestar."
         SUPABASE_URL: "https://ielprdmmuocajtbimvdx.supabase.co"
         SUPABASE_PUBLISHABLE_KEY: "sb_publishable_vBpKxn5X27C-gRvD1iiwpg_5BZ57_2E"

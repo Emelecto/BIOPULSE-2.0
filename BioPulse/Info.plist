@@ -35,5 +35,7 @@
 	<string>sb_publishable_vBpKxn5X27C-gRvD1iiwpg_5BZ57_2E</string>
 	<key>SUPABASE_URL</key>
 	<string>https://ielprdmmuocajtbimvdx.supabase.co</string>
+	<key>UILaunchScreen</key>
+	<dict/>
 </dict>
 </plist>
