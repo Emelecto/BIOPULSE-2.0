@@ -8,6 +8,7 @@ Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple 
 - `Resources/Assets.xcassets/ForestNight.imageset`: fondo nocturno del inicio; recurso decorativo, sin datos de salud.
 - `project.yml`: especificación reproducible del proyecto iOS 17 para XcodeGen.
 - `BioPulse.xcodeproj`: proyecto generado y versionado para abrir directamente en Xcode.
+- `Info.plist`: configuración de la app que Xcode necesita al compilar; debe permanecer junto a `BioPulse.xcodeproj`.
 - `Sources/HealthKit/HealthMetric.swift`: catálogo tipado de métricas y estados de capacidad.
 - `Sources/HealthKit/HealthKitCapabilityCatalog.swift`: mapea métricas a tipos HealthKit y evita confundir permiso denegado con ausencia de datos.
 - `Package.swift` y `Sources/BioPulseDomain`: paquete Foundation-only con contratos de métricas diarias, calidad, procedencia y baseline personal robusto.
@@ -54,3 +55,5 @@ Apple y Google requieren además la configuración de sus proveedores en Supabas
 ## Verificación actual
 
 **CONFIRMED:** [GitHub Actions en macOS, Xcode 26.6](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) generó el proyecto, compiló para simulador y para dispositivo iOS sin firma, y pasó las 26 pruebas Swift del dominio. El artefacto generado coincide byte por byte con el `.xcodeproj` versionado. **UNKNOWN:** firma con tu Apple Team, instalación y ejecución en tu iPhone, permisos reales de HealthKit, navegación visual, accesibilidad y flujos de cuenta/Coach en dispositivo. La compilación para dispositivo en CI no firma ni instala la app.
+
+**Corrección del 17-10-2026:** la primera copia versionada omitía `Info.plist`; al abrirla directamente, Xcode mostraba «Build input file cannot be found». El archivo generado ya está versionado. El [run 39056797219](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39056797219) compiló primero el proyecto de un checkout limpio, sin regenerarlo, y después confirmó que XcodeGen reproduce los archivos versionados; también pasaron 26 pruebas y el build iOS sin firma. Una copia descargada antes de esta corrección debe actualizarse.

@@ -103,7 +103,7 @@ Esta sección reemplaza los estados anteriores cuando hay contradicciones. «Com
 ### Verificación realizada en Windows — 2026-10-17
 
 - **CONFIRMED:** los 38 archivos Swift de fuentes y pruebas pasan el parser de sintaxis de Swift. Esto no es compilación ni validación de tipos.
-- **CONFIRMED en CI macOS:** el proyecto de Xcode está versionado. [Run 39053219208](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) con Xcode 26.6 compiló el target iOS para simulador y dispositivo sin firma, y pasó 26 pruebas Swift del dominio. El proyecto generado en ese run coincide byte por byte con el versionado. En Windows, `swift test` sigue bloqueado por el SDK C incompleto, pero ya no impide verificar la compilación en macOS.
+- **CONFIRMED en CI macOS:** `BioPulse.xcodeproj` e `Info.plist` están versionados. El [run 39056797219](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39056797219) compiló el checkout limpio para simulador antes de regenerar el proyecto, confirmó que XcodeGen reproduce los archivos versionados, pasó 26 pruebas Swift y compiló para dispositivo sin firma. En Windows, `swift test` sigue bloqueado por el SDK C incompleto, pero ya no impide verificar la compilación en macOS.
 - **CONFIRMED:** `npm run build` completa TypeScript y Vite; las 10 pruebas Vitest de web pasan.
 - **CONFIRMED:** las cuatro pruebas Python del contrato ML pasan con el fixture sintético de software. Esto comprueba el pipeline como código, no la calidad predictiva de un modelo.
 - **CONFIRMED:** las 10 pruebas unitarias de política del Coach pasan. No se probó una respuesta real de Groq ni el flujo integrado en iPhone.
