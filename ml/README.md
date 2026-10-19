@@ -8,6 +8,8 @@ Antes de entrenar se requieren: consentimiento de investigación, procedencia y 
 
 `train_research.py` compara tres opciones: predictor trivial (referencia mínima), modelo lineal regularizado (relaciones comprensibles) y gradient boosting (posibles relaciones no lineales). Las métricas se miden en personas no vistas después del corte temporal. El resultado está marcado `research_only_not_for_product`; no guarda pesos entrenados ni alimenta los índices visibles. La fórmula visible está en [SCORE_ALGORITHMS.md](../docs/SCORE_ALGORITHMS.md). No existe todavía una etiqueta independiente de descanso percibido estructurada en BioPulse ni un evento clínico válido para entrenamiento.
 
+La app iOS integra por separado `PersonalAnomalyForest`, una implementación Swift de Isolation Forest que se ajusta con las observaciones diarias de la propia persona y se evalúa en el dispositivo. Requiere 30 días previos completos con HRV, pulso en reposo y energía activa. Su resultado es un índice exploratorio de atipicidad estadística, no una probabilidad ni un resultado clínico. No utiliza el conjunto WHOOP heredado ni entrena con datos de una persona para generalizar a otras.
+
 ## Benchmark PMData — 2026-10-17
 
 Se descargó un subconjunto del archivo oficial de [PMData](https://datasets.simula.no/pmdata/) y se evaluó el autorreporte de readiness del día siguiente frente a mediciones Fitbit del día anterior. `prepare_pmdata.py` convierte una extracción de `pmdata.zip` (carpetas `p01`…`p16`) en una tabla privada; `assess_pmdata.py` ejecuta el holdout y añade una referencia de persistencia. No subir la tabla derivada ni datos de participantes al repositorio.

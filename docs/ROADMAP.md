@@ -109,7 +109,7 @@ Esta sección reemplaza los estados anteriores cuando hay contradicciones. «Com
 - **CONFIRMED:** las 10 pruebas unitarias de política del Coach pasan. No se probó una respuesta real de Groq ni el flujo integrado en iPhone.
 - **BLOCKED por entorno:** no se pudo ejecutar Supabase local/pgTAP porque Docker Desktop no tiene un daemon activo en este equipo.
 
-Los modelos del repositorio son algoritmos candidatos dentro de un pipeline de investigación; no hay pesos entrenados ni un modelo de BioPulse desplegado. El CSV heredado no cumple las condiciones de procedencia y etiqueta independiente para afirmar validez clínica.
+El pipeline de entrenamiento supervisado del repositorio sigue siendo investigación y no se han desplegado sus pesos. iOS integra un Isolation Forest personal experimental, entrenado en el dispositivo para encontrar días estadísticamente atípicos; no predice enfermedad ni recuperación. El CSV heredado no cumple las condiciones de procedencia y etiqueta independiente para afirmar validez clínica.
 
 ### Requiere Mac/Xcode o dispositivo Apple
 

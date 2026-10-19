@@ -24,7 +24,8 @@ The product emphasizes real data, provenance, coverage, and context instead of t
 - CONFIRMED: an authenticated account is required to use the app. Login does not imply permission to sync.
 - CONFIRMED: HealthKit original samples stay on-device by default. Cloud sync is optional and consent is separate by category; the iOS sync transport is not implemented yet.
 - CONFIRMED: the Coach is informational, Spanish-first, non-diagnostic, and requires explicit consent before sending permitted derived context; no original HealthKit samples are sent.
-- CONFIRMED: no clinical prediction model is validated or active. ML research work is not a released feature.
+- CONFIRMED: no clinical prediction model is validated or active. The supervised models in the research pipeline are not released in the app.
+- CONFIRMED: iOS includes an experimental, unsupervised personal Isolation Forest anomaly score computed on-device from daily HRV, resting heart rate, and active energy. It is not a clinical risk or recovery prediction; supervised models remain research-only.
 - CONFIRMED: the public BioPulse 2.0 web experience is reachable at `https://biopulse-20.vercel.app/` (checked 2026-10-17); this is not an App Store listing.
 - UNKNOWN: App Store availability, launch date, pricing, support contact, public waitlist destination, and final privacy/legal copy.
 - PROPOSED for the landing-page implementation only: plain static HTML/CSS/JS, kept isolated under `landing/` so it can be replaced without changing the iOS app or Admin panel.

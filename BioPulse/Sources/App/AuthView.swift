@@ -140,7 +140,12 @@ private struct AuthView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            PulseIcon(symbol: "waveform.path.ecg")
+            Image("BioPulseBrandMark")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 58, height: 58)
+                .clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
+                .accessibilityHidden(true)
             Text("BioPulse").font(.largeTitle.weight(.bold)).foregroundStyle(.white)
             Text(confirmationEmail != nil ? "Un paso más para entrar." : mode == .signIn ? "Tu bienestar,\nen perspectiva." : "Un espacio para conocerte.")
                 .font(.title.weight(.semibold))

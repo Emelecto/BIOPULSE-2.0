@@ -12,6 +12,7 @@ Este directorio contiene la interfaz SwiftUI, una primera lectura real de Apple 
 - `Sources/HealthKit/HealthMetric.swift`: catálogo tipado de métricas y estados de capacidad.
 - `Sources/HealthKit/HealthKitCapabilityCatalog.swift`: mapea métricas a tipos HealthKit y evita confundir permiso denegado con ausencia de datos.
 - `Package.swift` y `Sources/BioPulseDomain`: paquete Foundation-only con contratos de métricas diarias, calidad, procedencia y baseline personal robusto.
+- `Sources/BioPulseDomain/PersonalAnomalyForest.swift`: Isolation Forest no supervisado, ajustado e inferido localmente con historial personal; requiere 30 días previos completos y su índice no es una probabilidad clínica.
 - `Tests/BioPulseDomainTests`: pruebas Swift Testing; los valores incluidos están marcados explícitamente como datos simulados de prueba.
 - `Sources/BioPulseDomain/CSVImporter.swift`: importador local de CSV para los contratos tidy y wide, con reporte de columnas no mapeadas, advertencias y filas rechazadas.
 - `Sources/BioPulseDomain/MetricTrend.swift`: tendencias deterministas contra el baseline personal, con cobertura y razones explícitas cuando no hay datos suficientes.

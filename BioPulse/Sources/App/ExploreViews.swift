@@ -20,6 +20,7 @@ struct TrendsView: View {
         ScreenShell(title: "Tendencias", subtitle: "Cambios observados en tus registros") {
             let yesterday = health.isCSVImported ? health.displayedDataDay : (Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now)
             let signal = WellnessScores.change(health.wellnessValues, day: yesterday)
+            let anomaly = PersonalAnomalyForest.evaluate(health.personalAnomalyObservations, on: yesterday)
             DashboardCard {
                 Text("SEÑAL DE CAMBIO PERSONAL").font(.caption.weight(.semibold)).foregroundStyle(PulseStyle.secondary)
                 Text(signal.value.map { $0 == 0 ? "Sin cambio persistente" : "\($0)/100" } ?? "—")
@@ -27,6 +28,18 @@ struct TrendsView: View {
                 Text(signal.reason).font(.subheadline).foregroundStyle(PulseStyle.secondary)
                 Text("\(health.isCSVImported ? "Día importado" : "Ayer") · \(signal.version) · magnitud de cambio, no probabilidad de enfermedad")
                     .font(.caption2).foregroundStyle(PulseStyle.muted)
+                Text("Es una regla fija, no ML: compara sueño, HRV y frecuencia en reposo con tu historial. Solo marca un cambio si al menos dos señales se desvían durante dos días seguidos. Un 0 no descarta un problema de salud.")
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
+            }
+            DashboardCard {
+                Text("MODELO ML · ISOLATION FOREST · \(anomaly.version)")
+                    .font(.caption.weight(.semibold)).foregroundStyle(PulseStyle.secondary)
+                Text(anomaly.value.map { "\($0)/100" } ?? "Datos insuficientes")
+                    .font(.title2.weight(.semibold)).foregroundStyle(.white)
+                Text(anomaly.reason)
+                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                Text("Aprende tu patrón con HRV, pulso en reposo y energía activa. Entrena y analiza en este iPhone; no necesita datos de sueño ni envía mediciones a un modelo remoto.")
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
             }
             DashboardCard {
                 Text("Tu historia, día a día").font(.headline)
@@ -132,6 +145,11 @@ struct SleepView: View {
                 Text(score.reason)
                     .font(.subheadline).foregroundStyle(PulseStyle.secondary)
             }
+            StatusPanel(
+                symbol: "function",
+                title: "Qué resume este índice",
+                message: "Combina duración de sueño (65 %) y cercanía a tu duración habitual (35 %). Necesita la noche evaluada y siete noches previas dentro de 14 días. No analiza etapas, calidad percibida ni es un modelo de aprendizaje automático."
+            )
             DashboardCard {
                 Text("Meta personal de sueño").font(.headline)
                 Picker("Duración objetivo", selection: Binding(
@@ -197,24 +215,34 @@ struct ScoreExplanationView: View {
     @ObservedObject var personal: PersonalContextStore
 
     private var score: WellnessScore {
-        let day = Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now
+        let day = health.isCSVImported
+            ? health.displayedDataDay
+            : (Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now)
         return WellnessScores.bio(health.wellnessValues, day: day, targetMinutes: personal.sleepTargetMinutes)
     }
+
+    private var scoreDateLabel: String { health.isCSVImported ? "día importado" : "ayer" }
 
     var body: some View {
         ScreenShell(title: "BioScore", subtitle: "Bienestar general") {
             StatusPanel(symbol: score.value == nil ? "circle.dashed" : "waveform.path.ecg",
-                        title: score.value.map { "BioScore \($0)/100 · ayer" } ?? "Datos insuficientes",
+                        title: score.value.map { "BioScore \($0)/100 · \(scoreDateLabel)" } ?? "Datos insuficientes",
                         message: score.reason)
             if let _ = score.value {
                 DashboardCard {
                     Text("Componentes · \(score.version)").font(.headline)
                     Text("Sueño \(Int(score.components["sleep"] ?? 0))/100 · recuperación \(Int(score.components["recovery"] ?? 0))/100 · actividad habitual \(Int(score.components["activityBalance"] ?? 0))/100")
                         .font(.subheadline).foregroundStyle(PulseStyle.secondary)
-                    Text("Pesos propuestos: 40 % sueño, 35 % recuperación y 25 % actividad. Compara solo con tu propio historial.")
+                    Text("Pesos exploratorios: 40 % sueño, 35 % recuperación (HRV y pulso en reposo) y 25 % actividad habitual. Compara solo con tu historial.")
                         .font(.caption).foregroundStyle(PulseStyle.secondary)
                 }
             }
+
+            StatusPanel(
+                symbol: "function",
+                title: "Es una fórmula, no un modelo ML",
+                message: "Resume sueño, HRV, frecuencia cardiaca en reposo y energía activa frente a tu historial. Necesita datos del día y al menos 14 días previos para cada señal en una ventana de 28 días. Sus pesos son una hipótesis de producto, no una receta médica ni una medida clínica validada."
+            )
 
             SectionHeading(title: "Señales consideradas", subtitle: "Mediciones y procedencia")
             ForEach([HealthMetric.sleepAnalysis, .heartRateVariabilitySDNN, .restingHeartRate, .stepCount]) { metric in

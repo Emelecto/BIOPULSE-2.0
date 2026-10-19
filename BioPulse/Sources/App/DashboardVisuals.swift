@@ -36,15 +36,24 @@ struct DashboardPageHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("BioPulse")
-                .font(.title2.weight(.regular))
-                .foregroundStyle(.white)
+            HStack(spacing: 9) {
+                Image("BioPulseBrandMark")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 27, height: 27)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .accessibilityHidden(true)
+                Text("BioPulse")
+                    .font(.title2.weight(.regular))
+                    .foregroundStyle(.white)
+            }
             VStack(alignment: .leading, spacing: 7) {
                 Text(title).font(.largeTitle.weight(.semibold))
                 Capsule().fill(.white).frame(width: 34, height: 3)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
     }
 }

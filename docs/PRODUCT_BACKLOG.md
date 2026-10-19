@@ -50,7 +50,7 @@ Estado: **implementado en fuente para iOS; compilación y QA en Xcode pendientes
 - Exportaciones y widgets requieren revisión de privacidad, selección explícita de contenido y controles para ocultar o eliminar información.
 - Los recordatorios deben ser opt-in, configurables y fáciles de desactivar.
 - La sincronización sigue siendo por categoría y consentimiento separado; login no equivale a autorización cloud.
-- ML permanece como investigación hasta que se cumplan los requisitos de [investigación ML](ML_RESEARCH.md). No se anuncia ningún modelo como validado a partir de esta propuesta.
+- Los modelos supervisados y cualquier predicción de riesgo permanecen en investigación según [investigación ML](ML_RESEARCH.md). iOS incluye un Isolation Forest personal experimental que solo mide atipicidad estadística; no se anuncia como validado ni clínico.
 
 ## E. Verificación pendiente y siguiente secuencia
 

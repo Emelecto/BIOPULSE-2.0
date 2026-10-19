@@ -1,6 +1,6 @@
 # Investigación ML — alcance y evidencia
 
-Estado: **CONFIRMED** para la auditoría reproducida y la existencia del pipeline de investigación; **UNKNOWN** para utilidad predictiva real en BioPulse 2.0. Ningún modelo se activa en la app.
+Estado: **CONFIRMED** para la auditoría reproducida y la existencia del pipeline supervisado de investigación; **UNKNOWN** para utilidad predictiva real en BioPulse 2.0. La app ahora ejecuta localmente un Isolation Forest personal no supervisado para atipicidad de señales; no estima riesgo clínico ni recuperación. Ningún modelo supervisado predictivo se activa en la app.
 
 ## Auditoría heredada
 
