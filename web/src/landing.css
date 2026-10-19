@@ -21,7 +21,9 @@
   border-bottom: 1px solid rgba(255, 255, 255, .1);
 }
 .land-brand { display: inline-flex; align-items: center; gap: 9px; color: #fff; font: 800 20px Manrope, sans-serif; letter-spacing: -.05em; }
-.land-brand img { width: 42px; height: 42px; object-fit: cover; border-radius: 50%; }
+.land-brand svg { width: 42px; height: 42px; flex: none; }
+.land-organic-ring { color: #f7f9f8; overflow: visible; filter: drop-shadow(0 0 8px rgba(255,255,255,.28)); }
+.land-organic-ring.is-brand text { fill: #fff; stroke: none; font: 600 76px Manrope, sans-serif; letter-spacing: -.08em; }
 .landing-rework .land-nav nav { gap: clamp(22px, 3.2vw, 48px); }
 .landing-rework .land-nav nav > a:not(.nav-open-app) { color: #d2d7d6; font-size: 13px; }
 .landing-rework .land-nav nav > a:not(.nav-open-app):hover { color: #fff; }
@@ -79,7 +81,7 @@
   --visual-rotate-x: 0deg;
   --visual-rotate-y: 0deg;
   width: 100%;
-  min-height: 650px;
+  min-height: 715px;
   max-width: 600px;
   margin: 0 auto;
   padding: 0;
@@ -90,46 +92,45 @@
   transition: transform .28s cubic-bezier(.23,1,.32,1);
   animation: land-product-enter 1s .2s cubic-bezier(.23,1,.32,1) both;
 }
-.land-visual-halo { position: absolute; inset: 12% 4% 3%; border-radius: 50%; background: radial-gradient(circle at 52% 44%, rgba(191,220,220,.2), rgba(44,89,98,.08) 38%, transparent 69%); filter: blur(24px); pointer-events: none; }
-.land-device {
-  width: min(72%, 330px);
-  min-height: 618px;
-  position: relative;
-  z-index: 1;
-  margin: 8px auto 0;
-  padding: 38px 21px 18px;
-  border: 3px solid #657176;
-  border-radius: 45px;
-  background: linear-gradient(152deg, #1a252a 0%, #0e1519 35%, #080d10 90%);
-  box-shadow: 0 0 0 4px #070a0d, 0 40px 95px rgba(0,0,0,.75), 0 15px 45px rgba(129,169,177,.14), inset 0 0 0 1px rgba(255,255,255,.12);
-  overflow: hidden;
-}
-.land-device::before { content: ''; position: absolute; inset: 2px; border-radius: 40px; border: 1px solid rgba(255,255,255,.1); pointer-events: none; }
-.land-device-notch { position: absolute; top: 12px; left: 50%; width: 94px; height: 17px; transform: translateX(-50%); border-radius: 999px; background: #030607; }
-.land-device-top { display: flex; justify-content: space-between; align-items: center; color: #f3f4f4; font: 700 14px Manrope, sans-serif; }
-.land-device-top span:last-child { color: #9daeb0; font: 700 9px 'DM Sans', sans-serif; letter-spacing: .16em; }
-.land-device-heading { display: grid; gap: 2px; margin: 23px 0 4px; }
-.land-device-heading strong { font: 600 29px Manrope, sans-serif; letter-spacing: -.06em; }
-.land-device-heading small { color: #b9c4c5; font-size: 10px; }
-.land-device-ring { height: 241px; position: relative; display: grid; justify-items: center; align-content: end; }
-.land-ring-motion { width: 227px; height: 227px; position: absolute; top: 0; left: 50%; transform: translateX(-50%); animation: land-ring-select .48s cubic-bezier(.23,1,.32,1) both; }
-.land-ring-motion img { width: 100%; height: 100%; mix-blend-mode: screen; filter: drop-shadow(0 0 16px rgba(255,255,255,.18)); animation: land-ring-breathe 6s ease-in-out infinite; }
-.land-ring-caption { position: relative; z-index: 1; margin: 0; padding: 5px 10px; color: #bdc8cb; font-size: 10px; line-height: 1.45; text-align: center; background: rgba(8,13,16,.73); border-radius: 8px; }
-.land-device-divider { height: 1px; margin-top: 15px; background: rgba(255,255,255,.16); }
-.land-device-label { margin: 19px 0 9px; color: #aebcbf; font-size: 9px; font-weight: 700; letter-spacing: .17em; }
-.land-device-row { height: 43px; display: grid; grid-template-columns: 23px 1fr auto; align-items: center; gap: 8px; margin-bottom: 6px; padding: 0 11px; border: 1px solid rgba(255,255,255,.08); border-radius: 13px; background: rgba(255,255,255,.035); color: #d0d8d9; opacity: .66; transition: background .28s ease, border-color .28s ease, opacity .28s ease, transform .28s cubic-bezier(.23,1,.32,1); }
-.land-device-row svg { color: #e4e8e8; }
-.land-device-row span { font-size: 11px; font-weight: 600; }
-.land-device-row small { color: #9dafb1; font-size: 9px; }
-.land-device-row.is-current { transform: translateX(4px); opacity: 1; background: rgba(255,255,255,.11); border-color: rgba(255,255,255,.35); }
-.land-device-foot { margin: 13px 0 0; color: #9eadaf; font-size: 9px; text-align: center; }
-.land-float-card { position: absolute; z-index: 2; display: flex; align-items: center; gap: 11px; min-width: 180px; padding: 13px 15px; border: 1px solid rgba(255,255,255,.24); border-radius: 18px; background: rgba(23,32,36,.76); box-shadow: 0 18px 45px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.13); backdrop-filter: blur(18px); }
-.land-float-card b, .land-float-card small { display: block; }
-.land-float-card b { color: #fff; font-size: 12px; }
-.land-float-card small { margin-top: 3px; color: #b7c5c6; font-size: 10px; }
-.land-float-icon { width: 31px; height: 31px; display: grid; place-items: center; flex: none; border-radius: 50%; color: #f8f9f8; background: rgba(255,255,255,.13); }
-.land-float-source { top: 20%; left: -1%; }
-.land-float-context { right: -2%; bottom: 15%; }
+.land-visual-halo { position: absolute; inset: 9% 1% 4%; border-radius: 50%; background: radial-gradient(circle at 52% 44%, rgba(191,220,220,.19), rgba(44,89,98,.08) 38%, transparent 69%); filter: blur(25px); pointer-events: none; }
+.land-iphone { position: relative; z-index: 1; width: min(79%, 358px); height: 703px; margin: 0 auto; padding: 7px; border: 2px solid #839095; border-radius: 49px; background: linear-gradient(115deg, #657176, #10171a 13%, #394347 30%, #06090b 73%, #7d8a8e 94%); box-shadow: 0 0 0 2px #090d0f, 0 34px 75px rgba(0,0,0,.68), 0 0 40px rgba(182,210,215,.12), inset 0 0 0 1px rgba(255,255,255,.45); }
+.land-iphone::before, .land-iphone::after { content: ''; position: absolute; left: -6px; width: 3px; background: linear-gradient(#859094, #242c2f, #798488); border-radius: 4px 0 0 4px; }
+.land-iphone::before { top: 133px; height: 49px; }
+.land-iphone::after { top: 194px; height: 66px; }
+.land-iphone-glass { position: relative; height: 100%; overflow: hidden; border: 1px solid rgba(255,255,255,.14); border-radius: 40px; background: radial-gradient(circle at 20% 0%, #192327 0%, #0d1417 42%, #080d10 78%); }
+.land-iphone-status { height: 41px; display: flex; align-items: center; justify-content: space-between; padding: 5px 19px 0; color: #fff; font: 700 11px 'DM Sans', sans-serif; }
+.land-iphone-island { position: absolute; top: 11px; left: 50%; width: 99px; height: 23px; transform: translateX(-50%); border-radius: 999px; background: #020405; box-shadow: inset 0 0 0 1px rgba(255,255,255,.035); }
+.land-iphone-system { display: flex; align-items: end; gap: 2px; height: 11px; }
+.land-iphone-system i { width: 3px; background: #fff; border-radius: 2px; }
+.land-iphone-system i:nth-child(1) { height: 5px; }.land-iphone-system i:nth-child(2) { height: 8px; }.land-iphone-system i:nth-child(3) { height: 11px; }
+.land-iphone-system b { width: 17px; height: 9px; margin-left: 5px; border: 1px solid #fff; border-radius: 2px; box-shadow: inset 0 0 0 2px #0c1417, inset 12px 0 0 #fff; }
+.land-ios-content { height: calc(100% - 112px); padding: 14px 19px 0; overflow: hidden; mask-image: linear-gradient(#000 85%, transparent 100%); }
+.land-ios-brand { display: flex; align-items: center; gap: 7px; color: #fff; font: 500 18px Manrope, sans-serif; letter-spacing: -.05em; }
+.land-ios-brand > svg { margin-left: auto; color: #d9e0e0; }
+.land-ios-brand-icon svg { width: 24px; height: 24px; }
+.land-ios-title { margin-top: 13px; color: #fff; font: 600 31px Manrope, sans-serif; letter-spacing: -.065em; }
+.land-ios-title span { display: block; width: 27px; height: 3px; margin-top: 2px; border-radius: 4px; background: #fff; }
+.land-ios-date { margin: 8px 0 0; color: #aab7ba; font-size: 10px; }
+.land-ios-score { position: relative; height: 199px; display: grid; place-items: center; }
+.land-ios-score .land-organic-ring { position: absolute; width: 208px; height: 208px; animation: land-ring-breathe 6s ease-in-out infinite; }
+.land-ios-score-value { position: relative; display: grid; justify-items: center; gap: 0; color: #fff; }
+.land-ios-score-value span { color: #b8c4c6; font-size: 11px; }
+.land-ios-score-value strong { font: 600 43px/1.15 Manrope, sans-serif; }
+.land-ios-score-value small { color: #b8c4c6; font-size: 10px; }
+.land-ios-score-note { margin: -3px 0 0; color: #aab7ba; font-size: 10px; text-align: center; }
+.land-ios-score-link { display: block; margin-top: 5px; color: #fff; font-size: 10px; font-weight: 700; text-align: center; }
+.land-ios-health { display: flex; align-items: flex-start; gap: 10px; margin-top: 15px; padding: 13px; border: 1px solid rgba(255,255,255,.14); border-radius: 16px; background: #1b2225; }
+.land-ios-health > svg { flex: none; color: #f2f4f3; }
+.land-ios-health strong, .land-ios-health span { display: block; }.land-ios-health strong { color: #fff; font-size: 11px; }.land-ios-health span { margin-top: 2px; color: #abb7ba; font-size: 9px; }
+.land-ios-section { display: grid; gap: 2px; margin: 17px 0 9px; }.land-ios-section strong { color: #fff; font-size: 13px; }.land-ios-section span { color: #a9b4b7; font-size: 9px; }
+.land-ios-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.land-ios-metric { min-height: 74px; display: flex; flex-direction: column; align-items: flex-start; padding: 9px; border: 1px solid rgba(255,255,255,.12); border-radius: 13px; background: #1a2023; transition: border-color .25s ease, background .25s ease, transform .25s ease; }
+.land-ios-metric.is-current, .land-ios-journal.is-current { border-color: rgba(255,255,255,.43); background: #262e31; transform: translateY(-2px); }
+.land-ios-metric span { color: #bfc9ca; font-size: 9px; }.land-ios-metric strong { margin-top: 4px; color: #fff; font-size: 12px; }.land-ios-metric small { margin-top: auto; color: #929fa2; font-size: 8px; }
+.land-ios-journal { display: flex; align-items: center; gap: 8px; margin-top: 8px; padding: 10px; border: 1px solid rgba(255,255,255,.13); border-radius: 12px; background: #1a2023; color: #fff; font-size: 10px; font-weight: 700; transition: border-color .25s ease, background .25s ease, transform .25s ease; }.land-ios-journal svg:last-child { margin-left: auto; }
+.land-ios-tabbar { position: absolute; right: 0; bottom: 0; left: 0; height: 68px; display: flex; justify-content: space-around; align-items: flex-start; padding: 12px 6px 0; border-top: 1px solid rgba(255,255,255,.15); background: rgba(20,27,30,.95); box-shadow: 0 -10px 30px rgba(0,0,0,.28); }
+.land-ios-tabbar span { display: grid; justify-items: center; gap: 3px; color: #a4b1b3; font-size: 8px; }.land-ios-tabbar span.is-current { color: #fff; }
+.land-iphone-home-indicator { position: absolute; z-index: 3; bottom: 5px; left: 50%; width: 94px; height: 4px; transform: translateX(-50%); border-radius: 999px; background: #fff; }
 
 .land-signal-console { grid-column: 1 / -1; z-index: 3; display: grid; grid-template-columns: 160px minmax(300px, .85fr) minmax(280px, 1fr); align-items: center; gap: clamp(20px, 4vw, 70px); padding: 22px 0 5px; border-top: 1px solid rgba(255,255,255,.34); }
 .land-console-label { align-self: start; display: grid; gap: 8px; color: #e7eceb; font-size: 10px; font-weight: 700; letter-spacing: .14em; }
@@ -188,7 +189,8 @@
 .land-closing h2 em { color: #fff; font-style: normal; }
 .land-closing-inner > p:not(.section-index) { max-width: 49ch; color: #bfcdce; font-size: 16px; line-height: 1.65; }
 .land-closing .action { margin-top: 19px; }
-.land-closing-mark { position: absolute; width: min(34vw, 430px); right: 10%; top: 50%; transform: translateY(-50%); mix-blend-mode: screen; opacity: .7; pointer-events: none; }
+.land-closing-mark { position: absolute; width: min(34vw, 430px); right: 10%; top: 50%; transform: translateY(-50%); opacity: .72; pointer-events: none; }
+.land-closing-mark svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 20px rgba(255,255,255,.16)); }
 .landing-rework .land-footer { max-width: none; padding-inline: clamp(24px, 6vw, 112px); background: #080c0f; border-color: rgba(255,255,255,.16); }
 .landing-rework .land-footer small { border-color: rgba(255,255,255,.16); }
 
@@ -206,13 +208,12 @@
 @keyframes land-copy-enter { from { opacity: 0; transform: translateY(17px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes land-product-enter { from { opacity: 0; translate: 0 22px; } to { opacity: 1; translate: 0 0; } }
 @keyframes land-ring-breathe { 0%, 100% { opacity: .85; scale: 1; } 50% { opacity: 1; scale: 1.025; } }
-@keyframes land-ring-select { from { opacity: .6; scale: .94; } to { opacity: 1; scale: 1; } }
 @keyframes land-signal-enter { from { opacity: .35; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 @media (max-width: 1050px) {
   .landing-rework .land-hero { grid-template-columns: 1fr; min-height: 0; padding-top: 148px; }
   .landing-rework .land-hero-copy { max-width: 800px; }
-  .landing-rework .land-visual { justify-self: center; min-height: 650px; }
+  .landing-rework .land-visual { justify-self: center; min-height: 715px; }
   .land-signal-console { grid-template-columns: 140px 1fr; }
   .land-signal-copy { grid-column: 2; }
   .landing-rework .land-columns { gap: 38px; }
@@ -222,25 +223,14 @@
   .landing-rework .land-nav { height: 72px; }
   .landing-rework .land-nav nav { top: 66px; left: 18px; right: 18px; padding: 22px; border: 1px solid rgba(255,255,255,.22); border-radius: 20px; background: rgba(18,26,30,.97); box-shadow: 0 24px 48px rgba(0,0,0,.4); backdrop-filter: blur(20px); }
   .land-brand { font-size: 19px; }
-  .land-brand img { width: 37px; height: 37px; }
+  .land-brand svg { width: 37px; height: 37px; }
   .landing-rework .land-hero { padding-top: 133px; padding-bottom: 40px; row-gap: 32px; }
   .landing-rework .land-hero h1 { font-size: clamp(44px, 11vw, 66px); }
   .landing-rework .land-lead { font-size: 16px; }
   .landing-rework .land-buttons { flex-direction: column; align-items: stretch; }
   .landing-rework .land-buttons .action { width: 100%; }
-  .landing-rework .land-visual { width: 100%; min-height: 560px; }
-  .land-device { width: min(77%, 292px); min-height: 548px; padding: 36px 15px 16px; border-radius: 39px; }
-  .land-device::before { border-radius: 34px; }
-  .land-device-heading { margin-top: 18px; }
-  .land-device-ring { height: 205px; }
-  .land-ring-motion { width: 194px; height: 194px; }
-  .land-device-row { height: 38px; }
-  .land-float-card { min-width: 0; padding: 9px 10px; border-radius: 15px; }
-  .land-float-card b { font-size: 10px; }
-  .land-float-card small { font-size: 8px; }
-  .land-float-icon { width: 27px; height: 27px; }
-  .land-float-source { left: -1%; top: 24%; }
-  .land-float-context { right: -1%; bottom: 13%; }
+  .landing-rework .land-visual { width: 100%; min-height: 710px; }
+  .land-iphone { width: min(100%, 358px); }
   .land-signal-console { grid-template-columns: 1fr; gap: 12px; padding-top: 20px; }
   .land-console-label { display: flex; justify-content: space-between; }
   .land-signal-tabs { gap: clamp(15px, 6vw, 32px); }
@@ -259,15 +249,17 @@
 }
 
 @media (max-width: 410px) {
-  .land-float-card { display: none; }
-  .land-device { width: min(94%, 292px); }
-  .landing-rework .land-visual { min-height: 558px; }
+  .land-iphone { width: min(100%, 326px); height: 665px; }
+  .landing-rework .land-visual { min-height: 673px; }
+  .land-ios-content { padding-inline: 16px; }
+  .land-ios-score { height: 182px; }
+  .land-ios-score .land-organic-ring { width: 192px; height: 192px; }
   .land-signal-tabs button { font-size: 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .landing-rework .land-hero-scene, .landing-rework .land-hero-copy > *, .landing-rework .land-visual, .landing-rework .land-ring-motion, .landing-rework .land-ring-motion img, .landing-rework .land-signal-copy > div { animation: none !important; }
+  .landing-rework .land-hero-scene, .landing-rework .land-hero-copy > *, .landing-rework .land-visual, .landing-rework .land-ios-score .land-organic-ring, .landing-rework .land-signal-copy > div { animation: none !important; }
   .landing-rework .land-visual { transform: none !important; }
   .landing-rework.land-motion-ready .land-reveal { opacity: 1 !important; transform: none !important; }
-  .landing-rework .land-device-row, .landing-rework .land-signal-tabs button, .landing-rework .action { transition: color .15s ease, background .15s ease, border-color .15s ease !important; }
+  .landing-rework .land-ios-metric, .landing-rework .land-ios-journal, .landing-rework .land-signal-tabs button, .landing-rework .action { transition: color .15s ease, background .15s ease, border-color .15s ease !important; }
 }

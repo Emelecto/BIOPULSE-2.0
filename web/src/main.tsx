@@ -15,6 +15,7 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  FileUp,
   Heart,
   HeartPulse,
   Home,
@@ -56,8 +57,10 @@ import {
   type Sleep,
 } from "./data";
 import { bioScore, changeSignal, scoreColor, sleepScore, type ScoreResult } from "./scoring";
+import { inspectHealthCSV, type CSVImportResult } from "./csv";
 import "./style.css";
 import "./landing.css";
+import "./csv.css";
 
 type Tab = "Hoy" | "Tendencias" | "Diario" | "Sueño" | "Perfil";
 const tabs: {
@@ -77,12 +80,27 @@ const metricNames: Record<string, string> = {
   steps: "Pasos",
   active_energy: "Energía activa",
   heart_rate: "Frecuencia cardiaca",
+  respiratory_rate: "Frecuencia respiratoria",
+  oxygen_saturation: "Saturación de oxígeno",
+  wrist_temperature_deviation: "Variación de temperatura",
+  walking_running_distance: "Distancia caminada",
+  exercise_duration: "Tiempo de ejercicio",
+  flights_climbed: "Pisos subidos",
+  vo2_max: "VO₂ máx.",
+  heart_rate_recovery_one_minute: "Recuperación de FC",
 };
+const metricLabel = (kind: string, csv: ActiveCSV | null) => csv && kind === "hrv_sdnn" ? "HRV mediana" : metricNames[kind] ?? kind;
 const emptyMetrics = {
   daily: [] as Daily[],
   hourly: [] as Hourly[],
   sleep: [] as Sleep[],
 };
+type ActiveCSV = { name: string; result: CSVImportResult };
+function offsetDay(day: string, days: number): string {
+  const date = new Date(`${day}T12:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 function Brand({ light = false }: { light?: boolean }) {
   return (
     <span className={`brand ${light ? "brand-light" : ""}`}>
@@ -180,6 +198,20 @@ const landingSignals = [
 ] as const;
 type LandingSignal = (typeof landingSignals)[number]["id"];
 
+function OrganicRing({ brand = false }: { brand?: boolean }) {
+  const strands = [0, 1, 2, 3].map((strand) => {
+    const points = Array.from({ length: 181 }, (_, step) => {
+      const angle = (step / 180) * Math.PI * 2;
+      const ripple = Math.sin(angle * (5 + strand) + strand * 1.4) * 3.5;
+      const drift = Math.sin(angle * 3 + strand) * 2;
+      const radius = 88 + ripple + drift + (strand - 2) * 2;
+      return `${(120 + Math.cos(angle) * radius).toFixed(2)},${(120 + Math.sin(angle) * radius).toFixed(2)}`;
+    });
+    return <polyline key={strand} points={points.join(" ")} fill="none" stroke="currentColor" strokeWidth={strand === 0 ? 1.8 : 0.9} opacity={strand === 0 ? 0.9 : 0.45} strokeLinejoin="round" />;
+  });
+  return <svg className={brand ? "land-organic-ring is-brand" : "land-organic-ring"} viewBox="0 0 240 240" aria-hidden="true" focusable="false">{strands}{brand && <text x="120" y="144" textAnchor="middle">B</text>}</svg>;
+}
+
 function Landing() {
   const [menu, setMenu] = useState(false);
   const [activeSignal, setActiveSignal] = useState<LandingSignal>("sleep");
@@ -224,7 +256,7 @@ function Landing() {
       </a>
       <header className="land-nav">
         <a href="/" aria-label="BioPulse, inicio">
-          <span className="land-brand"><img src="/images/brand-mark.png" alt="" />BioPulse</span>
+          <span className="land-brand"><OrganicRing brand />BioPulse</span>
         </a>
         <button
           className="menu-button"
@@ -276,28 +308,32 @@ function Landing() {
             aria-label="Representación de la interfaz de BioPulse sin mediciones personales"
           >
             <div className="land-visual-halo" aria-hidden="true" />
-            <div className="land-float-card land-float-source" aria-hidden="true">
-              <span className="land-float-icon"><Watch size={18} /></span>
-              <span><b>Apple Health</b><small>Lecturas con permiso</small></span>
-            </div>
-            <div className="land-device">
-              <div className="land-device-notch" aria-hidden="true" />
-              <div className="land-device-top"><span>BioPulse</span><span>HOY</span></div>
-              <div className="land-device-heading"><strong>Hoy</strong><small>Tus señales, en contexto</small></div>
-              <div className="land-device-ring">
-                <div className="land-ring-motion" key={activeSignal}><img src="/images/brand-mark.png" alt="" /></div>
-                <p className="land-ring-caption">Una lectura personal<br />cuando hay datos suficientes</p>
+            <div className="land-iphone">
+              <div className="land-iphone-glass">
+                <div className="land-iphone-status"><span>9:41</span><span className="land-iphone-island" /><span className="land-iphone-system"><i /><i /><i /><b /></span></div>
+                <div className="land-ios-content">
+                  <div className="land-ios-brand"><span className="land-ios-brand-icon"><OrganicRing brand /></span><span>BioPulse</span><UserRound size={19} /></div>
+                  <div className="land-ios-title">Hoy<span /></div>
+                  <p className="land-ios-date">Tus señales, en contexto</p>
+                  <div className="land-ios-score">
+                    <OrganicRing />
+                    <div className="land-ios-score-value"><span>BioScore</span><strong>—</strong><small>Datos insuficientes</small></div>
+                  </div>
+                  <p className="land-ios-score-note">Índice personal · requiere historial suficiente</p>
+                  <span className="land-ios-score-link">Ver componentes ↗</span>
+                  <div className="land-ios-health"><HeartPulse size={18} /><div><strong>Conecta Apple Salud</strong><span>Elige qué señales compartir.</span></div></div>
+                  <div className="land-ios-section"><strong>Señales de hoy</strong><span>Datos observados, no puntuaciones</span></div>
+                  <div className="land-ios-metrics">
+                    <div className={`land-ios-metric land-ios-energy ${activeSignal === "activity" ? "is-current" : ""}`}><span>Energía activa</span><strong>Sin datos</strong><small>Sin registros por hora</small></div>
+                    <div className="land-ios-metric"><span>HRV media</span><strong>Sin datos</strong><small>Media de hoy</small></div>
+                    <div className="land-ios-metric"><span>FC en reposo</span><strong>Sin datos</strong><small>Última de hoy</small></div>
+                    <div className={`land-ios-metric ${activeSignal === "sleep" ? "is-current" : ""}`}><span>Sueño</span><strong>Sin datos</strong><small>Última noche</small></div>
+                  </div>
+                  <div className={`land-ios-journal ${activeSignal === "journal" ? "is-current" : ""}`}><BookOpen size={16} /><span>Añadir al Diario</span><ArrowRight size={14} /></div>
+                </div>
+                <div className="land-ios-tabbar"><span className="is-current"><Home size={17} />Hoy</span><span><TrendingUp size={17} />Tendencias</span><span><BookOpen size={17} />Diario</span><span><Moon size={17} />Sueño</span><span><UserRound size={17} />Perfil</span></div>
+                <div className="land-iphone-home-indicator" />
               </div>
-              <div className="land-device-divider" />
-              <p className="land-device-label">TU DÍA</p>
-              <div className={`land-device-row ${activeSignal === "sleep" ? "is-current" : ""}`}><Moon size={17} /><span>Sueño</span><small>Medición</small></div>
-              <div className={`land-device-row ${activeSignal === "activity" ? "is-current" : ""}`}><Zap size={17} /><span>Actividad</span><small>Medición</small></div>
-              <div className={`land-device-row ${activeSignal === "journal" ? "is-current" : ""}`}><BookOpen size={17} /><span>Tu diario</span><small>Contexto</small></div>
-              <p className="land-device-foot">Siempre sabes de dónde viene cada señal.</p>
-            </div>
-            <div className="land-float-card land-float-context" aria-hidden="true">
-              <span className="land-float-icon"><Activity size={18} /></span>
-              <span><b>En contexto</b><small>Una historia más completa</small></span>
             </div>
           </div>
           <div className="land-signal-console">
@@ -446,6 +482,13 @@ function Landing() {
               </p>
             </details>
             <details>
+              <summary>¿Puedo cargar un CSV de Apple Salud?</summary>
+              <p>
+                Sí. Inicia sesión y abre Perfil → Importar CSV. El archivo se
+                procesa en tu navegador durante esa sesión y no se sube al servidor.
+              </p>
+            </details>
+            <details>
               <summary>¿BioScore está disponible?</summary>
               <p>
                 Sí, como índice exploratorio cuando hay suficientes días observados.
@@ -468,11 +511,11 @@ function Landing() {
             <p>Entra a BioPulse y descubre cómo se conectan tus señales con el contexto que tú eliges añadir.</p>
             <a className="action" href="/app">Probar BioPulse web <ArrowRight size={18} /></a>
           </div>
-          <img src="/images/brand-mark.png" alt="" className="land-closing-mark" />
+          <span className="land-closing-mark"><OrganicRing brand /></span>
         </section>
       </main>
       <footer className="land-footer">
-        <span className="land-brand"><img src="/images/brand-mark.png" alt="" />BioPulse</span>
+        <span className="land-brand"><OrganicRing brand />BioPulse</span>
         <p>Bienestar, en contexto.</p>
         <a href="/app">
           Abrir app web <ArrowRight size={16} />
@@ -722,18 +765,25 @@ function BarChart({
       </Empty>
     );
   const max = Math.max(...rows.map((r) => r.value), 1);
+  const signed = rows.some((r) => r.value < 0);
+  const maxMagnitude = Math.max(...rows.map((r) => Math.abs(r.value)), 1);
   return (
     <div
       role="img"
       aria-label={`${label}: ${rows.map((r) => `${r.key} ${r.value.toFixed(1)}`).join(", ")}`}
       className={`bar-chart ${tall ? "bar-chart-tall" : ""}`}
     >
-      <div className="bars">
+      <div className={`bars ${signed ? "bars-signed" : ""}`}>
         {rows.map((r) => (
           <div className="bar-slot" key={r.key}>
             <span
-              className="bar"
-              style={{ height: `${Math.max(3, (r.value / max) * 100)}%` }}
+              className={`bar ${signed && r.value < 0 ? "bar-negative" : ""}`}
+              style={signed
+                ? {
+                    height: `${Math.max(2, (Math.abs(r.value) / maxMagnitude) * 44)}%`,
+                    ...(r.value < 0 ? { top: "50%" } : { bottom: "50%" }),
+                  }
+                : { height: `${Math.max(3, (r.value / max) * 100)}%` }}
             />
             <small>{r.key}</small>
           </div>
@@ -812,6 +862,7 @@ function MetricCard({
 function Today({
   daily,
   hourly,
+  csv,
   onJournal,
   onMetric,
   onConnect,
@@ -819,13 +870,15 @@ function Today({
 }: {
   daily: Daily[];
   hourly: Hourly[];
+  csv: ActiveCSV | null;
   onJournal: () => void;
   onMetric: (kind: string) => void;
   onConnect: () => void;
   targetMinutes: number;
 }) {
-  const date = today();
-  const score = bioScore(daily, daysAgo(1), targetMinutes);
+  const date = csv?.result.lastDay ?? today();
+  const score = bioScore(daily, csv ? date : daysAgo(1), targetMinutes);
+  const displayed = (kind: string) => csv ? daily.find((row) => row.metric_kind === kind) : latest(daily, kind, date);
   const hourRows = hourly
     .filter((r) => r.local_date === date && r.metric_kind === "active_energy")
     .map((r) => ({
@@ -840,8 +893,8 @@ function Today({
   return (
     <>
       <Header
-        title="Hoy"
-        subtitle={new Date().toLocaleDateString("es-CO", {
+        title={csv ? "Tus datos" : "Hoy"}
+        subtitle={csv ? `${dateLabel(date)} · CSV local` : new Date().toLocaleDateString("es-CO", {
           weekday: "long",
           day: "numeric",
           month: "long",
@@ -858,14 +911,14 @@ function Today({
           Ver componentes <ArrowRight size={13} />
         </small>
       </button>
-      {daily.length === 0 && (
+      {daily.length === 0 && !csv && (
         <Card className="callout">
           <ShieldCheck size={22} />
           <div>
             <strong>Conecta tus señales</strong>
             <p>
               No hay resúmenes disponibles. Puedes configurar Health Auto Export
-              desde tu Perfil.
+              o revisar un CSV local desde tu Perfil.
             </p>
             <Btn secondary onClick={onConnect}>
               Configurar puente <ArrowRight size={15} />
@@ -874,8 +927,8 @@ function Today({
         </Card>
       )}
       <div className="section-title">
-        <h2>Señales de hoy</h2>
-        <p>Datos observados, no puntuaciones</p>
+        <h2>{csv ? "Señales del CSV" : "Señales de hoy"}</h2>
+        <p>Datos observados, no puntuaciones · {csv ? "archivo local" : "Apple Salud"}</p>
       </div>
       <div className="metrics-grid">
         <button
@@ -885,27 +938,27 @@ function Today({
           <span className="metric-head">
             Energía activa <Zap size={17} />
           </span>
-          <strong>{formatMetric(latest(daily, "active_energy"))}</strong>
+          <strong>{formatMetric(displayed("active_energy"))}</strong>
           <div className="energy-graph">
-            <BarChart rows={hourRows} tall label="Energía activa por hora" />
+            {csv ? <Empty title="Sin registros por hora">El CSV muestra el agregado diario de energía activa.</Empty> : <BarChart rows={hourRows} tall label="Energía activa por hora" />}
           </div>
-          <small>Registrada por hora · Apple Salud</small>
+          <small>{csv ? "Agregado diario · CSV local" : "Registrada por hora · Apple Salud"}</small>
         </button>
         <div className="metric-stack">
           <MetricCard
-            title="HRV media"
-            row={latest(daily, "hrv_sdnn")}
+            title={csv ? "HRV mediana" : "HRV media"}
+            row={displayed("hrv_sdnn")}
             history={history("hrv_sdnn")}
             icon={Activity}
-            note="Media de hoy"
+            note={csv ? "Mediana diaria · CSV" : "Media de hoy"}
             onClick={() => onMetric("hrv_sdnn")}
           />
           <MetricCard
             title="FC en reposo"
-            row={latest(daily, "resting_heart_rate")}
+            row={displayed("resting_heart_rate")}
             history={history("resting_heart_rate")}
             icon={Heart}
-            note="Valor agregado"
+            note={csv ? "Mediana diaria · CSV" : "Valor agregado"}
             onClick={() => onMetric("resting_heart_rate")}
           />
         </div>
@@ -914,15 +967,15 @@ function Today({
           row={daily.find((r) => r.metric_kind === "sleep_duration")}
           history={history("sleep_duration")}
           icon={Moon}
-          note="Última noche con datos"
+          note={csv ? "Duración importada · CSV" : "Última noche con datos"}
           onClick={() => onMetric("sleep_duration")}
         />
         <MetricCard
           title="Pasos"
-          row={latest(daily, "steps")}
+          row={displayed("steps")}
           history={history("steps")}
           icon={Activity}
-          note="Acumulado de hoy"
+          note={csv ? "Total del día importado" : "Acumulado de hoy"}
           onClick={() => onMetric("steps")}
         />
       </div>
@@ -948,22 +1001,31 @@ function Today({
 
 function Trends({
   daily,
+  csv,
   onMetric,
 }: {
   daily: Daily[];
+  csv: ActiveCSV | null;
   onMetric: (kind: string) => void;
 }) {
-  const [kind, setKind] = useState("hrv_sdnn");
+  const choices = csv
+    ? Object.keys(metricNames).filter((metric) => daily.some((row) => row.metric_kind === metric))
+    : ["hrv_sdnn", "resting_heart_rate", "sleep_duration", "active_energy", "steps"];
+  const [kind, setKind] = useState(() => choices.includes("hrv_sdnn") ? "hrv_sdnn" : choices[0]);
+  const selectedKind = choices.includes(kind) ? kind : choices[0];
   const [period, setPeriod] = useState(7);
-  const signal = changeSignal(daily, daysAgo(1));
+  const anchor = csv?.result.lastDay ?? today();
+  const rangeStart = offsetDay(anchor, -period + 1);
+  const previousStart = offsetDay(anchor, -period * 2 + 1);
+  const signal = changeSignal(daily, csv ? anchor : daysAgo(1));
   const rows = daily
-    .filter((r) => r.metric_kind === kind && r.local_date >= daysAgo(period))
+    .filter((r) => r.metric_kind === selectedKind && r.local_date >= rangeStart && r.local_date <= anchor)
     .sort((a, b) => a.local_date.localeCompare(b.local_date));
   const previous = daily.filter(
     (r) =>
-      r.metric_kind === kind &&
-      r.local_date < daysAgo(period) &&
-      r.local_date >= daysAgo(period * 2),
+      r.metric_kind === selectedKind &&
+      r.local_date < rangeStart &&
+      r.local_date >= previousStart,
   );
   const average = (points: Daily[]) =>
     points.length
@@ -991,16 +1053,10 @@ function Trends({
         <div className="filter-row">
           <label>
             Señal
-            <select value={kind} onChange={(e) => setKind(e.target.value)}>
-              {[
-                "hrv_sdnn",
-                "resting_heart_rate",
-                "sleep_duration",
-                "active_energy",
-                "steps",
-              ].map((m) => (
+            <select value={selectedKind} onChange={(e) => setKind(e.target.value)}>
+              {choices.map((m) => (
                 <option value={m} key={m}>
-                  {metricNames[m]}
+                  {metricLabel(m, csv)}
                 </option>
               ))}
             </select>
@@ -1023,9 +1079,9 @@ function Trends({
             value: r.value,
           }))}
           tall
-          label={`Tendencia de ${metricNames[kind]}`}
+          label={`Tendencia de ${metricLabel(selectedKind, csv)}`}
         />
-        <small>Agregados observados · Apple Salud vía Health Auto Export</small>
+        <small>Agregados observados · {csv ? "CSV local" : "Apple Salud vía Health Auto Export"}</small>
       </Card>
       <div className="section-title">
         <h2>¿Qué cambió?</h2>
@@ -1064,27 +1120,27 @@ function Trends({
         <p>Toca una señal para conocerla</p>
       </div>
       {Object.keys(metricNames)
-        .filter((m) => m !== "heart_rate")
+        .filter((m) => m !== "heart_rate" && (!csv || daily.some((row) => row.metric_kind === m)))
         .map((m) => (
           <button
             key={m}
             className="card metric-row"
             onClick={() => onMetric(m)}
           >
-            <span>{metricNames[m]}</span>
-            <strong>{formatMetric(latest(daily, m))}</strong>
+            <span>{metricLabel(m, csv)}</span>
+            <strong>{formatMetric(csv ? daily.find((row) => row.metric_kind === m) : latest(daily, m))}</strong>
             <ChevronRight size={18} />
           </button>
         ))}
       <p className="fine-print">
         Los agregados no sustituyen una evaluación clínica. La cobertura depende
-        de Apple Salud y de la automatización.
+        {csv ? " de las señales incluidas en el CSV." : " de Apple Salud y de la automatización."}
       </p>
     </>
   );
 }
 
-function SleepPage({ daily, sleep, targetMinutes, onTargetChange }: { daily: Daily[]; sleep: Sleep[]; targetMinutes: number; onTargetChange: (value: number) => void }) {
+function SleepPage({ daily, sleep, csv, targetMinutes, onTargetChange }: { daily: Daily[]; sleep: Sleep[]; csv: ActiveCSV | null; targetMinutes: number; onTargetChange: (value: number) => void }) {
   const row = daily.find((r) => r.metric_kind === "sleep_duration");
   const score = sleepScore(daily, row?.local_date ?? today(), targetMinutes);
   const stages = sleep.filter(
@@ -1095,7 +1151,7 @@ function SleepPage({ daily, sleep, targetMinutes, onTargetChange }: { daily: Dai
   const total = stages.reduce((sum, r) => sum + r.minutes, 0);
   return (
     <>
-      <Header title="Sueño" subtitle="Tu última noche registrada" />
+      <Header title="Sueño" subtitle={csv ? "Duración importada del CSV · sin etapas" : "Tu última noche registrada"} />
       <Card className="sleep-hero">
         <Ring title="SLEEP SCORE" compact score={score} />
         <div>
@@ -1156,8 +1212,7 @@ function SleepPage({ daily, sleep, targetMinutes, onTargetChange }: { daily: Dai
           </>
         ) : (
           <Empty title="Sin etapas agregadas">
-            Si tu fuente registra fases de sueño y se comparte el resumen,
-            aparecerán aquí.
+            {csv ? "La importación CSV aporta duración diaria cuando existe, pero no fases de sueño." : "Si tu fuente registra fases de sueño y se comparte el resumen, aparecerán aquí."}
           </Empty>
         )}
       </Card>
@@ -1465,18 +1520,70 @@ function JournalPage({
   );
 }
 
+function CSVImportPanel({ active, onActivate, onClear }: { active: ActiveCSV | null; onActivate: (value: ActiveCSV) => void; onClear: () => void }) {
+  const input = useRef<HTMLInputElement>(null);
+  const [preview, setPreview] = useState<CSVImportResult | null>(null);
+  const [fileName, setFileName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function inspect(file?: File) {
+    if (!file) return;
+    setPreview(null);
+    setFileName(file.name);
+    setError("");
+    setBusy(true);
+    try {
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      setPreview(await inspectHealthCSV(file, timeZone));
+    } catch (issue) {
+      setError(issue instanceof Error ? issue.message : "No se pudo revisar el CSV.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <div className="section-title csv-section-title"><h2>Importar CSV</h2><p>Revisa el archivo antes de usarlo</p></div>
+      <Card className="csv-panel">
+        <div className="csv-intro"><span className="csv-icon"><FileUp size={21} /></span><div><h2>Datos de Apple Salud, en esta sesión</h2><p>El archivo se procesa en este navegador. No se envía a BioPulse, Supabase ni al Coach, y se descarta al cerrar o recargar la página.</p></div></div>
+        <input ref={input} className="sr-only" type="file" accept=".csv,.txt,text/csv,text/plain" aria-label="Elegir archivo CSV de salud" onChange={(event) => { void inspect(event.target.files?.[0]); event.target.value = ""; }} />
+        <Btn secondary disabled={busy} onClick={() => input.current?.click()}><FileUp size={17} />{busy ? "Revisando archivo…" : "Revisar archivo CSV"}</Btn>
+        <p className="csv-footnote">Acepta los formatos tidy y wide de la app iOS, en UTF-8 y hasta 100 MB. Las fechas se agrupan según la zona horaria de este navegador.</p>
+        {busy && <p className="csv-working" role="status">Procesando muestras localmente…</p>}
+        {error && <p className="notice error" role="alert">{error}</p>}
+        {preview && <div className="csv-review" aria-live="polite">
+          <div className="csv-review-heading"><div><span className="card-topline">ARCHIVO REVISADO · {preview.format.toUpperCase()}</span><h3>{fileName}</h3></div><span className="csv-range">{dateLabel(preview.firstDay)} – {dateLabel(preview.lastDay)}</span></div>
+          <div className="csv-facts"><span><strong>{preview.sourceRows.toLocaleString("es-CO")}</strong>filas leídas</span><span><strong>{preview.acceptedValues.toLocaleString("es-CO")}</strong>valores compatibles</span><span><strong>{preview.rejectedValues.toLocaleString("es-CO")}</strong>valores rechazados</span><span><strong>{preview.daily.length.toLocaleString("es-CO")}</strong>agregados diarios</span></div>
+          <p className="csv-metrics">Señales: {preview.mappedMetrics.map((kind) => metricNames[kind] ?? kind).join(" · ")}</p>
+          {preview.skippedRows > 0 && <p className="csv-muted">{preview.skippedRows.toLocaleString("es-CO")} filas de tipos no compatibles se omitieron.</p>}
+          {preview.warnings.length > 0 && <ul className="csv-warnings">{preview.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
+          {preview.rejectedExamples.length > 0 && <details className="csv-rejections"><summary>Ver ejemplos de filas rechazadas</summary><ul>{preview.rejectedExamples.map((sample) => <li key={`${sample.row}-${sample.reason}`}>Fila {sample.row}: {sample.reason}</li>)}</ul></details>}
+          <Btn onClick={() => { onActivate({ name: fileName, result: preview }); setPreview(null); }}>Usar estos datos en BioPulse <ArrowRight size={16} /></Btn>
+        </div>}
+        {active && <div className="csv-active"><div><strong>CSV activo: {active.name}</strong><p>{active.result.daily.length.toLocaleString("es-CO")} agregados diarios · hasta {dateLabel(active.result.lastDay)}. Se muestran en lugar de los datos sincronizados.</p></div><button type="button" onClick={onClear}>Quitar CSV y volver a datos sincronizados</button></div>}
+      </Card>
+    </>
+  );
+}
+
 function Profile({
   email,
   userId,
   status,
   refreshStatus,
   refreshMetrics,
+  csv,
+  onActivateCSV,
+  onClearCSV,
 }: {
   email: string;
   userId: string;
   status: BridgeStatus | null;
   refreshStatus: () => Promise<void>;
   refreshMetrics: () => Promise<void>;
+  csv: ActiveCSV | null;
+  onActivateCSV: (value: ActiveCSV) => void;
+  onClearCSV: () => void;
 }) {
   const [token, setToken] = useState("");
   const [busy, setBusy] = useState(false);
@@ -1550,7 +1657,7 @@ function Profile({
   async function deleteData() {
     if (
       !window.confirm(
-        "¿Detener la conexión y eliminar todos los resúmenes importados por Health Auto Export? Esta acción no se puede deshacer.",
+        "¿Detener la conexión y eliminar los resúmenes sincronizados por Health Auto Export del servidor? Esto no afecta al CSV local. La eliminación remota no se puede deshacer.",
       )
     )
       return;
@@ -1573,10 +1680,12 @@ function Profile({
           <small>Acceso privado · {userId.slice(0, 8)}…</small>
         </div>
       </Card>
+      <CSVImportPanel active={csv} onActivate={onActivateCSV} onClear={onClearCSV} />
       <div className="section-title">
         <h2>Apple Salud en la web</h2>
         <p>Health Auto Export como puente opcional</p>
       </div>
+      {csv && <p className="notice">El CSV local y el puente son independientes. Las acciones de conexión siguientes afectan solo a los datos sincronizados del servidor.</p>}
       <Card className="bridge-card">
         <div className="bridge-title">
           <Watch />
@@ -1703,7 +1812,7 @@ function Profile({
           </Btn>
         )}
         <button className="danger-link" onClick={deleteData} disabled={busy}>
-          <Trash2 size={16} /> Eliminar datos importados
+          <Trash2 size={16} /> Eliminar resúmenes sincronizados
         </button>
       </div>
       {error && (
@@ -1913,13 +2022,15 @@ function Coach({
 
 function AppShell({ session }: { session: Session }) {
   const [tab, setTab] = useState<Tab>("Hoy");
-  const [metrics, setMetrics] = useState(emptyMetrics);
+  const [remoteMetrics, setRemoteMetrics] = useState(emptyMetrics);
+  const [csv, setCSV] = useState<ActiveCSV | null>(null);
   const [entries, setEntries] = useState<Journal[]>([]);
   const [status, setStatus] = useState<BridgeStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [coach, setCoach] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
+  const metrics = csv ? { daily: csv.result.daily, hourly: [] as Hourly[], sleep: [] as Sleep[] } : remoteMetrics;
   const userId = session.user.id;
   const [targetMinutes, setTargetMinutes] = useState(() => {
     const stored = Number(localStorage.getItem(`biopulse.sleepTarget.${session.user.id}`));
@@ -1932,7 +2043,7 @@ function AppShell({ session }: { session: Session }) {
   };
   const refreshMetrics = useCallback(async () => {
     try {
-      setMetrics(await loadMetrics(userId));
+      setRemoteMetrics(await loadMetrics(userId));
       setError("");
     } catch (e) {
       setError(
@@ -1974,7 +2085,7 @@ function AppShell({ session }: { session: Session }) {
         .reverse(),
     [metrics.daily, detail],
   );
-  const currentBio = useMemo(() => bioScore(metrics.daily, daysAgo(1), targetMinutes), [metrics.daily, targetMinutes]);
+  const currentBio = useMemo(() => bioScore(metrics.daily, csv?.result.lastDay ?? daysAgo(1), targetMinutes), [metrics.daily, csv, targetMinutes]);
   function navigate(next: Tab) {
     setTab(next);
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -2002,7 +2113,7 @@ function AppShell({ session }: { session: Session }) {
         <div className="side-bottom">
           <span className="side-status">
             <span className={status?.connected ? "live-pip" : "neutral-pip"} />{" "}
-            {status?.lastSyncAt ? "Datos recibidos" : status?.connected ? "Puente configurado" : "Esperando datos"}
+            {csv ? "CSV local activo" : status?.lastSyncAt ? "Datos recibidos" : status?.connected ? "Puente configurado" : "Esperando datos"}
           </span>
           <p>BioPulse · MVP de ciencia de datos</p>
         </div>
@@ -2015,6 +2126,7 @@ function AppShell({ session }: { session: Session }) {
           </button>
         </div>
         <div className="app-content">
+          {csv && <div className="csv-session-banner" role="status"><span><FileUp size={17} /> <strong>Mediciones CSV locales</strong> · {csv.name} · último día {dateLabel(csv.result.lastDay)}</span><button type="button" onClick={() => setCSV(null)}>Volver a datos sincronizados</button></div>}
           {loading && (
             <div className="loading-state">Consultando tus registros…</div>
           )}
@@ -2028,13 +2140,14 @@ function AppShell({ session }: { session: Session }) {
               <Today
                 daily={metrics.daily}
                 hourly={metrics.hourly}
+                csv={csv}
                 onJournal={() => navigate("Diario")}
                 onMetric={setDetail}
                 onConnect={() => navigate("Perfil")}
                 targetMinutes={targetMinutes}
               />
             ) : tab === "Tendencias" ? (
-              <Trends daily={metrics.daily} onMetric={setDetail} />
+              <Trends daily={metrics.daily} csv={csv} onMetric={setDetail} />
             ) : tab === "Diario" ? (
               <JournalPage
                 userId={userId}
@@ -2042,7 +2155,7 @@ function AppShell({ session }: { session: Session }) {
                 onReload={refreshJournal}
               />
             ) : tab === "Sueño" ? (
-              <SleepPage daily={metrics.daily} sleep={metrics.sleep} targetMinutes={targetMinutes} onTargetChange={updateTarget} />
+              <SleepPage daily={metrics.daily} sleep={metrics.sleep} csv={csv} targetMinutes={targetMinutes} onTargetChange={updateTarget} />
             ) : (
               <Profile
                 email={session.user.email ?? "Cuenta"}
@@ -2050,16 +2163,20 @@ function AppShell({ session }: { session: Session }) {
                 status={status}
                 refreshStatus={refreshStatus}
                 refreshMetrics={refreshMetrics}
+                csv={csv}
+                onActivateCSV={(value) => { setCSV(value); setCoach(false); setDetail(null); navigate("Hoy"); }}
+                onClearCSV={() => setCSV(null)}
               />
             ))}
         </div>
         <button
           className="coach-fab"
-          onClick={() => setCoach(true)}
-          aria-label="Abrir Coach IA"
+          onClick={() => { if (!csv) setCoach(true); }}
+          disabled={!!csv}
+          aria-label={csv ? "Coach IA pausado mientras se usa un CSV local" : "Abrir Coach IA"}
         >
           <Sparkles size={19} />
-          <span>Coach IA</span>
+          <span>{csv ? "Coach pausado · CSV" : "Coach IA"}</span>
         </button>
         <nav className="bottom-tabs" aria-label="Secciones">
           {tabs.map(({ name, icon: Icon }) => (
@@ -2076,7 +2193,7 @@ function AppShell({ session }: { session: Session }) {
           ))}
         </nav>
       </main>
-      {coach && (
+      {coach && !csv && (
         <Coach
           onClose={() => setCoach(false)}
           daily={metrics.daily}
@@ -2107,9 +2224,9 @@ function AppShell({ session }: { session: Session }) {
               DETALLE /{" "}
               {detail === "bioscore"
                 ? "BIO SCORE"
-                : metricNames[detail]?.toUpperCase()}
+                : metricLabel(detail, csv).toUpperCase()}
             </span>
-            <h2>{detail === "bioscore" ? "BioScore" : metricNames[detail]}</h2>
+            <h2>{detail === "bioscore" ? "BioScore" : metricLabel(detail, csv)}</h2>
             {detail === "bioscore" ? (
               <>
                 <Ring title="BIO SCORE" compact score={currentBio} />
@@ -2124,10 +2241,10 @@ function AppShell({ session }: { session: Session }) {
             ) : (
               <>
                 <strong className="detail-value">
-                  {formatMetric(latest(metrics.daily, detail))}
+                  {formatMetric(csv ? metrics.daily.find((row) => row.metric_kind === detail) : latest(metrics.daily, detail))}
                 </strong>
                 <p>
-                  Agregados observados. Un valor aislado no indica por sí mismo
+                  {csv ? "Agregados observados del CSV local." : "Agregados observados de Apple Salud."} Un valor aislado no indica por sí mismo
                   una condición médica.
                 </p>
                 <BarChart
@@ -2135,7 +2252,7 @@ function AppShell({ session }: { session: Session }) {
                     key: dateLabel(r.local_date),
                     value: r.value,
                   }))}
-                  label={`Historial de ${metricNames[detail]}`}
+                  label={`Historial de ${metricLabel(detail, csv)}`}
                 />
               </>
             )}

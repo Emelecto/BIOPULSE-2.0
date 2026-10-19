@@ -393,3 +393,17 @@
 - **Movimiento:** entrada inicial, aparición de secciones al desplazarse, respiración decorativa del anillo y transiciones al elegir una señal. La inclinación por puntero solo se habilita con ratón preciso y sin preferencia de movimiento reducido; los controles siguen siendo botones accesibles por teclado y tacto.
 - **Evidencia y límites:** la pantalla conceptual no representa valores ni resultados medidos. La landing indica que el prototipo iOS está en pruebas y que su descarga pública aún no existe. No se añadieron dependencias ni se desplegó el cambio.
 - **Verificación:** `npm run build` de `web` pasó y el paquete incluyó las dos imágenes de marca. La política del navegador local impidió abrir la vista `localhost` para inspección visual; revisar escritorio y móvil en un navegador autorizado antes de publicar.
+
+## D-058 — Vista de iPhone de la landing basada en la app nativa
+
+- **Estado:** CONFIRMED para la estructura implementada y compilación; UNKNOWN para revisión visual final en navegador tras este ajuste.
+- **Decisión:** se reemplazó el teléfono conceptual anterior por una representación del estado sin datos de `TodayView.swift`: encabezado, BioScore sin cifra, conexión a Apple Salud, tarjetas de señales y navegación inferior. No se muestran mediciones inventadas. El selector de la landing resalta la sección pertinente sin alterar datos.
+- **Marca:** el anillo y la B se trazan como SVG transparente inspirado en `OrganicScoreRing` para eliminar el fondo cuadrado visible en el hero y el cierre. Se retiró la copia PNG de la landing que causaba ese artefacto; el bosque permanece como fondo.
+- **Límite:** la vista reproduce la composición del código SwiftUI y no sustituye una captura del build en un iPhone real. La inspección visual local del navegador sigue pendiente por la política de acceso a `localhost` de esta sesión.
+
+## D-059 — Importación CSV local en la app web
+
+- **Estado:** CONFIRMED para implementación, pruebas unitarias y lectura del CSV real aportado; UNKNOWN para recorrido manual de la interfaz en navegador autenticado.
+- **Decisión:** Perfil permite revisar y activar CSV tidy/wide UTF-8 en memoria, procesado por un Web Worker. Reutiliza los tipos y reglas de agregación del importador iOS: suma para actividad y duración; mediana para señales fisiológicas; último registro para recuperación de FC. La vista CSV sustituye temporalmente las mediciones sincronizadas sin mezclarlas ni subirlas a Supabase. Quitarla o recargar devuelve la vista remota. El Coach se pausa mientras el CSV está activo.
+- **Cobertura:** se muestran filas, valores aceptados/rechazados, fechas, métricas y advertencias. Las fechas tidy se convierten a la zona horaria del navegador; wide exige YYYY-MM-DD. No se infieren sueño, etapas ni datos faltantes. Los totales de fuentes solapadas pueden duplicarse, como en iOS.
+- **Verificación:** 14 pruebas web pasan (incluidas 4 de CSV) y `npm run build` genera el worker. El archivo real de 31,4 MB y 233.495 filas produjo 88.762 valores compatibles, 3.175 agregados diarios y cero valores rechazados; 144.733 filas de tipos sin mapeo se omitieron. No contiene duración de sueño, por lo que ambos scores permanecen sin resultado. El archivo no se copió al repositorio.
