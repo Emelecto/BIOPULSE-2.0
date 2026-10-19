@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#071d26" />
-    <meta name="description" content="Panel operativo privado de BioPulse." />
-    <title>BioPulse · Operaciones</title>
+    <meta name="description" content="Espacios privados de administración y desarrollo de BioPulse." />
+    <title>BioPulse · Panel interno</title>
   </head>
   <body>
     <main class="shell">
@@ -16,9 +16,9 @@
 
       <section class="hero" aria-labelledby="page-title">
         <div class="hero-copy">
-          <p class="eyebrow">CENTRO DE OPERACIONES <span>—</span> 01</p>
-          <h1 id="page-title">Una vista clara<br /><em>del sistema.</em></h1>
-          <p class="lede">Actividad y adopción de BioPulse sin abrir datos de salud ni contenido personal.</p>
+          <p class="eyebrow">BIOPULSE <span>—</span> ESPACIO INTERNO</p>
+          <h1 id="page-title">El sistema<br /><em>en contexto.</em></h1>
+          <p class="lede">Operaciones y arquitectura del producto en espacios privados para el equipo.</p>
         </div>
         <div class="hero-orbit" aria-hidden="true"><span class="orbit-core">B<span>·</span>P</span></div>
       </section>
@@ -32,10 +32,47 @@
         </form>
       </section>
 
-      <section id="dashboard" class="dashboard" hidden aria-labelledby="metrics-title">
-        <div class="section-heading"><div><p class="eyebrow">SEÑALES OPERATIVAS</p><h2 id="metrics-title">Pulso de la plataforma</h2></div><div class="actions"><button type="button" id="refresh">Actualizar ↻</button><button type="button" id="logout">Salir</button></div></div>
-        <div class="metrics-grid" id="metric-grid" aria-live="polite"></div>
-        <div class="panel-footer"><span>Datos agregados · UTC para actividad diaria</span><time id="updated-at"></time></div>
+      <section id="dashboard" class="dashboard" hidden aria-labelledby="workspace-title">
+        <div class="workspace-bar">
+          <nav class="panel-tabs" aria-label="Paneles internos">
+            <button type="button" class="panel-tab is-active" id="admin-tab" data-view="admin-view" aria-current="page">Admin</button>
+            <button type="button" class="panel-tab" id="developer-tab" data-view="developer-view">Developer</button>
+          </nav>
+          <div class="actions"><button type="button" id="refresh">Actualizar</button><button type="button" id="logout">Salir</button></div>
+        </div>
+
+        <section id="admin-view" class="panel-view" aria-labelledby="metrics-title">
+          <div class="section-heading"><div><p class="eyebrow">OPERACIONES</p><h2 id="metrics-title">Pulso de la plataforma</h2><p class="section-lede">Adopción y uso agregado, sin exponer cuentas ni registros de salud.</p></div></div>
+          <div class="metrics-grid" id="metric-grid" aria-live="polite"></div>
+          <div class="panel-footer"><span>Conteos agregados · Actividad diaria en UTC</span><time id="updated-at"></time></div>
+          <aside class="privacy-note"><span class="note-mark" aria-hidden="true">✓</span><p><strong>Privacidad preservada</strong><br />Este panel consulta totales del sistema. No muestra datos biométricos, diarios, correos ni identidades.</p></aside>
+        </section>
+
+        <section id="developer-view" class="panel-view" aria-labelledby="developer-title" hidden>
+          <div class="section-heading"><div><p class="eyebrow">ARQUITECTURA Y DIAGNÓSTICO</p><h2 id="developer-title">Developer workspace</h2><p class="section-lede">Estado de componentes y alcance técnico de BioPulse 2.0.</p></div></div>
+          <div class="dev-overview">
+            <article class="dev-surface connection-surface">
+              <div class="surface-heading"><div><span class="surface-kicker">CONEXIÓN ACTUAL</span><h3>Backend privado</h3></div><span id="connection-indicator" class="state-dot is-checking" aria-hidden="true"></span></div>
+              <p id="connection-state" class="connection-state" role="status" aria-live="polite">Esperando comprobación…</p>
+              <p class="surface-copy">La comprobación autentica la sesión y consulta el endpoint operativo protegido.</p>
+              <p class="connection-meta"><span>Proyecto</span><code id="project-host">—</code></p>
+            </article>
+            <article class="dev-surface model-surface">
+              <div class="surface-heading"><div><span class="surface-kicker">ML EN EL PRODUCTO</span><h3>Modelo personal</h3></div><span class="status-tag status-experimental">Experimental</span></div>
+              <p class="model-name">Isolation Forest <span>· en el dispositivo</span></p>
+              <p class="surface-copy">Explora combinaciones atípicas de HRV, pulso en reposo y energía activa frente al historial personal.</p>
+              <div class="model-contract"><span>30 días previos completos</span><span>Sin diagnóstico ni probabilidad clínica</span></div>
+            </article>
+          </div>
+          <div class="developer-section-head"><div><span class="surface-kicker">MAPA DE COMPONENTES</span><h3>Qué está construido y qué sigue en evaluación</h3></div><span class="read-only-label">Solo lectura</span></div>
+          <div class="component-list" id="component-list">
+            <article class="component-row"><span class="component-icon" aria-hidden="true">01</span><div class="component-main"><h4>Aplicación iOS</h4><p>SwiftUI · Apple Salud · importación CSV local</p></div><span class="status-tag status-built">Implementado</span></article>
+            <article class="component-row"><span class="component-icon" aria-hidden="true">02</span><div class="component-main"><h4>Web y autenticación</h4><p>React · sesión Supabase · acceso a cuenta</p></div><span class="status-tag status-built">Implementado</span></article>
+            <article class="component-row"><span class="component-icon" aria-hidden="true">03</span><div class="component-main"><h4>Puente de métricas</h4><p>Agregados con consentimiento · procesamiento con controles del servidor</p></div><span class="status-tag status-built">Implementado</span></article>
+            <article class="component-row"><span class="component-icon" aria-hidden="true">04</span><div class="component-main"><h4>ML supervisado</h4><p>Benchmark de recuperación no superó la referencia simple; permanece fuera del producto.</p></div><span class="status-tag status-research">Investigación</span></article>
+          </div>
+          <div class="developer-footnote"><span class="footnote-line" aria-hidden="true"></span><p>Las etiquetas describen el estado documentado en el repositorio. La conexión del backend se verifica en vivo; el estado del resto de componentes no sustituye una prueba en dispositivo.</p></div>
+        </section>
       </section>
 
       <p id="status" class="status" role="status" aria-live="polite"></p>

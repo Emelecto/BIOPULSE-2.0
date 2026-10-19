@@ -15,6 +15,10 @@ const login = $('#login-panel');
 const dashboard = $('#dashboard');
 const status = $('#status');
 const grid = $('#metric-grid');
+const adminView = $('#admin-view');
+const developerView = $('#developer-view');
+const connectionState = $('#connection-state');
+const connectionIndicator = $('#connection-indicator');
 
 function setStatus(message, error = false) {
   status.textContent = message;
@@ -30,6 +34,26 @@ function showLogin() {
 function showDashboard() {
   login.hidden = true;
   dashboard.hidden = false;
+}
+
+function setConnection(message, state = 'checking') {
+  connectionState.textContent = message;
+  connectionIndicator.className = `state-dot is-${state}`;
+}
+
+function selectView(viewId) {
+  const isDeveloper = viewId === 'developer-view';
+  adminView.hidden = isDeveloper;
+  developerView.hidden = !isDeveloper;
+  $('#admin-tab').classList.toggle('is-active', !isDeveloper);
+  $('#developer-tab').classList.toggle('is-active', isDeveloper);
+  if (isDeveloper) {
+    $('#admin-tab').removeAttribute('aria-current');
+    $('#developer-tab').setAttribute('aria-current', 'page');
+  } else {
+    $('#developer-tab').removeAttribute('aria-current');
+    $('#admin-tab').setAttribute('aria-current', 'page');
+  }
 }
 
 function card(label, value, note, index) {
@@ -48,17 +72,19 @@ function card(label, value, note, index) {
 async function loadMetrics() {
   if (!client) return;
   setStatus('Actualizando indicadores…');
+  setConnection('Verificando sesión y endpoint…');
   $('#refresh').disabled = true;
   try {
     const { data: { session }, error: sessionError } = await client.auth.getSession();
     if (sessionError || !session) { showLogin(); setStatus('Inicia sesión para continuar.', true); return; }
+    showDashboard();
     const response = await fetch(`${url}/functions/v1/admin-ops`, {
       headers: { Authorization: `Bearer ${session.access_token}`, apikey: key },
       cache: 'no-store',
     });
     const payload = await response.json();
-    if (response.status === 401) { showLogin(); setStatus('La sesión venció. Entra de nuevo.', true); return; }
-    if (response.status === 403) { showLogin(); await client.auth.signOut(); setStatus('Esta cuenta no tiene acceso al panel interno.', true); return; }
+    if (response.status === 401) { setConnection('Sesión vencida', 'error'); showLogin(); setStatus('La sesión venció. Entra de nuevo.', true); return; }
+    if (response.status === 403) { setConnection('Cuenta sin autorización', 'error'); showLogin(); await client.auth.signOut(); setStatus('Esta cuenta no tiene acceso al panel interno.', true); return; }
     if (payload.error === 'admin_not_configured') throw new Error('El acceso de administrador aún no está activado en el servidor.');
     if (!response.ok || !payload.metrics) throw new Error('No se pudieron consultar los indicadores. Inténtalo de nuevo.');
     const m = payload.metrics;
@@ -67,15 +93,17 @@ async function loadMetrics() {
       ['Cuentas nuevas', m.newAccounts7d, 'Últimos 7 días'],
       ['Solicitudes al Coach', m.coachRequestsToday, 'Hoy · UTC'],
       ['Usuarios activos en Coach', m.coachUsersToday, 'Hoy · UTC'],
-      ['Eventos de consentimiento', m.syncConsentEvents7d, 'Sincronización · 7 días'],
-      ['Eventos de consentimiento', m.coachConsentEvents7d, 'Coach IA · 7 días'],
+      ['Consentimientos de sincronización', m.syncConsentEvents7d, 'Eventos · últimos 7 días'],
+      ['Consentimientos del Coach', m.coachConsentEvents7d, 'Eventos · últimos 7 días'],
     ];
     grid.replaceChildren(...items.map((item, index) => card(...item, index)));
     const timestamp = new Date(m.generatedAt);
     $('#updated-at').textContent = Number.isNaN(timestamp.getTime()) ? '' : `Actualizado ${timestamp.toLocaleString('es-CO')}`;
     showDashboard();
+    setConnection(`Conectado · comprobado ${timestamp.toLocaleTimeString('es-CO')}`, 'ok');
     setStatus('Indicadores actualizados.');
   } catch (error) {
+    setConnection('No se pudo verificar el backend', 'error');
     setStatus(error instanceof Error ? error.message : 'No se pudo conectar.', true);
   } finally {
     $('#refresh').disabled = false;
@@ -98,11 +126,19 @@ $('#login-form').addEventListener('submit', async (event) => {
 });
 
 $('#refresh').addEventListener('click', loadMetrics);
+$('[data-view="admin-view"]').addEventListener('click', () => selectView('admin-view'));
+$('[data-view="developer-view"]').addEventListener('click', () => selectView('developer-view'));
 $('#logout').addEventListener('click', async () => {
   await client?.auth.signOut();
   showLogin();
+  selectView('admin-view');
+  setConnection('Esperando comprobación…');
   setStatus('Sesión cerrada.');
 });
+
+$('#project-host').textContent = (() => {
+  try { return new URL(url).hostname; } catch { return 'No configurado'; }
+})();
 
 if (!client) {
   $('#login-form button').disabled = true;

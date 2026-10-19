@@ -378,3 +378,18 @@
 - **Límite de agregación:** las métricas acumulativas se suman desde las filas recibidas. Cuando el archivo incluye muestras superpuestas de iPhone y Watch, los totales pueden diferir de los agregados deduplicados por Apple Salud. Solo se importan tipos/unidades mapeados; los demás se reportan en advertencias. No se infieren muestras de sueño a partir de este CSV.
 - **Fuente inspeccionada:** el archivo aportado por el usuario tenía 233.495 filas y ~31 MB, con formato tidy `type,sourceName,unit,startDate,endDate,value`, fechas con offset `-0500` y valores en varias unidades. No se copió al repositorio.
 - **Verificación:** análisis sintáctico Swift 6.4.1 en Windows pasó. La compilación con SDK de Apple, pruebas en simulador e importación en iPhone siguen pendientes de macOS/Xcode.
+
+## D-056 — Paneles web Admin y Developer
+
+- **Estado:** CONFIRMED para la estructura local y la autorización compartida; UNKNOWN para publicación y revisión visual tras login real.
+- **Decisión:** la interfaz interna web separa operaciones del inventario técnico en dos vistas bajo el mismo acceso privado del propietario. Admin conserva conteos agregados; Developer ofrece una comprobación autenticada en vivo del endpoint `admin-ops`, arquitectura de componentes y estado ML documentado. No se añaden acciones de escritura ni acceso a datos de salud.
+- **ML:** Isolation Forest personal se etiqueta experimental y en el dispositivo; modelos supervisados quedan como investigación, coherente con el benchmark que no superó el predictor trivial.
+- **Verificación:** `npm run build` de Admin pasó; la vista de acceso se inspeccionó en navegador móvil y el documento incluye navegación accesible y adaptable para ambas vistas. El endpoint solo se marca conectado tras respuesta autenticada correcta. No se probaron paneles con una sesión real en esta actualización, ni se publicó o desplegó el panel.
+
+## D-057 — Landing web alineada con la identidad iOS
+
+- **Estado:** CONFIRMED para implementación local y compilación; UNKNOWN para revisión visual en navegador tras el rediseño.
+- **Decisión:** la landing Vite/React reutiliza el bosque nocturno y el anillo blanco con B de la app. El hero muestra una representación sin mediciones ficticias, composición con profundidad y un selector interactivo de Sueño, Actividad y Diario. La navegación y la app web autenticada bajo `/app` conservan sus rutas.
+- **Movimiento:** entrada inicial, aparición de secciones al desplazarse, respiración decorativa del anillo y transiciones al elegir una señal. La inclinación por puntero solo se habilita con ratón preciso y sin preferencia de movimiento reducido; los controles siguen siendo botones accesibles por teclado y tacto.
+- **Evidencia y límites:** la pantalla conceptual no representa valores ni resultados medidos. La landing indica que el prototipo iOS está en pruebas y que su descarga pública aún no existe. No se añadieron dependencias ni se desplegó el cambio.
+- **Verificación:** `npm run build` de `web` pasó y el paquete incluyó las dos imágenes de marca. La política del navegador local impidió abrir la vista `localhost` para inspección visual; revisar escritorio y móvil en un navegador autorizado antes de publicar.

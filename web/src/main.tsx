@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { Session } from "@supabase/supabase-js";
 import "@fontsource/dm-sans/latin-400.css";
@@ -57,6 +57,7 @@ import {
 } from "./data";
 import { bioScore, changeSignal, scoreColor, sleepScore, type ScoreResult } from "./scoring";
 import "./style.css";
+import "./landing.css";
 
 type Tab = "Hoy" | "Tendencias" | "Diario" | "Sueño" | "Perfil";
 const tabs: {
@@ -154,25 +155,85 @@ function Header({ title, subtitle }: { title: string; subtitle: string }) {
   );
 }
 
+const landingSignals = [
+  {
+    id: "sleep",
+    label: "Sueño",
+    icon: Moon,
+    title: "Tu descanso, en perspectiva",
+    description: "Mira la duración y la regularidad registradas, junto a lo que ocurrió en tus días.",
+  },
+  {
+    id: "activity",
+    label: "Actividad",
+    icon: Zap,
+    title: "Movimiento con contexto",
+    description: "Relaciona la actividad observada con tus hábitos y cambios de rutina, sin asumir una causa.",
+  },
+  {
+    id: "journal",
+    label: "Diario",
+    icon: BookOpen,
+    title: "La parte que tú conoces",
+    description: "Añade cómo te sentiste o qué cambió. BioPulse distingue tus notas de las mediciones.",
+  },
+] as const;
+type LandingSignal = (typeof landingSignals)[number]["id"];
+
 function Landing() {
   const [menu, setMenu] = useState(false);
+  const [activeSignal, setActiveSignal] = useState<LandingSignal>("sleep");
+  const landingRef = useRef<HTMLDivElement>(null);
+  const visualRef = useRef<HTMLDivElement>(null);
+  const selectedSignal = landingSignals.find((signal) => signal.id === activeSignal)!;
+
+  useEffect(() => {
+    const root = landingRef.current;
+    if (!root || !('IntersectionObserver' in window)) return;
+    const elements = root.querySelectorAll<HTMLElement>(".land-reveal");
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -28px 0px" });
+    elements.forEach((element) => observer.observe(element));
+    root.classList.add("land-motion-ready");
+    return () => observer.disconnect();
+  }, []);
+
+  const moveVisual = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!window.matchMedia("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)").matches) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+    const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+    visualRef.current?.style.setProperty("--visual-rotate-x", `${(-y * 5).toFixed(2)}deg`);
+    visualRef.current?.style.setProperty("--visual-rotate-y", `${(x * 7).toFixed(2)}deg`);
+  };
+
+  const resetVisual = () => {
+    visualRef.current?.style.setProperty("--visual-rotate-x", "0deg");
+    visualRef.current?.style.setProperty("--visual-rotate-y", "0deg");
+  };
+
   return (
-    <div className="landing">
+    <div className="landing landing-rework" ref={landingRef}>
       <a className="skip" href="#contenido">
         Saltar al contenido
       </a>
       <header className="land-nav">
         <a href="/" aria-label="BioPulse, inicio">
-          <Brand />
+          <span className="land-brand"><img src="/images/brand-mark.png" alt="" />BioPulse</span>
         </a>
         <button
           className="menu-button"
           type="button"
           onClick={() => setMenu(!menu)}
-          aria-label="Abrir navegación"
+          aria-label={menu ? "Cerrar navegación" : "Abrir navegación"}
           aria-expanded={menu}
         >
-          <Menu />
+          {menu ? <X /> : <Menu />}
         </button>
         <nav className={menu ? "nav-open" : ""} aria-label="Navegación">
           <a href="#metodo" onClick={() => setMenu(false)}>
@@ -185,74 +246,76 @@ function Landing() {
             Preguntas
           </a>
           <a className="nav-open-app" href="/app">
-            Abrir app web <ArrowRight size={16} />
+            Probar BioPulse <ArrowRight size={16} />
           </a>
         </nav>
       </header>
       <main id="contenido">
-        <section className="land-hero">
-          <div className="land-glow" aria-hidden="true" />
+        <section className="land-hero" aria-labelledby="land-title">
+          <div className="land-hero-scene" aria-hidden="true" />
           <div className="land-hero-copy">
-            <p className="eyebrow">
-              <span className="live-pip" /> BIENESTAR, EN CONTEXTO
-            </p>
-            <h1>
-              Tu cuerpo da señales.
-              <br />
-              <em>Entiéndelas juntas.</em>
-            </h1>
+            <p className="eyebrow"><span className="live-pip" /> DEL APPLE WATCH A UNA LECTURA MÁS CLARA</p>
+            <h1 id="land-title">Tu cuerpo da señales.<br /><em>Entiéndelas juntas.</em></h1>
             <p className="land-lead">
-              Sueño, actividad y lo que vives cada día. BioPulse reúne tus
-              registros reales para ayudarte a observar patrones sin convertir
-              una señal en un diagnóstico.
+              BioPulse reúne tus registros de bienestar y lo que vives cada día.
+              Explora patrones personales con contexto, transparencia y control sobre tus datos.
             </p>
             <div className="land-buttons">
-              <a className="action" href="/app">
-                Abrir app web <ArrowRight size={18} />
-              </a>
-              <a className="action action-secondary" href="#ios">
-                iOS próximamente <ArrowDownRight size={18} />
-              </a>
+              <a className="action" href="/app">Probar BioPulse web <ArrowRight size={18} /></a>
+              <a className="action action-secondary" href="#metodo">Descubrir cómo funciona <ArrowDownRight size={18} /></a>
             </div>
-            <span className="land-subnote">
-              La web funciona con cuenta · iOS aún no está en App Store
-            </span>
+            <span className="land-subnote">App web disponible · prototipo iOS en pruebas</span>
           </div>
           <div
             className="land-visual"
-            aria-label="Vista conceptual de BioPulse sin valores ficticios"
+            ref={visualRef}
+            data-signal={activeSignal}
+            onPointerMove={moveVisual}
+            onPointerLeave={resetVisual}
+            role="img"
+            aria-label="Representación de la interfaz de BioPulse sin mediciones personales"
           >
-            <div className="preview-top">
-              HOY <span>DATOS REALES · SIN CÁLCULOS INVENTADOS</span>
+            <div className="land-visual-halo" aria-hidden="true" />
+            <div className="land-float-card land-float-source" aria-hidden="true">
+              <span className="land-float-icon"><Watch size={18} /></span>
+              <span><b>Apple Health</b><small>Lecturas con permiso</small></span>
             </div>
-            <div className="preview-ring">
-              <div className="ring-orbit one" />
-              <div className="ring-orbit two" />
-              <div className="ring-core">
-                <small>BIO SCORE</small>
-                <b>—</b>
-                <span>en desarrollo</span>
+            <div className="land-device">
+              <div className="land-device-notch" aria-hidden="true" />
+              <div className="land-device-top"><span>BioPulse</span><span>HOY</span></div>
+              <div className="land-device-heading"><strong>Hoy</strong><small>Tus señales, en contexto</small></div>
+              <div className="land-device-ring">
+                <div className="land-ring-motion" key={activeSignal}><img src="/images/brand-mark.png" alt="" /></div>
+                <p className="land-ring-caption">Una lectura personal<br />cuando hay datos suficientes</p>
               </div>
+              <div className="land-device-divider" />
+              <p className="land-device-label">TU DÍA</p>
+              <div className={`land-device-row ${activeSignal === "sleep" ? "is-current" : ""}`}><Moon size={17} /><span>Sueño</span><small>Medición</small></div>
+              <div className={`land-device-row ${activeSignal === "activity" ? "is-current" : ""}`}><Zap size={17} /><span>Actividad</span><small>Medición</small></div>
+              <div className={`land-device-row ${activeSignal === "journal" ? "is-current" : ""}`}><BookOpen size={17} /><span>Tu diario</span><small>Contexto</small></div>
+              <p className="land-device-foot">Siempre sabes de dónde viene cada señal.</p>
             </div>
-            <div className="preview-cards">
-              <div>
-                <Moon size={17} /> Sueño <strong>—</strong>
-              </div>
-              <div>
-                <HeartPulse size={17} /> HRV <strong>—</strong>
-              </div>
+            <div className="land-float-card land-float-context" aria-hidden="true">
+              <span className="land-float-icon"><Activity size={18} /></span>
+              <span><b>En contexto</b><small>Una historia más completa</small></span>
             </div>
-            <p>La claridad también consiste en mostrar lo que falta.</p>
           </div>
-          <div className="land-vertical">
-            01 / 04 · OBSERVAR ANTES DE CONCLUIR
+          <div className="land-signal-console">
+            <div className="land-console-label"><span>EXPLORA EL SISTEMA</span><span>01 — 03</span></div>
+            <div className="land-signal-tabs" role="group" aria-label="Explorar señales de BioPulse">
+              {landingSignals.map((signal) => {
+                const Icon = signal.icon;
+                return <button key={signal.id} type="button" aria-pressed={activeSignal === signal.id} onClick={() => setActiveSignal(signal.id)}><Icon size={17} /><span>{signal.label}</span></button>;
+              })}
+            </div>
+            <div className="land-signal-copy" aria-live="polite"><div key={activeSignal}><strong>{selectedSignal.title}</strong><p>{selectedSignal.description}</p></div></div>
           </div>
         </section>
         <section className="land-section land-method" id="metodo">
-          <div className="section-index">
+          <div className="section-index land-reveal">
             01 <span>/</span> LA IDEA
           </div>
-          <div className="land-columns">
+          <div className="land-columns land-reveal">
             <h2>
               Una señal sola
               <br />
@@ -274,7 +337,7 @@ function Landing() {
               </a>
             </div>
           </div>
-          <div className="signal-rail">
+          <div className="signal-rail land-reveal">
             <span>
               <Moon size={18} /> Sueño
             </span>
@@ -291,15 +354,15 @@ function Landing() {
           </div>
         </section>
         <section className="land-section land-privacy" id="privacidad">
-          <div className="section-index">
+          <div className="section-index land-reveal">
             02 <span>/</span> CONTROL
           </div>
-          <h2>
+          <h2 className="land-reveal">
             Tus datos.
             <br />
             <em>Tus decisiones.</em>
           </h2>
-          <div className="privacy-grid">
+          <div className="privacy-grid land-reveal">
             <div>
               <ShieldCheck />
               <h3>Cuenta obligatoria</h3>
@@ -328,44 +391,44 @@ function Landing() {
           </div>
         </section>
         <section className="land-section land-platform" id="ios">
-          <div className="section-index">
+          <div className="section-index land-reveal">
             03 <span>/</span> DÓNDE USARLO
           </div>
-          <div>
+          <div className="land-reveal">
             <h2>
               Empieza en la web.
               <br />
               <em>Continúa en iOS.</em>
             </h2>
             <p>
-              La app web es la forma más sencilla de probar el proyecto hoy. La
-              instalación pública en iPhone llegará cuando exista distribución
-              oficial; por ahora no hay enlace de App Store.
+              Puedes probar la app web hoy. El prototipo nativo de iOS ya está
+              en pruebas en iPhone; su distribución pública llegará cuando esté
+              listo para publicarse.
             </p>
             <a className="action" href="/app">
               Entrar a BioPulse <ArrowRight size={18} />
             </a>
           </div>
-          <div className="platform-slate">
+          <div className="platform-slate land-reveal">
             <span>WEB APP</span>
             <strong>Disponible para probar</strong>
             <small>Con cuenta y conexión opcional de Health Auto Export</small>
             <span className="platform-divider" />
             <span>APP IOS</span>
-            <strong>En desarrollo</strong>
-            <small>No disponible para descarga pública</small>
+            <strong>Prototipo en pruebas</strong>
+            <small>Aún no disponible para descarga pública</small>
           </div>
         </section>
         <section className="land-section land-faq" id="preguntas">
-          <div className="section-index">
+          <div className="section-index land-reveal">
             04 <span>/</span> PREGUNTAS
           </div>
-          <h2>
+          <h2 className="land-reveal">
             Lo importante,
             <br />
             <em>sin letra pequeña.</em>
           </h2>
-          <div className="faq-list">
+          <div className="faq-list land-reveal">
             <details>
               <summary>¿Necesito un Apple Watch?</summary>
               <p>
@@ -398,9 +461,18 @@ function Landing() {
             </details>
           </div>
         </section>
+        <section className="land-closing" aria-labelledby="land-closing-title">
+          <div className="land-closing-inner land-reveal">
+            <p className="section-index">TU PRÓXIMA LECTURA EMPIEZA AQUÍ</p>
+            <h2 id="land-closing-title">Tus datos tienen<br /><em>más que contar.</em></h2>
+            <p>Entra a BioPulse y descubre cómo se conectan tus señales con el contexto que tú eliges añadir.</p>
+            <a className="action" href="/app">Probar BioPulse web <ArrowRight size={18} /></a>
+          </div>
+          <img src="/images/brand-mark.png" alt="" className="land-closing-mark" />
+        </section>
       </main>
       <footer className="land-footer">
-        <Brand />
+        <span className="land-brand"><img src="/images/brand-mark.png" alt="" />BioPulse</span>
         <p>Bienestar, en contexto.</p>
         <a href="/app">
           Abrir app web <ArrowRight size={16} />
