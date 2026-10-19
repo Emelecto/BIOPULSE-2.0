@@ -193,6 +193,6 @@ public enum PersonalAnomalyForest {
 
 private extension Int {
     func clamped(to range: ClosedRange<Int>) -> Int {
-        min(range.upperBound, max(range.lowerBound, self))
+        Swift.min(range.upperBound, Swift.max(range.lowerBound, self))
     }
 }
