@@ -246,6 +246,7 @@ private struct AuthView: View {
     @ViewBuilder
     private var feedback: some View {
         if let message { PulseFeedback(message: message) }
+        if let notice = auth.accountNotice { PulseFeedback(message: notice) }
         if let errorMessage { PulseFeedback(message: errorMessage, isError: true) }
         if let callbackError = auth.callbackError { PulseFeedback(message: callbackError, isError: true) }
     }

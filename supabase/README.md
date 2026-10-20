@@ -2,6 +2,8 @@
 
 Este directorio contiene la configuración local, migraciones SQL, funciones Edge y pruebas pgTAP del backend. Las migraciones de cuentas, Coach, agregados diarios y operaciones están aplicadas en el proyecto remoto; la configuración Auth del Dashboard/SMTP/OAuth aún requiere verificación independiente.
 
+`functions/account-delete` permite borrar la **cuenta autenticada** tras recibir la confirmación `ELIMINAR`. Usa el JWT para obtener el ID; no acepta un ID de destino enviado por el cliente. Requiere `SUPABASE_URL`, una clave pública y una clave secreta **solo del servidor**. Las tablas del esquema actual referencian `auth.users(id) ON DELETE CASCADE`. Seis pruebas del controlador y el test HTTP local pasaron: se eliminaron los registros de once tablas de una cuenta sintética y se conservaron los de otra. La función todavía no está desplegada. Ver `docs/REAL_USER_READINESS.md` antes de activarla para usuarios reales.
+
 ## Modelo inicial
 
 - `auth.users`: identidad y credenciales administradas por Supabase Auth; BioPulse no almacena contraseñas.
@@ -43,6 +45,8 @@ supabase test db
 ## Flujo de autenticación de la app
 
 La aplicación exige una sesión antes de mostrar las pestañas. El registro por correo puede requerir confirmación antes de emitir sesión; el callback es `biopulse://auth-callback`. La app también incluye Apple (nonce) y Google, pero ambos proveedores deben habilitarse y configurarse en el proyecto remoto antes de que esos botones funcionen. La sincronización de datos no se activa por iniciar sesión.
+
+La web usa rutas propias para confirmación, recuperación y cambio de correo. Las plantillas HTML, asuntos, URLs permitidas y configuración SMTP se describen en `templates/README.md`. `config.toml` prepara el entorno local; las plantillas y avisos de seguridad del proyecto alojado requieren configurarse en su Dashboard. La función `confirm-email` conserva la ruta del flujo iOS y entrega texto legible: el dominio estándar de Supabase [reescribe las respuestas HTML a texto plano](https://supabase.com/docs/guides/functions/limits). Las pantallas HTML de marca se sirven desde la web. El cambio local requiere despliegue y prueba en dispositivo.
 
 ## Coach IA
 

@@ -20,7 +20,6 @@ import {
   HeartPulse,
   Home,
   LockKeyhole,
-  LogOut,
   Menu,
   Moon,
   Plus,
@@ -58,6 +57,7 @@ import {
 } from "./data";
 import { bioScore, changeSignal, scoreColor, sleepScore, type ScoreResult } from "./scoring";
 import { inspectHealthCSV, type CSVImportResult } from "./csv";
+import { AccountCenter, AuthCallbackPage, AuthPage, ResetPasswordPage, WelcomePanel } from "./auth-ui";
 import "./style.css";
 import "./landing.css";
 import "./csv.css";
@@ -526,225 +526,6 @@ function Landing() {
           soporte y distribución iOS.
         </small>
       </footer>
-    </div>
-  );
-}
-
-function Auth() {
-  const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [error, setError] = useState("");
-  async function submit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!supabase) return;
-    setBusy(true);
-    setError("");
-    setNotice("");
-    const result =
-      mode === "login"
-        ? await supabase.auth.signInWithPassword({ email, password })
-        : mode === "signup"
-          ? await supabase.auth.signUp({
-              email,
-              password,
-              options: { emailRedirectTo: `${location.origin}/app` },
-            })
-          : await supabase.auth.resetPasswordForEmail(email, {
-              redirectTo: `${location.origin}/app`,
-            });
-    setBusy(false);
-    if (result.error) setError(result.error.message);
-    else if (mode === "signup")
-      setNotice(
-        "Revisa tu correo para confirmar la cuenta. El enlace regresará a esta web.",
-      );
-    else if (mode === "recovery")
-      setNotice("Te enviamos un enlace para restablecer tu contraseña.");
-  }
-  return (
-    <div className="auth-page">
-      <a href="/" className="auth-back">
-        <ChevronLeft size={17} /> Volver al sitio
-      </a>
-      <div className="auth-grid">
-        <div className="auth-story">
-          <Brand />
-          <span className="eyebrow">TU ESPACIO PERSONAL</span>
-          <h1>
-            Entender empieza
-            <br />
-            <em>por observar.</em>
-          </h1>
-          <p>
-            Entra para ver tus señales reales, llevar tu Diario y conectar Apple
-            Salud solo si tú lo decides.
-          </p>
-          <div className="auth-art">
-            <Activity size={53} strokeWidth={1} />
-          </div>
-        </div>
-        <Card className="auth-card">
-          <p className="eyebrow">ACCESO SEGURO</p>
-          <h2>
-            {mode === "login"
-              ? "Bienvenido de nuevo"
-              : mode === "signup"
-                ? "Crea tu cuenta"
-                : "Recupera tu acceso"}
-          </h2>
-          <p>Tu cuenta es necesaria para usar BioPulse.</p>
-          {!configured && (
-            <div className="notice error">
-              Falta configurar VITE_SUPABASE_URL y
-              VITE_SUPABASE_PUBLISHABLE_KEY.
-            </div>
-          )}
-          <div className="auth-switch">
-            <button
-              className={mode === "login" ? "selected" : ""}
-              onClick={() => setMode("login")}
-            >
-              Iniciar sesión
-            </button>
-            <button
-              className={mode === "signup" ? "selected" : ""}
-              onClick={() => setMode("signup")}
-            >
-              Crear cuenta
-            </button>
-          </div>
-          <form onSubmit={submit}>
-            <label>
-              Correo electrónico
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoComplete="email"
-                required
-              />
-            </label>
-            {mode !== "recovery" && (
-              <label>
-                Contraseña
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={
-                    mode === "signup" ? "new-password" : "current-password"
-                  }
-                  minLength={6}
-                  required
-                />
-              </label>
-            )}
-            {mode === "login" && (
-              <button
-                type="button"
-                className="text-button forgot"
-                onClick={() => setMode("recovery")}
-              >
-                Olvidé mi contraseña
-              </button>
-            )}
-            {error && (
-              <div role="alert" className="notice error">
-                {error}
-              </div>
-            )}
-            {notice && (
-              <div role="status" className="notice">
-                {notice}
-              </div>
-            )}
-            <Btn type="submit" disabled={busy || !configured}>
-              {busy
-                ? "Un momento…"
-                : mode === "login"
-                  ? "Iniciar sesión"
-                  : mode === "signup"
-                    ? "Crear cuenta"
-                    : "Enviar enlace"}
-              <ArrowRight size={17} />
-            </Btn>
-          </form>
-          {mode === "login" && (
-            <button
-              className="action action-secondary google-button"
-              onClick={async () => {
-                const result = await supabase?.auth.signInWithOAuth({
-                  provider: "google",
-                  options: { redirectTo: `${location.origin}/app` },
-                });
-                if (result?.error) setError(result.error.message);
-              }}
-              disabled={!configured}
-            >
-              Continuar con Google
-            </button>
-          )}
-          {mode === "recovery" && (
-            <button className="text-button" onClick={() => setMode("login")}>
-              Volver al inicio de sesión
-            </button>
-          )}
-          <p className="auth-foot">
-            <ShieldCheck size={16} /> Iniciar sesión no activa ninguna
-            sincronización.
-          </p>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-function ResetPassword({ done }: { done: () => void }) {
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  async function submit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!supabase) return;
-    setBusy(true);
-    const result = await supabase.auth.updateUser({ password });
-    setBusy(false);
-    if (result.error) setError(result.error.message);
-    else done();
-  }
-  return (
-    <div className="auth-page">
-      <div className="reset-wrap">
-        <Card className="auth-card">
-          <Brand light />
-          <h2>Crea una contraseña nueva</h2>
-          <p>El enlace de recuperación te trajo de vuelta a BioPulse.</p>
-          <form onSubmit={submit}>
-            <label>
-              Nueva contraseña
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                minLength={8}
-                autoComplete="new-password"
-                required
-              />
-            </label>
-            {error && (
-              <p role="alert" className="notice error">
-                {error}
-              </p>
-            )}
-            <Btn type="submit" disabled={busy}>
-              Guardar contraseña
-            </Btn>
-          </form>
-        </Card>
-      </div>
     </div>
   );
 }
@@ -1680,6 +1461,7 @@ function Profile({
           <small>Acceso privado · {userId.slice(0, 8)}…</small>
         </div>
       </Card>
+      <AccountCenter email={email} userId={userId} onDataControls={() => document.getElementById("health-data-controls")?.scrollIntoView({ behavior: "smooth", block: "center" })} />
       <CSVImportPanel active={csv} onActivate={onActivateCSV} onClear={onClearCSV} />
       <div className="section-title">
         <h2>Apple Salud en la web</h2>
@@ -1795,7 +1577,7 @@ function Profile({
           </div>
         )}
       </Card>
-      <div className="bridge-actions">
+      <div className="bridge-actions" id="health-data-controls">
         <Btn
           secondary
           onClick={() => {
@@ -1825,21 +1607,6 @@ function Profile({
           {info}
         </div>
       )}
-      <div className="section-title">
-        <h2>Tu cuenta</h2>
-        <p>Control de acceso</p>
-      </div>
-      <button
-        className="card list-action"
-        onClick={() => supabase?.auth.signOut()}
-      >
-        <LogOut />
-        <span>
-          <strong>Cerrar sesión</strong>
-          <small>Vuelve a entrar cuando quieras.</small>
-        </span>
-        <ArrowRight size={17} />
-      </button>
       <p className="fine-print">
         La app iOS todavía guarda datos HealthKit originales en el dispositivo.
         Este puente web solo recibe agregados autorizados. No ofrece
@@ -2030,6 +1797,7 @@ function AppShell({ session }: { session: Session }) {
   const [error, setError] = useState("");
   const [coach, setCoach] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
+  const [welcome, setWelcome] = useState(() => localStorage.getItem(`biopulse.webWelcome.${session.user.id}`) !== "seen");
   const metrics = csv ? { daily: csv.result.daily, hourly: [] as Hourly[], sleep: [] as Sleep[] } : remoteMetrics;
   const userId = session.user.id;
   const [targetMinutes, setTargetMinutes] = useState(() => {
@@ -2089,6 +1857,11 @@ function AppShell({ session }: { session: Session }) {
   function navigate(next: Tab) {
     setTab(next);
     window.scrollTo({ top: 0, behavior: "instant" });
+  }
+  function closeWelcome(next?: Tab) {
+    localStorage.setItem(`biopulse.webWelcome.${userId}`, "seen");
+    setWelcome(false);
+    if (next) navigate(next);
   }
   return (
     <div className="app-page">
@@ -2169,7 +1942,7 @@ function AppShell({ session }: { session: Session }) {
               />
             ))}
         </div>
-        <button
+        {tab !== "Perfil" && <button
           className="coach-fab"
           onClick={() => { if (!csv) setCoach(true); }}
           disabled={!!csv}
@@ -2177,7 +1950,7 @@ function AppShell({ session }: { session: Session }) {
         >
           <Sparkles size={19} />
           <span>{csv ? "Coach pausado · CSV" : "Coach IA"}</span>
-        </button>
+        </button>}
         <nav className="bottom-tabs" aria-label="Secciones">
           {tabs.map(({ name, icon: Icon }) => (
             <button
@@ -2259,6 +2032,7 @@ function AppShell({ session }: { session: Session }) {
           </section>
         </div>
       )}
+      {welcome && <WelcomePanel onClose={() => closeWelcome()} onProfile={() => closeWelcome("Perfil")} />}
     </div>
   );
 }
@@ -2276,11 +2050,14 @@ function Root() {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setReady(true);
-    });
+    }).catch(() => setReady(true));
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (event, next) => {
         setSession(next);
-        if (event === "PASSWORD_RECOVERY") setReset(true);
+        if (event === "PASSWORD_RECOVERY") {
+          setReset(true);
+          if (location.pathname === "/app") history.replaceState({}, "", "/app/reset");
+        }
         setReady(true);
       },
     );
@@ -2294,11 +2071,18 @@ function Root() {
         <p>Preparando tu espacio…</p>
       </div>
     );
-  if (session && reset) return <ResetPassword done={() => setReset(false)} />;
+  if (location.pathname === "/app/confirm") return <AuthCallbackPage kind="confirm" confirmed={!!session} />;
+  if (location.pathname === "/app/email-change") return <AuthCallbackPage kind="email-change" confirmed={!!session} />;
+  const callbackError = new URLSearchParams(location.search).has("error") || new URLSearchParams(location.hash.slice(1)).has("error");
+  if (location.pathname === "/app/reset" || reset) {
+    if (session && !callbackError)
+      return <ResetPasswordPage done={() => { history.replaceState({}, "", "/app"); setReset(false); }} />;
+    return <AuthCallbackPage kind="reset" confirmed={false} />;
+  }
   return session ? (
     <AppShell key={session.user.id} session={session} />
   ) : (
-    <Auth />
+    <AuthPage />
   );
 }
 

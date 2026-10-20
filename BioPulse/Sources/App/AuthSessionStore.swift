@@ -5,9 +5,15 @@ import Supabase
 
 private enum AuthSessionError: LocalizedError {
     case notConfigured
+    case notSignedIn
+    case deletionFailed
 
     var errorDescription: String? {
-        "La conexión de BioPulse con Supabase no está configurada."
+        switch self {
+        case .notConfigured: "La conexión de BioPulse con Supabase no está configurada."
+        case .notSignedIn: "Vuelve a iniciar sesión antes de eliminar la cuenta."
+        case .deletionFailed: "No pudimos confirmar la eliminación. Vuelve a abrir BioPulse y comprueba tu cuenta antes de intentarlo otra vez."
+        }
     }
 }
 
@@ -30,6 +36,7 @@ final class AuthSessionStore: ObservableObject {
     @Published private(set) var isRecoveringPassword = false
     @Published private(set) var configurationProblem: String?
     @Published var callbackError: String?
+    @Published private(set) var accountNotice: String?
 
     private let client: SupabaseClient?
 
@@ -65,6 +72,7 @@ final class AuthSessionStore: ObservableObject {
     }
 
     func signUp(email: String, password: String) async throws -> Bool {
+        accountNotice = nil
         let response = try await configuredClient().auth.signUp(
             email: email,
             password: password,
@@ -74,6 +82,7 @@ final class AuthSessionStore: ObservableObject {
     }
 
     func signIn(email: String, password: String) async throws {
+        accountNotice = nil
         _ = try await configuredClient().auth.signIn(email: email, password: password)
     }
 
@@ -86,6 +95,7 @@ final class AuthSessionStore: ObservableObject {
     }
 
     func signInWithGoogle() async throws {
+        accountNotice = nil
         _ = try await configuredClient().auth.signInWithOAuth(
             provider: .google,
             redirectTo: Self.callbackURL
@@ -93,6 +103,7 @@ final class AuthSessionStore: ObservableObject {
     }
 
     func signInWithApple(identityToken: String, nonce: String) async throws {
+        accountNotice = nil
         _ = try await configuredClient().auth.signInWithIdToken(
             credentials: OpenIDConnectCredentials(
                 provider: .apple,
@@ -113,6 +124,38 @@ final class AuthSessionStore: ObservableObject {
 
     func signOut() async throws {
         try await configuredClient().auth.signOut()
+    }
+
+    /// The server derives the account ID from this session's JWT. No client-supplied
+    /// account ID or privileged key is included in the request.
+    func deleteAccount() async throws {
+        guard let token = session?.accessToken else { throw AuthSessionError.notSignedIn }
+        guard
+            let base = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as? String,
+            let url = URL(string: "\(base)/functions/v1/account-delete"),
+            let publicKey = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_PUBLISHABLE_KEY") as? String
+        else { throw AuthSessionError.notConfigured }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.setValue(publicKey, forHTTPHeaderField: "apikey")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = Data(#"{"confirmation":"ELIMINAR"}"#.utf8)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard
+            (response as? HTTPURLResponse)?.statusCode == 200,
+            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Bool],
+            object["deleted"] == true
+        else { throw AuthSessionError.deletionFailed }
+    }
+
+    func finishDeletedAccount(localDataRemoved: Bool) async {
+        do { try await configuredClient().auth.signOut(scope: .local) }
+        catch { session = nil }
+        isReady = true
+        accountNotice = localDataRemoved ? "Tu cuenta BioPulse se eliminó." : nil
+        callbackError = localDataRemoved ? nil : "Tu cuenta se eliminó del servidor, pero no pudimos borrar todos sus datos locales. Elimina la app de este iPhone para quitar esos archivos."
     }
 
     func handleAuthCallback(_ url: URL) async {

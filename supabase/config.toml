@@ -14,7 +14,7 @@ major_version = 17
 [auth]
 enabled = true
 site_url = "https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email"
-additional_redirect_urls = ["https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email", "biopulse://auth-callback", "http://127.0.0.1:4173/app", "http://localhost:4173/app"]
+additional_redirect_urls = ["https://ielprdmmuocajtbimvdx.supabase.co/functions/v1/confirm-email", "biopulse://auth-callback", "https://biopulse-20.vercel.app/app", "https://biopulse-20.vercel.app/app/confirm", "https://biopulse-20.vercel.app/app/reset", "https://biopulse-20.vercel.app/app/email-change", "http://127.0.0.1:5173/app", "http://127.0.0.1:5173/app/confirm", "http://127.0.0.1:5173/app/reset", "http://127.0.0.1:5173/app/email-change", "http://127.0.0.1:4173/app", "http://127.0.0.1:4173/app/confirm", "http://127.0.0.1:4173/app/reset", "http://127.0.0.1:4173/app/email-change", "http://localhost:4173/app"]
 enable_signup = true
 enable_anonymous_sign_ins = false
 
@@ -22,6 +22,32 @@ enable_anonymous_sign_ins = false
 enable_signup = true
 double_confirm_changes = true
 enable_confirmations = true
+
+[auth.email.template.confirmation]
+subject = "Confirma tu cuenta en BioPulse"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Recupera tu acceso a BioPulse"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Confirma tu nuevo correo en BioPulse"
+content_path = "./supabase/templates/email_change.html"
+
+[auth.email.template.invite]
+subject = "Te invitaron a BioPulse"
+content_path = "./supabase/templates/invite.html"
+
+[auth.email.notification.password_changed]
+enabled = true
+subject = "Tu contraseña de BioPulse cambió"
+content_path = "./supabase/templates/password_changed.html"
+
+[auth.email.notification.email_changed]
+enabled = true
+subject = "El correo de tu cuenta BioPulse cambió"
+content_path = "./supabase/templates/email_changed.html"
 
 [functions.coach]
 verify_jwt = true
@@ -34,3 +60,6 @@ verify_jwt = true
 
 [functions.health-bridge]
 verify_jwt = false
+
+[functions.account-delete]
+verify_jwt = true

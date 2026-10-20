@@ -13,6 +13,10 @@ struct ProfileView: View {
     @State private var isImportingCSV = false
     @State private var signOutError: String?
     @State private var isSigningOut = false
+    @State private var showingAccountDeletion = false
+    @State private var deletionConfirmation = ""
+    @State private var isDeletingAccount = false
+    @State private var deletionError: String?
 
     var body: some View {
         ScreenShell(title: "Perfil", subtitle: "Tu cuenta, tus datos y tus decisiones") {
@@ -110,6 +114,18 @@ struct ProfileView: View {
             .buttonStyle(PulseSecondaryButtonStyle())
             .disabled(isSigningOut)
 
+            if let deletionError {
+                Text(deletionError)
+                    .font(.footnote)
+                    .foregroundStyle(.red)
+            }
+            Button("Eliminar mi cuenta BioPulse", role: .destructive) {
+                deletionConfirmation = ""
+                deletionError = nil
+                showingAccountDeletion = true
+            }
+            .buttonStyle(PulseSecondaryButtonStyle())
+
             SectionHeading(title: "Privacidad", subtitle: "Diseñada para mantener tus datos cerca")
             StatusPanel(
                 symbol: "arrow.triangle.2.circlepath",
@@ -170,6 +186,47 @@ struct ProfileView: View {
                 importError = "No se pudo abrir el archivo seleccionado."
             }
         }
+        .sheet(isPresented: $showingAccountDeletion) {
+            NavigationStack {
+                ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Eliminar tu cuenta")
+                        .font(.title2.bold())
+                    Text("Se eliminarán tu acceso y los datos asociados a tu cuenta BioPulse. Las mediciones originales de Apple Salud no se borran. Esta acción no se puede deshacer.")
+                        .foregroundStyle(PulseStyle.secondary)
+                    TextField("Escribe ELIMINAR", text: $deletionConfirmation)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                        .padding(14)
+                        .background(PulseStyle.elevated, in: RoundedRectangle(cornerRadius: 12))
+                        .accessibilityLabel("Escribe ELIMINAR para confirmar")
+                    Button(role: .destructive) {
+                        Task { await deleteAccount() }
+                    } label: {
+                        if isDeletingAccount { ProgressView() }
+                        else { Text("Eliminar cuenta definitivamente") }
+                    }
+                    .buttonStyle(PulseActionButtonStyle())
+                    .disabled(deletionConfirmation != "ELIMINAR" || isDeletingAccount)
+                    if let deletionError {
+                        Text(deletionError)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+                }
+                .padding(24)
+                }
+                .background(PulseStyle.background.ignoresSafeArea())
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancelar") { showingAccountDeletion = false }
+                            .disabled(isDeletingAccount)
+                    }
+                }
+            }
+            .presentationDetents([.medium, .large])
+            .interactiveDismissDisabled(isDeletingAccount)
+        }
     }
 
     private func signOut() async {
@@ -180,6 +237,27 @@ struct ProfileView: View {
             try await auth.signOut()
         } catch {
             signOutError = "No se pudo cerrar la sesión. Comprueba tu conexión e inténtalo otra vez."
+        }
+    }
+
+    private func deleteAccount() async {
+        guard deletionConfirmation == "ELIMINAR", !isDeletingAccount else { return }
+        deletionError = nil
+        isDeletingAccount = true
+        defer { isDeletingAccount = false }
+        do {
+            try await auth.deleteAccount()
+            let localDataRemoved: Bool
+            do {
+                try personal.deleteLocalAccountData()
+                localDataRemoved = true
+            } catch {
+                localDataRemoved = false
+            }
+            await auth.finishDeletedAccount(localDataRemoved: localDataRemoved)
+            showingAccountDeletion = false
+        } catch {
+            deletionError = "No pudimos confirmar la eliminación. Comprueba tu conexión y tu cuenta antes de intentarlo otra vez."
         }
     }
 }

@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import UserNotifications
 
 enum PersonalFocus: String, CaseIterable, Codable, Identifiable {
     case sleep
@@ -238,6 +239,21 @@ final class PersonalContextStore: ObservableObject {
     func updatePreferences(_ update: (inout PersonalizationPreferences) -> Void) {
         update(&preferences)
         persist()
+    }
+
+    func deleteLocalAccountData() throws {
+        allowsWrites = false
+        let reminders = ["biopulse.daily.checkin", "biopulse.weekly.summary"]
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: reminders)
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: reminders)
+        let directory = fileURL.deletingLastPathComponent()
+        if FileManager.default.fileExists(atPath: directory.path) {
+            try FileManager.default.removeItem(at: directory)
+        }
+        UserDefaults.standard.removeObject(forKey: sleepTargetKey)
+        checkIns = []
+        annotations = []
+        experiments = []
     }
 
     private func load() {

@@ -1,5 +1,5 @@
 {
-  "rewrites": [{ "source": "/app", "destination": "/index.html" }],
+  "rewrites": [{ "source": "/app", "destination": "/index.html" }, { "source": "/app/:path*", "destination": "/index.html" }],
   "headers": [
     { "source": "/(.*)", "headers": [
       { "key": "X-Content-Type-Options", "value": "nosniff" },
