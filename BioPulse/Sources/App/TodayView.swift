@@ -13,6 +13,12 @@ struct TodayView: View {
     private var needsHistory: Bool {
         WellnessScores.calibration(scoreValues, day: health.bioScoreDay, includeBiometrics: true).contains { !$0.isReady }
     }
+    private var sleepCardNote: String {
+        let data = health.sleepScoreData(using: personal)
+        if let lastDay = data.values.filter({ $0.metric == .sleepDuration && $0.day <= .now }).map(\.day).max(),
+           data.reportedDays.contains(Calendar.current.startOfDay(for: lastDay)) { return "Estimado por ti · última noche" }
+        return health.isCSVImported ? "Última noche del CSV" : "Última noche · Apple Salud"
+    }
 
     private var score: WellnessScore {
         WellnessScores.bio(scoreValues, day: health.bioScoreDay, targetMinutes: personal.sleepTargetMinutes)
@@ -57,7 +63,7 @@ struct TodayView: View {
                 }
                 if let error = health.errorMessage { PulseFeedback(message: error, isError: true) }
 
-                SectionHeading(title: health.isCSVImported ? "Señales del CSV" : "Señales de hoy", subtitle: "Datos observados, no puntuaciones")
+                SectionHeading(title: health.isCSVImported ? "Señales del CSV" : "Señales de hoy", subtitle: "Mediciones y registros, no puntuaciones")
                 let layout = typeSize >= .xxxLarge
                     ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
                     : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
@@ -71,7 +77,7 @@ struct TodayView: View {
                     }.frame(maxWidth: .infinity)
                 }
                 layout {
-                    metricCard("Sueño", metric: .sleepAnalysis, note: "Última noche · toca para ver la fuente", symbol: "moon.stars")
+                    metricCard("Sueño", metric: .sleepAnalysis, note: sleepCardNote, symbol: "moon.stars")
                         .frame(maxWidth: .infinity).frame(height: 158)
                     metricCard("Pasos", metric: .stepCount, note: health.isCSVImported ? "Total del día importado" : "Acumulado de hoy", symbol: "figure.walk")
                         .frame(maxWidth: .infinity).frame(height: 158)

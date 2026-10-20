@@ -2,6 +2,8 @@ import Foundation
 import Testing
 @testable import BioPulseDomain
 
+// All dates and physiological values below are synthetic test fixtures, not user measurements.
+
 struct SleepReportTests {
     private var calendar: Calendar {
         var calendar = Calendar(identifier: .gregorian)

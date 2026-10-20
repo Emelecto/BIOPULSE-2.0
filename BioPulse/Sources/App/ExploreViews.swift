@@ -17,7 +17,7 @@ struct ScoreCalibrationCard: View {
         DashboardCard {
             Label(requirements.allSatisfy(\.isReady) ? "Tu referencia está lista; falta el día evaluado" : "Tus scores necesitan conocerte", systemImage: "calendar.badge.clock")
                 .font(.headline).foregroundStyle(.white)
-            Text("Es normal ver el anillo sin número al comenzar. La app está reuniendo el historial necesario para comparar tus registros contigo mismo.")
+            Text("Es normal ver el anillo sin número al comenzar. La app reúne historial para comparar tus registros contigo mismo. Si Apple Salud ya tiene historial compatible, se aprovecha desde el primer día.")
                 .font(.subheadline).foregroundStyle(PulseStyle.secondary)
             ForEach(requirements) { item in
                 VStack(alignment: .leading, spacing: 6) {
@@ -57,11 +57,11 @@ struct ScoreCalibrationCard: View {
 }
 
 struct SleepCheckInCard: View {
+    private struct Night: Identifiable { let id = UUID(); let date: Date }
     @ObservedObject var personal: PersonalContextStore
     @ObservedObject var health: HealthDataController
     var showsHistory: Bool
-    @State private var showingEditor = false
-    @State private var editingDate = Date.now
+    @State private var editingNight: Night?
 
     var body: some View {
         DashboardCard {
@@ -75,8 +75,7 @@ struct SleepCheckInCard: View {
                     .font(.subheadline).foregroundStyle(PulseStyle.secondary)
             }
             Button(personal.sleepReport() == nil ? "Registrar mi sueño" : "Editar el sueño de hoy") {
-                editingDate = .now
-                showingEditor = true
+                editingNight = Night(date: .now)
             }
             .buttonStyle(PulseActionButtonStyle())
             Text("Tu registro se guarda en este iPhone para tu cuenta. El Sleep Score usa la fecha al despertar; el BioScore evalúa el último día completo.")
@@ -89,8 +88,7 @@ struct SleepCheckInCard: View {
                 DisclosureGroup("Mis registros de sueño (\(personal.sleepReports.count))") {
                     ForEach(personal.sleepReports) { report in
                         Button {
-                            editingDate = report.date() ?? .now
-                            showingEditor = true
+                            editingNight = Night(date: report.date() ?? .now)
                         } label: {
                             HStack(alignment: .top) {
                                 VStack(alignment: .leading, spacing: 3) {
@@ -109,8 +107,8 @@ struct SleepCheckInCard: View {
                 .font(.subheadline).tint(.white)
             }
         }
-        .sheet(isPresented: $showingEditor) {
-            SleepReportEditor(personal: personal, health: health, date: editingDate)
+        .sheet(item: $editingNight) { night in
+            SleepReportEditor(personal: personal, health: health, date: night.date)
         }
     }
 }

@@ -73,7 +73,9 @@ final class HealthDataController: ObservableObject {
     private var healthKitSnapshot: HealthDataSnapshot?
 
     var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
-    var displayedDataDay: Date { csvLastDay ?? Calendar.current.startOfDay(for: .now) }
+    var displayedDataDay: Date {
+        isCSVImported ? (csvLastDay ?? Calendar.current.startOfDay(for: .now)) : Calendar.current.startOfDay(for: .now)
+    }
 
     func useCSV(_ result: CSVImportResult) -> Bool {
         guard !result.records.isEmpty else { return false }

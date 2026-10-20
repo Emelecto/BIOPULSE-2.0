@@ -384,7 +384,7 @@ enum SleepReminderNotifications {
         let center = UNUserNotificationCenter.current()
         if let activeRequest, activeRequest.hasPrefix(accountPrefix) {
             center.removePendingNotificationRequests(withIdentifiers: [activeRequest])
-            activeRequest = nil
+            Self.activeRequest = nil
         }
         Task {
             let pending = await center.pendingNotificationRequests()
