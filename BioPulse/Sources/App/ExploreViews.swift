@@ -1,6 +1,334 @@
 import Charts
 import BioPulseDomain
 import SwiftUI
+import UserNotifications
+
+struct ScoreCalibrationCard: View {
+    let values: [WellnessValue]
+    let day: Date
+    let isBioScore: Bool
+    let reason: String
+
+    private var requirements: [ScoreHistoryRequirement] {
+        WellnessScores.calibration(values, day: day, includeBiometrics: isBioScore)
+    }
+
+    var body: some View {
+        DashboardCard {
+            Label(requirements.allSatisfy(\.isReady) ? "Tu referencia está lista; falta el día evaluado" : "Tus scores necesitan conocerte", systemImage: "calendar.badge.clock")
+                .font(.headline).foregroundStyle(.white)
+            Text("Es normal ver el anillo sin número al comenzar. La app está reuniendo el historial necesario para comparar tus registros contigo mismo.")
+                .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+            ForEach(requirements) { item in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(title(for: item.metric)).font(.subheadline)
+                        Spacer()
+                        Text("\(min(item.available, item.required))/\(item.required) \(item.metric == .sleepDuration ? "noches" : "días")")
+                            .font(.caption.monospacedDigit())
+                    }
+                    ProgressView(value: Double(min(item.available, item.required)), total: Double(item.required))
+                        .tint(.white)
+                    Text("Registros previos dentro de \(item.windowDays) días")
+                        .font(.caption2).foregroundStyle(PulseStyle.muted)
+                }
+                .accessibilityElement(children: .combine)
+            }
+            Text("Progreso para el \(day.formatted(date: .abbreviated, time: .omitted)). La noche o el día evaluado también debe tener datos y no cuenta como historial previo.")
+                .font(.caption).foregroundStyle(PulseStyle.secondary)
+            Text(isBioScore ? "Registrar sueño ayuda, pero el BioScore también necesita HRV, pulso en reposo y energía activa de Apple Salud. No exige llevar el reloj todas las noches si registras tu sueño." : "Puedes reunir las noches con Apple Salud o con tus registros manuales. La duración puede mostrarse desde el primer registro; el score espera siete noches previas.")
+                .font(.caption).foregroundStyle(PulseStyle.secondary)
+            if requirements.allSatisfy(\.isReady) {
+                Text(reason).font(.caption).foregroundStyle(PulseStyle.secondary)
+            }
+            Text("Este proceso construye una referencia personal; no es una calibración médica ni garantiza una fecha si faltan registros.")
+                .font(.caption2).foregroundStyle(PulseStyle.muted)
+        }
+    }
+
+    private func title(for metric: MetricKind) -> String {
+        switch metric {
+        case .sleepDuration: "Sueño"
+        case .heartRateVariabilitySDNN: "HRV"
+        case .restingHeartRate: "Pulso en reposo"
+        default: "Energía activa"
+        }
+    }
+}
+
+struct SleepCheckInCard: View {
+    @ObservedObject var personal: PersonalContextStore
+    @ObservedObject var health: HealthDataController
+    var showsHistory: Bool
+    @State private var showingEditor = false
+    @State private var editingDate = Date.now
+
+    var body: some View {
+        DashboardCard {
+            Label("¿Cómo dormiste?", systemImage: "moon.stars")
+                .font(.headline).foregroundStyle(.white)
+            if let report = personal.sleepReport() {
+                Text("Hoy registraste \(report.durationMinutes / 60) h \(report.durationMinutes % 60) min · descanso \(report.restfulness)/5 · calidad \(report.quality)/5")
+                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+            } else {
+                Text("No necesitas dormir con el reloj. Estima cuánto dormiste y cómo te sientes al despertar.")
+                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+            }
+            Button(personal.sleepReport() == nil ? "Registrar mi sueño" : "Editar el sueño de hoy") {
+                editingDate = .now
+                showingEditor = true
+            }
+            .buttonStyle(PulseActionButtonStyle())
+            Text("Tu registro se guarda en este iPhone para tu cuenta. El Sleep Score usa la fecha al despertar; el BioScore evalúa el último día completo.")
+                .font(.caption).foregroundStyle(PulseStyle.secondary)
+            if health.isCSVImported {
+                Text("Hay un CSV activo. Tus registros se guardan, pero no se mezclan con ese archivo. Cambia a Apple Salud desde Perfil para utilizarlos en tus scores.")
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
+            }
+            if showsHistory, !personal.sleepReports.isEmpty {
+                DisclosureGroup("Mis registros de sueño (\(personal.sleepReports.count))") {
+                    ForEach(personal.sleepReports) { report in
+                        Button {
+                            editingDate = report.date() ?? .now
+                            showingEditor = true
+                        } label: {
+                            HStack(alignment: .top) {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text((report.date() ?? report.recordedAt).formatted(date: .abbreviated, time: .omitted))
+                                    Text("\(report.durationMinutes / 60) h \(report.durationMinutes % 60) min · descanso \(report.restfulness)/5 · calidad \(report.quality)/5")
+                                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "pencil").font(.caption)
+                            }
+                            .padding(.vertical, 8)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .font(.subheadline).tint(.white)
+            }
+        }
+        .sheet(isPresented: $showingEditor) {
+            SleepReportEditor(personal: personal, health: health, date: editingDate)
+        }
+    }
+}
+
+struct SleepReminderControls: View {
+    @ObservedObject var personal: PersonalContextStore
+    @State private var message: String?
+    @State private var requestingPermission = false
+
+    var body: some View {
+        DashboardCard {
+            Toggle("Recordarme registrar mi sueño", isOn: Binding(
+                get: { personal.sleepReminder.enabled },
+                set: { enabled in
+                    Task {
+                        requestingPermission = true
+                        defer { requestingPermission = false }
+                        if enabled {
+                            do {
+                                let granted = try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
+                                guard granted else {
+                                    message = "Activa las notificaciones en Ajustes de iOS para recibir este aviso."
+                                    return
+                                }
+                            } catch {
+                                message = "No pudimos solicitar permiso. Inténtalo de nuevo."
+                                return
+                            }
+                        }
+                        guard personal.updateSleepReminder({ $0.enabled = enabled }) else {
+                            message = personal.persistenceMessage
+                            return
+                        }
+                        message = await personal.scheduleSleepReminder()
+                    }
+                }
+            ))
+            .font(.headline).tint(.white).disabled(requestingPermission)
+            if personal.sleepReminder.enabled {
+                DatePicker("Hora del recordatorio", selection: Binding(
+                    get: { Calendar.current.date(bySettingHour: personal.sleepReminder.hour, minute: personal.sleepReminder.minute, second: 0, of: .now) ?? .now },
+                    set: { date in
+                        let time = Calendar.current.dateComponents([.hour, .minute], from: date)
+                        guard personal.updateSleepReminder({ $0.hour = time.hour ?? 9; $0.minute = time.minute ?? 0 }) else {
+                            message = personal.persistenceMessage
+                            return
+                        }
+                        Task { message = await personal.scheduleSleepReminder() }
+                    }
+                ), displayedComponents: .hourAndMinute)
+            }
+            Text("Opcional · 9:00 a. m. por defecto. Al tocarlo se abre tu registro de sueño. Respeta el horario silencioso de Personalizar; iOS puede silenciar o retrasar el aviso según tus ajustes.")
+                .font(.caption).foregroundStyle(PulseStyle.secondary)
+            if let message { Text(message).font(.caption).foregroundStyle(PulseStyle.secondary) }
+        }
+        .task { message = await personal.scheduleSleepReminder() }
+    }
+}
+
+struct SleepReportEditor: View {
+    @ObservedObject var personal: PersonalContextStore
+    @ObservedObject var health: HealthDataController
+    @Environment(\.dismiss) private var dismiss
+    @State private var wakeDate: Date
+    @State private var hours = ""
+    @State private var minutes = "0"
+    @State private var restfulness = 0
+    @State private var quality = 0
+    @State private var awakenings = -1
+    @State private var factors: Set<SleepFactor> = []
+    @State private var note = ""
+    @State private var preferManual = false
+    @State private var errorMessage: String?
+    @State private var confirmingDeletion = false
+
+    init(personal: PersonalContextStore, health: HealthDataController, date: Date = .now) {
+        self.personal = personal
+        self.health = health
+        _wakeDate = State(initialValue: Calendar.current.startOfDay(for: date))
+    }
+
+    private var duration: Int? {
+        guard let hour = Int(hours), let minute = Int(minutes), (0...24).contains(hour), (0...59).contains(minute),
+              hour * 60 + minute <= 1440 else { return nil }
+        return hour * 60 + minute
+    }
+    private var canSave: Bool { duration != nil && (1...5).contains(restfulness) && (1...5).contains(quality) }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    DatePicker("Fecha al despertar", selection: $wakeDate, in: ...Date.now, displayedComponents: .date)
+                    Text("Registra la noche que terminó en esta fecha. Puedes completar o corregir noches anteriores.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
+                Section("¿Cuánto tiempo crees que dormiste?") {
+                    HStack {
+                        TextField("Horas", text: $hours).keyboardType(.numberPad).accessibilityLabel("Horas dormidas")
+                        Text("h").foregroundStyle(PulseStyle.secondary)
+                        TextField("Minutos", text: $minutes).keyboardType(.numberPad).accessibilityLabel("Minutos dormidos")
+                        Text("min").foregroundStyle(PulseStyle.secondary)
+                    }
+                    Text("Estima el tiempo dormido, sin incluir el tiempo despierto en cama. Si no dormiste, puedes registrar 0 horas.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                    if !hours.isEmpty, duration == nil {
+                        Text("Escribe horas entre 0 y 24 y minutos entre 0 y 59, sin superar 24 horas en total.")
+                            .font(.caption).foregroundStyle(.red)
+                    }
+                }
+                Section("Tu experiencia") {
+                    Picker("Descanso al despertar", selection: $restfulness) {
+                        Text("Seleccionar").tag(0)
+                        Text("1 · Nada descansado").tag(1)
+                        Text("2 · Poco descansado").tag(2)
+                        Text("3 · Intermedio").tag(3)
+                        Text("4 · Descansado").tag(4)
+                        Text("5 · Muy descansado").tag(5)
+                    }
+                    Picker("Calidad del sueño", selection: $quality) {
+                        Text("Seleccionar").tag(0)
+                        Text("1 · Muy mala").tag(1)
+                        Text("2 · Mala").tag(2)
+                        Text("3 · Intermedia").tag(3)
+                        Text("4 · Buena").tag(4)
+                        Text("5 · Muy buena").tag(5)
+                    }
+                    Picker("Despertares (opcional)", selection: $awakenings) {
+                        Text("Sin responder").tag(-1)
+                        Text("Ninguno").tag(0)
+                        Text("Uno").tag(1)
+                        Text("Dos").tag(2)
+                        Text("Tres o más").tag(3)
+                    }
+                    DisclosureGroup("¿Algo afectó tu descanso? (opcional)") {
+                        ForEach(SleepFactor.allCases) { factor in
+                            Toggle(factor.title, isOn: Binding(
+                                get: { factors.contains(factor) },
+                                set: { selected in if selected { factors.insert(factor) } else { factors.remove(factor) } }
+                            ))
+                        }
+                    }
+                    TextField("Algo más que quieras recordar (opcional)", text: $note, axis: .vertical)
+                        .lineLimit(2...4)
+                        .onChange(of: note) { _, value in if value.count > 280 { note = String(value.prefix(280)) } }
+                }
+                Section("Fuente para los scores") {
+                    if !health.isCSVImported, let observed = health.dailyHistory[.sleepAnalysis]?.first(where: { Calendar.current.isDate($0.day, inSameDayAs: wakeDate) }) {
+                        Text("Apple Salud tiene \(Int(observed.value) / 60) h \(Int(observed.value) % 60) min para esta fecha.")
+                            .font(.subheadline)
+                    }
+                    Toggle("Priorizar mi estimación para esta noche", isOn: $preferManual)
+                    Text("Si existe una duración en Apple Salud, se usa esa salvo que elijas tu estimación. Nunca sumamos ambas. Descanso y calidad quedan como contexto, sin cambiar la fórmula.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                    if health.isCSVImported {
+                        Text("Con un CSV activo, este registro se conserva para tu cuenta y solo alimenta los scores cuando vuelvas a Apple Salud desde Perfil.")
+                            .font(.caption).foregroundStyle(PulseStyle.secondary)
+                    }
+                }
+                if let errorMessage {
+                    Section { Text(errorMessage).foregroundStyle(.red).accessibilityAddTraits(.updatesFrequently) }
+                }
+                if let report = personal.sleepReport(on: wakeDate) {
+                    Section {
+                        Button("Eliminar registro de esta noche", role: .destructive) { confirmingDeletion = true }
+                            .confirmationDialog("¿Eliminar este registro de sueño?", isPresented: $confirmingDeletion, titleVisibility: .visible) {
+                                Button("Eliminar registro", role: .destructive) {
+                                    if personal.deleteSleepReport(report) { dismiss() }
+                                    else { errorMessage = personal.persistenceMessage }
+                                }
+                            }
+                    }
+                }
+                Section {
+                    Text("Autorreporte guardado en este iPhone. No se escribe en Apple Salud ni se generan mediciones o etapas. Los scores necesitan historial previo antes de mostrar un número.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(PulseStyle.background)
+            .navigationTitle("Mi noche")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Guardar", action: save).disabled(!canSave) }
+            }
+            .tint(.white)
+            .onAppear(perform: loadReport)
+            .onChange(of: wakeDate) { _, _ in loadReport() }
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    private func loadReport() {
+        errorMessage = nil
+        let report = personal.sleepReport(on: wakeDate)
+        hours = report.map { String($0.durationMinutes / 60) } ?? ""
+        minutes = report.map { String($0.durationMinutes % 60) } ?? "0"
+        restfulness = report?.restfulness ?? 0
+        quality = report?.quality ?? 0
+        awakenings = report?.awakenings ?? -1
+        factors = Set(report?.factors ?? [])
+        note = report?.note ?? ""
+        preferManual = report?.preferManual ?? false
+    }
+
+    private func save() {
+        guard let duration else { return }
+        do {
+            let report = try SleepReport(id: personal.sleepReport(on: wakeDate)?.id ?? UUID(), wakeDate: wakeDate,
+                                         durationMinutes: duration, restfulness: restfulness, quality: quality,
+                                         awakenings: awakenings < 0 ? nil : awakenings,
+                                         factors: Array(factors), note: note, preferManual: preferManual)
+            if personal.saveSleepReport(report) { dismiss() }
+            else { errorMessage = personal.persistenceMessage ?? "No pudimos guardar esta noche. Inténtalo de nuevo." }
+        } catch { errorMessage = error.localizedDescription }
+    }
+}
 
 struct TrendsView: View {
     @ObservedObject var health: HealthDataController
@@ -129,22 +457,43 @@ struct SleepView: View {
     @ObservedObject var health: HealthDataController
     @ObservedObject var personal: PersonalContextStore
 
+    private var sleepData: ResolvedSleepValues { health.sleepScoreData(using: personal) }
+    private var sleepDay: Date {
+        sleepData.values.filter { $0.metric == .sleepDuration && $0.day <= .now }.map(\.day).max() ?? health.displayedDataDay
+    }
+    private var sleepMinutes: Double? {
+        sleepData.values.first { $0.metric == .sleepDuration && Calendar.current.isDate($0.day, inSameDayAs: sleepDay) }?.value
+    }
+    private var isReported: Bool { sleepData.reportedDays.contains(Calendar.current.startOfDay(for: sleepDay)) }
+    private var needsHistory: Bool {
+        WellnessScores.calibration(sleepData.values, day: sleepDay, includeBiometrics: false).contains { !$0.isReady }
+    }
     private var score: WellnessScore {
-        let day = health.dailyHistory[.sleepAnalysis]?.last?.day ?? health.displayedDataDay
-        return WellnessScores.sleep(health.wellnessValues, day: day, targetMinutes: personal.sleepTargetMinutes)
+        WellnessScores.sleep(sleepData.values, day: sleepDay, targetMinutes: personal.sleepTargetMinutes)
     }
 
     var body: some View {
-        ScreenShell(title: "Sueño", subtitle: health.isCSVImported ? "El archivo no incluye sueño" : "Tu última noche registrada") {
+        ScreenShell(title: "Sueño", subtitle: health.isCSVImported ? "Sueño del archivo importado" : "Con tu reloj o con tu propio registro") {
             DashboardCard {
-                PendingScoreHero(title: "Sleep Score", score: score.value.map(Double.init), subtitle: score.value == nil ? "Datos insuficientes" : "Índice exploratorio")
-                Text("Tiempo dormido").font(.subheadline).foregroundStyle(PulseStyle.secondary)
-                Text(HealthMetric.sleepAnalysis.formattedValue(health.readings[.sleepAnalysis]))
+                PendingScoreHero(title: "Sleep Score", score: score.value.map(Double.init), subtitle: score.value == nil ? (needsHistory ? "Construyendo tu referencia" : "Falta registrar la noche") : "Índice exploratorio")
+                Text(isReported ? "Duración estimada por ti" : "Tiempo dormido").font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                Text(sleepMinutes.map { "\(Int($0) / 60) h \(Int($0) % 60) min" } ?? "—")
                     .font(.largeTitle.weight(.semibold)).monospacedDigit().foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
+                Text("Noche que termina el \(sleepDay.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
                 Text(score.reason)
                     .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                if sleepData.includesSelfReport(on: sleepDay) {
+                    Label("Incluye sueño reportado por ti", systemImage: "pencil.circle")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
             }
+            if score.value == nil {
+                ScoreCalibrationCard(values: sleepData.values, day: sleepDay, isBioScore: false, reason: score.reason)
+            }
+            SleepCheckInCard(personal: personal, health: health, showsHistory: true)
+            SleepReminderControls(personal: personal)
             StatusPanel(
                 symbol: "function",
                 title: "Qué resume este índice",
@@ -165,7 +514,11 @@ struct SleepView: View {
                     .font(.caption).foregroundStyle(PulseStyle.secondary)
             }
             DashboardCard {
-                Text("Etapas de la noche").font(.headline)
+                Text("Etapas disponibles en Apple Salud").font(.headline)
+                if isReported {
+                    Text("Mediciones del dispositivo, separadas de tu estimación. Registrar duración no genera etapas.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
                 if health.sleepStages.isEmpty {
                     DashboardEmptyChart(message: health.isCSVImported ? "El CSV cargado no incluye etapas de sueño." : "Sin etapas de sueño registradas por un dispositivo compatible")
                         .frame(height: 170)
@@ -188,11 +541,13 @@ struct SleepView: View {
                         .font(.caption2).foregroundStyle(PulseStyle.muted)
                 }
             }
-            if let reading = health.readings[.sleepAnalysis] {
+            if isReported {
+                StatusPanel(symbol: "pencil.circle", title: "Sueño reportado por ti", message: "La duración es tu estimación para esa noche. Descanso, calidad, despertares y factores quedan como contexto; no modifican los pesos del score ni generan etapas de sueño.")
+            } else if let reading = health.readings[.sleepAnalysis] {
                 DataProvenance(reading: reading)
                 StatusPanel(symbol: "info.circle", title: "Qué incluye este tiempo", message: "Suma los intervalos marcados como sueño, sin contar superposiciones dos veces. No incluye el tiempo simplemente en cama.")
             } else {
-                StatusPanel(symbol: "moon.zzz", title: "Aún no hay una noche registrada", message: health.isCSVImported ? "Este archivo no contiene registros de sueño. Quita el CSV para volver a Apple Salud." : "Cuando Apple Salud tenga registros de sueño compartidos con BioPulse, aparecerán aquí. Revisa los permisos y desliza hacia abajo para actualizar.")
+                StatusPanel(symbol: "moon.zzz", title: "Aún no hay una noche registrada", message: health.isCSVImported ? "Si el archivo no incluye sueño, vuelve a Apple Salud desde Perfil para utilizar tus registros manuales." : "Puedes registrar tu sueño sin llevar el reloj o compartir las mediciones de Apple Salud. No rellenamos noches ausentes.")
             }
             Text("Fórmula \(score.version) · parámetros exploratorios pendientes de evaluación; BioPulse no estima etapas ausentes.")
                 .font(.footnote).foregroundStyle(PulseStyle.secondary)
@@ -215,10 +570,7 @@ struct ScoreExplanationView: View {
     @ObservedObject var personal: PersonalContextStore
 
     private var score: WellnessScore {
-        let day = health.isCSVImported
-            ? health.displayedDataDay
-            : (Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now)
-        return WellnessScores.bio(health.wellnessValues, day: day, targetMinutes: personal.sleepTargetMinutes)
+        WellnessScores.bio(health.sleepScoreData(using: personal).values, day: health.bioScoreDay, targetMinutes: personal.sleepTargetMinutes)
     }
 
     private var scoreDateLabel: String { health.isCSVImported ? "día importado" : "ayer" }
@@ -228,6 +580,15 @@ struct ScoreExplanationView: View {
             StatusPanel(symbol: score.value == nil ? "circle.dashed" : "waveform.path.ecg",
                         title: score.value.map { "BioScore \($0)/100 · \(scoreDateLabel)" } ?? "Datos insuficientes",
                         message: score.reason)
+            if score.value == nil {
+                ScoreCalibrationCard(values: health.sleepScoreData(using: personal).values,
+                                     day: health.bioScoreDay, isBioScore: true, reason: score.reason)
+            }
+            Text("Día evaluado: \(health.bioScoreDay.formatted(date: .abbreviated, time: .omitted)). El BioScore usa un día completo; el registro de sueño de esta mañana corresponde a la fecha de hoy.")
+                .font(.caption).foregroundStyle(PulseStyle.secondary)
+            if health.sleepScoreData(using: personal).includesSelfReport(on: health.bioScoreDay) {
+                StatusPanel(symbol: "pencil.circle", title: "Incluye autorreportes de sueño", message: "Una parte de la duración y la referencia de sueño procede de tus estimaciones. No se presenta como una medición del reloj.")
+            }
             if let _ = score.value {
                 DashboardCard {
                     Text("Componentes · \(score.version)").font(.headline)
@@ -245,9 +606,11 @@ struct ScoreExplanationView: View {
             )
 
             SectionHeading(title: "Señales consideradas", subtitle: "Mediciones y procedencia")
-            ForEach([HealthMetric.sleepAnalysis, .heartRateVariabilitySDNN, .restingHeartRate, .stepCount]) { metric in
+            ForEach([HealthMetric.heartRateVariabilitySDNN, .restingHeartRate, .activeEnergyBurned]) { metric in
                 MetricListRow(metric: metric, reading: health.readings[metric], showsChevron: false)
             }
+            Text("El sueño se obtiene de Apple Salud o de tu registro para cada noche. Si hay ambos, Apple Salud tiene prioridad salvo que elijas tu estimación. Las mediciones de las tarjetas son las últimas disponibles; el cálculo utiliza la fecha indicada arriba.")
+                .font(.caption).foregroundStyle(PulseStyle.secondary)
             Text("Este índice personal es exploratorio. No equivale a un diagnóstico ni confirma un estado de salud.")
                 .font(.footnote)
                 .foregroundStyle(PulseStyle.secondary)

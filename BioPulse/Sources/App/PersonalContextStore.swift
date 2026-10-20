@@ -1,6 +1,13 @@
 import Combine
 import Foundation
 import UserNotifications
+import BioPulseDomain
+
+struct SleepReminderPreferences: Codable, Equatable {
+    var enabled = false
+    var hour = 9
+    var minute = 0
+}
 
 enum PersonalFocus: String, CaseIterable, Codable, Identifiable {
     case sleep
@@ -160,13 +167,17 @@ final class PersonalContextStore: ObservableObject {
     @Published private(set) var preferences = PersonalizationPreferences()
     @Published private(set) var persistenceMessage: String?
     @Published private(set) var sleepTargetMinutes = 480
+    @Published private(set) var sleepReports: [SleepReport] = []
+    @Published private(set) var sleepReminder = SleepReminderPreferences()
 
     private static let schemaVersion = 1
     private let fileURL: URL
     private let sleepTargetKey: String
+    let userID: UUID
     private var allowsWrites = true
 
     init(userID: UUID) {
+        self.userID = userID
         guard let baseURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             preconditionFailure("Application Support must be available on iOS.")
         }
@@ -185,6 +196,43 @@ final class PersonalContextStore: ObservableObject {
         guard (360...600).contains(minutes), minutes.isMultiple(of: 30) else { return }
         sleepTargetMinutes = minutes
         UserDefaults.standard.set(minutes, forKey: sleepTargetKey)
+    }
+
+    func sleepReport(on date: Date = .now) -> SleepReport? {
+        let day = LocalDay(date: date, timeZone: .current)
+        return sleepReports.first { $0.wakeDay.year == day.year && $0.wakeDay.month == day.month && $0.wakeDay.day == day.day }
+    }
+
+    @discardableResult
+    func saveSleepReport(_ report: SleepReport) -> Bool {
+        guard report.isValid, let day = report.date(), Calendar.current.startOfDay(for: day) <= Calendar.current.startOfDay(for: .now) else { return false }
+        let previous = sleepReports
+        sleepReports.removeAll { $0.wakeDay.year == report.wakeDay.year && $0.wakeDay.month == report.wakeDay.month && $0.wakeDay.day == report.wakeDay.day }
+        sleepReports.append(report)
+        sleepReports.sort { $0.wakeDay > $1.wakeDay }
+        guard persist() else { sleepReports = previous; return false }
+        return true
+    }
+
+    @discardableResult
+    func deleteSleepReport(_ report: SleepReport) -> Bool {
+        let previous = sleepReports
+        sleepReports.removeAll { $0.id == report.id }
+        guard persist() else { sleepReports = previous; return false }
+        return true
+    }
+
+    @discardableResult
+    func updateSleepReminder(_ update: (inout SleepReminderPreferences) -> Void) -> Bool {
+        let previous = sleepReminder
+        update(&sleepReminder)
+        guard persist() else { sleepReminder = previous; return false }
+        return true
+    }
+
+    func scheduleSleepReminder() async -> String? {
+        await SleepReminderNotifications.schedule(userID: userID, reminder: sleepReminder,
+                                                 quietStart: preferences.quietStartHour, quietEnd: preferences.quietEndHour)
     }
 
     var activeExperiments: [PersonalExperiment] {
@@ -243,6 +291,7 @@ final class PersonalContextStore: ObservableObject {
 
     func deleteLocalAccountData() throws {
         allowsWrites = false
+        SleepReminderNotifications.cancel(for: userID)
         let reminders = ["biopulse.daily.checkin", "biopulse.weekly.summary"]
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: reminders)
         UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: reminders)
@@ -254,6 +303,8 @@ final class PersonalContextStore: ObservableObject {
         checkIns = []
         annotations = []
         experiments = []
+        sleepReports = []
+        sleepReminder = SleepReminderPreferences()
     }
 
     private func load() {
@@ -272,14 +323,17 @@ final class PersonalContextStore: ObservableObject {
             annotations = envelope.annotations.sorted { $0.occurredAt > $1.occurredAt }
             experiments = envelope.experiments
             preferences = envelope.preferences
+            sleepReports = (envelope.sleepReports ?? []).filter(\.isValid).sorted { $0.wakeDay > $1.wakeDay }
+            sleepReminder = envelope.sleepReminder ?? SleepReminderPreferences()
         } catch {
             allowsWrites = false
             persistenceMessage = "No se pudieron leer tus datos locales. BioPulse no los sobrescribirá."
         }
     }
 
-    private func persist() {
-        guard allowsWrites else { return }
+    @discardableResult
+    private func persist() -> Bool {
+        guard allowsWrites else { return false }
         do {
             try FileManager.default.createDirectory(
                 at: fileURL.deletingLastPathComponent(),
@@ -290,15 +344,19 @@ final class PersonalContextStore: ObservableObject {
                 checkIns: checkIns,
                 annotations: annotations,
                 experiments: experiments,
-                preferences: preferences
+                preferences: preferences,
+                sleepReports: sleepReports,
+                sleepReminder: sleepReminder
             )
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .millisecondsSince1970
             encoder.outputFormatting = [.sortedKeys]
             try encoder.encode(envelope).write(to: fileURL, options: [.atomic, .completeFileProtection])
             persistenceMessage = nil
+            return true
         } catch {
             persistenceMessage = "No se pudo guardar en este dispositivo. Comprueba el espacio disponible e inténtalo otra vez."
+            return false
         }
     }
 }
@@ -309,4 +367,94 @@ private struct PersonalContextEnvelope: Codable {
     let annotations: [PersonalAnnotation]
     let experiments: [PersonalExperiment]
     let preferences: PersonalizationPreferences
+    // Optional keys preserve existing v1 files without discarding older personal data.
+    let sleepReports: [SleepReport]?
+    let sleepReminder: SleepReminderPreferences?
+}
+
+@MainActor
+enum SleepReminderNotifications {
+    private static var revision = UUID()
+    private static let prefix = "biopulse.sleep."
+    private static var activeRequest: String?
+
+    static func cancel(for userID: UUID) {
+        revision = UUID()
+        let accountPrefix = prefix + userID.uuidString.lowercased() + "."
+        let center = UNUserNotificationCenter.current()
+        if let activeRequest, activeRequest.hasPrefix(accountPrefix) {
+            center.removePendingNotificationRequests(withIdentifiers: [activeRequest])
+            activeRequest = nil
+        }
+        Task {
+            let pending = await center.pendingNotificationRequests()
+            let delivered = await center.deliveredNotifications()
+            center.removePendingNotificationRequests(withIdentifiers: pending.map(\.identifier).filter { $0.hasPrefix(accountPrefix) })
+            center.removeDeliveredNotifications(withIdentifiers: delivered.map { $0.request.identifier }.filter { $0.hasPrefix(accountPrefix) })
+        }
+    }
+
+    static func cancelActive() {
+        revision = UUID()
+        if let activeRequest {
+            let center = UNUserNotificationCenter.current()
+            center.removePendingNotificationRequests(withIdentifiers: [activeRequest])
+            center.removeDeliveredNotifications(withIdentifiers: [activeRequest])
+        }
+        activeRequest = nil
+    }
+
+    static func cancelAll() async {
+        cancelActive()
+        let token = revision
+        let center = UNUserNotificationCenter.current()
+        let pending = await center.pendingNotificationRequests()
+        guard revision == token else { return }
+        center.removePendingNotificationRequests(withIdentifiers: pending.map(\.identifier).filter { $0.hasPrefix(prefix) })
+        let delivered = await center.deliveredNotifications()
+        guard revision == token else { return }
+        center.removeDeliveredNotifications(withIdentifiers: delivered.map { $0.request.identifier }.filter { $0.hasPrefix(prefix) })
+    }
+
+    static func schedule(userID: UUID, reminder: SleepReminderPreferences, quietStart: Int, quietEnd: Int) async -> String? {
+        let token = UUID()
+        revision = token
+        let center = UNUserNotificationCenter.current()
+        let pending = await center.pendingNotificationRequests()
+        guard revision == token else { return nil }
+        let old = pending.map(\.identifier).filter { $0.hasPrefix(prefix) }
+        center.removePendingNotificationRequests(withIdentifiers: old)
+        activeRequest = nil
+        guard reminder.enabled else { return nil }
+        let settings = await center.notificationSettings()
+        guard revision == token else { return nil }
+        guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else {
+            return "Permite las notificaciones de BioPulse en Ajustes para recibir el recordatorio."
+        }
+        let hour = min(23, max(0, reminder.hour))
+        let quiet = quietStart == quietEnd ? false
+            : quietStart < quietEnd ? (hour >= quietStart && hour < quietEnd) : (hour >= quietStart || hour < quietEnd)
+        guard !quiet else { return "El recordatorio de sueño cae dentro de tu horario silencioso. Cambia la hora para programarlo." }
+        let content = UNMutableNotificationContent()
+        content.title = "¿Cómo dormiste?"
+        content.body = "Dedica un momento a registrar tu descanso en BioPulse."
+        content.sound = .default
+        content.userInfo = ["destination": "sleep-check-in", "accountID": userID.uuidString]
+        var time = DateComponents()
+        time.hour = hour
+        time.minute = min(59, max(0, reminder.minute))
+        let identifier = prefix + userID.uuidString.lowercased() + "." + token.uuidString
+        activeRequest = identifier
+        do {
+            try await center.add(UNNotificationRequest(identifier: identifier, content: content,
+                                                       trigger: UNCalendarNotificationTrigger(dateMatching: time, repeats: true)))
+            // A sign-out or another account may have superseded this asynchronous request.
+            if revision != token {
+                center.removePendingNotificationRequests(withIdentifiers: [identifier])
+            }
+            return nil
+        } catch {
+            return "No se pudo programar el recordatorio. Inténtalo de nuevo desde Sueño."
+        }
+    }
 }

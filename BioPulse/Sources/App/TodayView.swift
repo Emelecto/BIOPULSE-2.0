@@ -9,10 +9,13 @@ struct TodayView: View {
     let openJournal: () -> Void
     @State private var selectedMetric: HealthMetric?
     @State private var showingScore = false
+    private var scoreValues: [WellnessValue] { health.sleepScoreData(using: personal).values }
+    private var needsHistory: Bool {
+        WellnessScores.calibration(scoreValues, day: health.bioScoreDay, includeBiometrics: true).contains { !$0.isReady }
+    }
 
     private var score: WellnessScore {
-        let day = health.isCSVImported ? health.displayedDataDay : (Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now)
-        return WellnessScores.bio(health.wellnessValues, day: day, targetMinutes: personal.sleepTargetMinutes)
+        WellnessScores.bio(scoreValues, day: health.bioScoreDay, targetMinutes: personal.sleepTargetMinutes)
     }
 
     var body: some View {
@@ -23,7 +26,7 @@ struct TodayView: View {
                     .font(.subheadline).foregroundStyle(PulseStyle.secondary)
                 Button { showingScore = true } label: {
                     VStack(spacing: 4) {
-                        PendingScoreHero(title: "BioScore", score: score.value.map(Double.init), subtitle: score.value == nil ? "Datos insuficientes" : "Índice exploratorio · \(health.isCSVImported ? "día importado" : "ayer")")
+                        PendingScoreHero(title: "BioScore", score: score.value.map(Double.init), subtitle: score.value == nil ? (needsHistory ? "Construyendo tu referencia" : "Faltan datos del día") : "Índice exploratorio · \(health.isCSVImported ? "día importado" : "ayer")")
                         Text(score.value == nil ? score.reason : "Índice personal · \(health.isCSVImported ? "día importado" : "ayer") · \(score.version)")
                             .font(.subheadline).foregroundStyle(PulseStyle.secondary)
                         Label("Ver componentes", systemImage: "arrow.up.right")
@@ -32,6 +35,16 @@ struct TodayView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PulsePressButtonStyle())
+
+                if score.value == nil {
+                    ScoreCalibrationCard(values: health.sleepScoreData(using: personal).values,
+                                         day: health.bioScoreDay, isBioScore: true, reason: score.reason)
+                }
+                if health.sleepScoreData(using: personal).includesSelfReport(on: health.bioScoreDay) {
+                    Text("Este BioScore incluye sueño reportado por ti, también en su referencia personal.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
+                SleepCheckInCard(personal: personal, health: health, showsHistory: false)
 
                 if !health.hasRequestedAccess && !health.isCSVImported {
                     StatusPanel(symbol: "heart.text.square", title: "Conecta Apple Salud", message: "Elige qué señales compartir para ver tus mediciones y, con historial suficiente, tu índice personal.")
@@ -58,7 +71,7 @@ struct TodayView: View {
                     }.frame(maxWidth: .infinity)
                 }
                 layout {
-                    metricCard("Sueño", metric: .sleepAnalysis, note: health.isCSVImported ? "No incluido en el CSV" : "Última noche", symbol: "moon.stars")
+                    metricCard("Sueño", metric: .sleepAnalysis, note: "Última noche · toca para ver la fuente", symbol: "moon.stars")
                         .frame(maxWidth: .infinity).frame(height: 158)
                     metricCard("Pasos", metric: .stepCount, note: health.isCSVImported ? "Total del día importado" : "Acumulado de hoy", symbol: "figure.walk")
                         .frame(maxWidth: .infinity).frame(height: 158)
@@ -85,7 +98,10 @@ struct TodayView: View {
         .toolbar(.hidden, for: .navigationBar)
         .refreshable { await health.reload() }
         .sheet(item: $selectedMetric) { metric in
-            NavigationStack { MetricDetailView(metric: metric, reading: health.readings[metric]) }
+            NavigationStack {
+                if metric == .sleepAnalysis { SleepView(health: health, personal: personal) }
+                else { MetricDetailView(metric: metric, reading: health.readings[metric]) }
+            }
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $showingScore) {
@@ -128,7 +144,15 @@ struct TodayView: View {
     }
 
     private func metricCard(_ title: String, metric: HealthMetric, note: String, symbol: String) -> some View {
-        let history = Array((health.dailyHistory[metric] ?? []).suffix(7))
+        let sleepData = health.sleepScoreData(using: personal)
+        let sleepNights = sleepData.values.filter { $0.metric == .sleepDuration && $0.day <= .now }.sorted { $0.day < $1.day }
+        let history = metric == .sleepAnalysis
+            ? sleepNights.suffix(7).map { DailyHealthObservation(day: $0.day, value: $0.value, sourceName: "Sueño · fuente por noche") }
+            : Array((health.dailyHistory[metric] ?? []).suffix(7))
+        let sleepValue = sleepNights.last?.value
+        let displayValue = metric == .sleepAnalysis
+            ? (sleepValue.map { "\(Int($0) / 60) h \(Int($0) % 60) min" } ?? "—")
+            : metric.formattedValue(health.readings[metric])
         return Button { selectedMetric = metric } label: {
             DashboardCard {
                 HStack(alignment: .top) {
@@ -138,7 +162,7 @@ struct TodayView: View {
                     Image(systemName: symbol).foregroundStyle(.white.opacity(0.75))
                 }
                 Spacer(minLength: 7)
-                Text(metric.formattedValue(health.readings[metric]))
+                Text(displayValue)
                     .font(.system(.title2, design: .rounded, weight: .semibold))
                     .foregroundStyle(.white).monospacedDigit()
                     .lineLimit(1).minimumScaleFactor(0.7)
@@ -156,6 +180,6 @@ struct TodayView: View {
             }
         }
         .buttonStyle(PulsePressButtonStyle())
-        .accessibilityLabel("\(title): \(metric.formattedValue(health.readings[metric])). \(note). Ver detalle")
+        .accessibilityLabel("\(title): \(displayValue). \(note). Ver detalle")
     }
 }

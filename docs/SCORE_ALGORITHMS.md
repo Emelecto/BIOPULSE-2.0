@@ -1,5 +1,9 @@
 # Índices personales BioPulse — `personal-v1`
 
+## Actualización iOS `personal-v2` — 20-10-2026
+
+La app iOS incorpora autorreportes de duración por fecha al despertar. Para los scores toma una sola fuente por noche: Apple Salud por defecto, o el autorreporte si no hay medición o el usuario lo prioriza explícitamente. La procedencia manual se muestra cuando afecta tanto a la noche evaluada como a la referencia previa. Los CSV permanecen separados de los autorreportes de la cuenta. Descanso percibido, calidad, despertares y factores se guardan como contexto local y no puntúan. La versión admite una duración explícita de cero horas y cuenta fechas únicas, manteniendo las fórmulas y ventanas indicadas abajo. La web conserva `personal-v1`. Contrato y criterios: [Sueño manual](MANUAL_SLEEP.md).
+
 **CONFIRMED:** implementación de fórmulas deterministas en `web/src/scoring.ts` y `BioPulse/Sources/BioPulseDomain/WellnessScores.swift`. Son hipótesis de producto, sin validación clínica. No se entrena ni publica un modelo predictivo con datos de BioPulse en esta fase.
 
 ## Contrato y reglas de entrada
@@ -23,7 +27,7 @@ constancia = clamp(100 - max(0, |minutos - median14| - 30) × 100 / 150)
 Sleep Score = round(0.65 × duración + 0.35 × constancia)
 ```
 
-No mide arquitectura del sueño, horarios de acostarse o descanso percibido. La propuesta anterior incluía un check-in subjetivo; se reserva para una versión posterior porque hoy no hay una etiqueta estructurada y comparable en ambas plataformas.
+No mide arquitectura del sueño, horarios de acostarse o descanso percibido. Desde `personal-v2` iOS recoge un check-in subjetivo estructurado como contexto; no cambia la fórmula ni se incorpora automáticamente al ML.
 
 ### BioScore
 

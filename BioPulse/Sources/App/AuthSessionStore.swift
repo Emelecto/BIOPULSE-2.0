@@ -65,7 +65,9 @@ final class AuthSessionStore: ObservableObject {
                 self.isRecoveringPassword = event == .passwordRecovery
                 if event == .signedOut {
                     self.isRecoveringPassword = false
+                    await SleepReminderNotifications.cancelAll()
                 }
+                if event == .initialSession, session == nil { await SleepReminderNotifications.cancelAll() }
                 self.isReady = true
             }
         }

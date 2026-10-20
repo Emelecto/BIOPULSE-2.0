@@ -2,13 +2,16 @@ import SwiftUI
 
 struct RootView: View {
     private enum Tab: Hashable { case today, trends, journal, sleep, profile }
+    private enum PresentedSheet: String, Identifiable { case coach, sleepReport; var id: String { rawValue } }
     let userID: UUID
     @ObservedObject var auth: AuthSessionStore
     @StateObject private var health = HealthDataController()
     @StateObject private var journal: JournalController
     @StateObject private var personal: PersonalContextStore
-    @State private var showingCoach = false
+    @State private var presentedSheet: PresentedSheet?
     @State private var selectedTab: Tab = .today
+    @EnvironmentObject private var notificationRouter: SleepNotificationRouter
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
 
@@ -42,18 +45,40 @@ struct RootView: View {
             }
         .tint(.white)
         .preferredColorScheme(.dark)
-        .task { await health.reload() }
-        .sheet(isPresented: $showingCoach) {
-            CoachPreviewView(auth: auth, health: health, journal: journal)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
+        .task {
+            openSleepNotification()
+            _ = await personal.scheduleSleepReminder()
+            await health.reload()
         }
+        .onChange(of: notificationRouter.requestedAccountID) { _, _ in openSleepNotification() }
+        .onChange(of: personal.preferences) { _, _ in Task { _ = await personal.scheduleSleepReminder() } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { _ = await personal.scheduleSleepReminder() } }
+        }
+        .sheet(item: $presentedSheet) { destination in
+            switch destination {
+            case .sleepReport:
+                SleepReportEditor(personal: personal, health: health)
+            case .coach:
+                CoachPreviewView(auth: auth, health: health, journal: journal)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+            }
+        }
+    }
+
+    private func openSleepNotification() {
+        guard let requestedAccount = notificationRouter.requestedAccountID else { return }
+        notificationRouter.requestedAccountID = nil
+        guard requestedAccount == userID else { return }
+        selectedTab = .sleep
+        presentedSheet = .sleepReport
     }
 
     private var coachDock: some View {
         HStack {
             Spacer(minLength: 0)
-            Button { showingCoach = true } label: {
+            Button { presentedSheet = .coach } label: {
                 Label(health.isCSVImported ? "Coach pausado con CSV" : "Coach IA", systemImage: health.isCSVImported ? "lock.fill" : "sparkles")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)

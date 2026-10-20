@@ -42,6 +42,7 @@ struct PersonalizationSettingsView: View {
                 .font(.caption).foregroundStyle(PulseStyle.secondary)
 
             SectionHeading(title: "Rituales", subtitle: "Avisos locales y opcionales")
+            SleepReminderControls(personal: personal)
             VStack(alignment: .leading, spacing: 12) {
                 Toggle(isOn: Binding(
                     get: { personal.preferences.dailyReminderEnabled },

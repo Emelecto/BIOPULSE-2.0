@@ -435,3 +435,11 @@
 - **Estado:** CONFIRMED en fuente para mantener capturas separadas de Apple Salud y CSV; UNKNOWN para compilación con Xcode y validación en iPhone.
 - **Decisión:** Perfil ofrece sincronizar Apple Salud con el CSV cargado. La consulta actualiza una captura independiente de HealthKit sin reemplazar los datos CSV visibles. El usuario puede alternar entre ambas fuentes durante la sesión o quitar el CSV; BioPulse no suma ni mezcla fuentes. Se muestra la hora de consulta o el error parcial de HealthKit.
 - **Límites:** la consulta requiere autorización y que Apple Salud tenga muestras accesibles. El CSV permanece solo en memoria, como antes. No se añade sincronización con la cuenta web ni lectura continua en segundo plano.
+
+## D-064 — Sueño autoinformado y cobertura de scores
+
+- **Estado:** CONFIRMED en fuente; UNKNOWN para compilación iOS y recorrido de notificaciones/persistencia en iPhone hasta completar la comprobación en Mac.
+- **Decisión:** añadir un registro de sueño por fecha local al despertar, persistido por cuenta. Duración estimada, descanso y calidad son respuestas explícitas; despertares, factores y nota son opcionales. Se puede editar o eliminar. Apple Salud tiene prioridad por noche salvo elección explícita del usuario; no se suman fuentes y no se mezclan los CSV con autorreportes personales.
+- **Scores:** `personal-v2` iOS mantiene los pesos y ventanas, admite cero horas reportadas y cuenta días únicos. Duración reportada puede completar Sleep Score y BioScore; el feedback subjetivo se conserva como contexto y no cambia los pesos ni entrena ML. Se identifica procedencia manual tanto en el día como en su referencia.
+- **Experiencia:** mostrar progreso real hacia siete noches y catorce días por señal, distinguiendo falta de historial de falta de datos del día. El recordatorio de sueño es local, opt-in, inicialmente a las 09:00, configurable y vinculado a la cuenta. El toque abre el formulario tras restaurar la sesión. La programación respeta horario silencioso y se cancela al salir o eliminar la cuenta.
+- **Contrato:** criterios de aceptación y límites en `docs/MANUAL_SLEEP.md`. No se modifica la web en esta entrega.

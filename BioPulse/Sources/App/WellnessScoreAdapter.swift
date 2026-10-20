@@ -3,6 +3,16 @@ import Foundation
 
 @MainActor
 extension HealthDataController {
+    func sleepScoreData(using personal: PersonalContextStore) -> ResolvedSleepValues {
+        // A CSV can belong to someone else. Never blend it with this account's reports.
+        ResolvedSleepValues.resolve(observed: wellnessValues, reports: isCSVImported ? [] : personal.sleepReports)
+    }
+
+    var bioScoreDay: Date {
+        isCSVImported ? displayedDataDay
+            : (Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now)
+    }
+
     var personalAnomalyObservations: [PersonalAnomalyObservation] {
         let calendar = Calendar.current
 

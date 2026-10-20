@@ -23,7 +23,7 @@ public struct WellnessScore: Sendable {
     init(value: Int?, day: Date, reason: String, components: [String: Double] = [:]) {
         self.value = value
         self.day = day
-        self.version = "personal-v1"
+        self.version = "personal-v2"
         self.reason = reason
         self.components = components
     }
@@ -38,12 +38,14 @@ public enum WellnessScores {
     }
     private static func value(_ values: [WellnessValue], _ kind: MetricKind, _ day: Date, _ calendar: Calendar) -> Double? {
         guard let number = values.first(where: { $0.metric == kind && calendar.isDate($0.day, inSameDayAs: day) })?.value,
-              number.isFinite, (kind == .activeEnergyBurned ? number >= 0 : number > 0) else { return nil }
+              number.isFinite, ((kind == .activeEnergyBurned || kind == .sleepDuration) ? number >= 0 : number > 0) else { return nil }
         return number
     }
     private static func history(_ values: [WellnessValue], _ kind: MetricKind, _ day: Date, window: Int, calendar: Calendar) -> [Double] {
         guard let start = calendar.date(byAdding: .day, value: -window, to: calendar.startOfDay(for: day)) else { return [] }
-        return values.filter { $0.metric == kind && $0.day >= start && $0.day < calendar.startOfDay(for: day) && $0.value.isFinite && (kind == .activeEnergyBurned ? $0.value >= 0 : $0.value > 0) }.map(\.value)
+        let valid = values.filter { $0.metric == kind && $0.day >= start && $0.day < calendar.startOfDay(for: day) && $0.value.isFinite && ((kind == .activeEnergyBurned || kind == .sleepDuration) ? $0.value >= 0 : $0.value > 0) }
+        let byDay = Dictionary(valid.map { (calendar.startOfDay(for: $0.day), $0.value) }, uniquingKeysWith: { first, _ in first })
+        return Array(byDay.values)
     }
     private static func baseline(_ values: [WellnessValue], _ kind: MetricKind, _ day: Date, calendar: Calendar) -> (center: Double, mad: Double)? {
         let prior = history(values, kind, day, window: 28, calendar: calendar)
@@ -54,7 +56,7 @@ public enum WellnessScores {
 
     public static func sleep(_ values: [WellnessValue], day: Date, targetMinutes: Int = 480, calendar: Calendar = .current) -> WellnessScore {
         guard (360...600).contains(targetMinutes) else { return WellnessScore(value: nil, day: day, reason: "Configura una meta de sueño entre 6 y 10 horas.") }
-        guard let duration = value(values, .sleepDuration, day, calendar) else { return WellnessScore(value: nil, day: day, reason: "Falta la duración observada de esta noche.") }
+        guard let duration = value(values, .sleepDuration, day, calendar) else { return WellnessScore(value: nil, day: day, reason: "Falta la duración de esta noche. Puedes conectar Apple Salud o registrar tu sueño.") }
         let prior = history(values, .sleepDuration, day, window: 14, calendar: calendar)
         guard prior.count >= 7 else { return WellnessScore(value: nil, day: day, reason: "Se necesitan 7 noches previas en 14 días; hay \(prior.count).") }
         let durationIndex = bounded(100 - max(0, abs(duration - Double(targetMinutes)) - 30) * 100 / 240)
