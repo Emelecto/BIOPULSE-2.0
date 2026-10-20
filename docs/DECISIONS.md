@@ -429,3 +429,9 @@
 - **Corrección de D-060:** `confirm-email` conserva texto legible, ya que Supabase reescribe HTML como texto en su dominio estándar; las páginas de marca pertenecen a la web. No se publicó la versión HTML anterior.
 - **Verificación:** 21 pruebas web y seis del controlador pasan; build web y `deno check` de las funciones de borrado/confirmación pasan. Los cambios Swift pasan el parser; falta compilarlos con Xcode. El workflow `.github/workflows/web-quality.yml` prepara estas comprobaciones web y del controlador sin credenciales de producción.
 - **Integración local:** se pudo arrancar Docker y Supabase en Windows; el test HTTP pasó con dos cuentas sintéticas, borró los registros de once tablas del titular y conservó la otra cuenta. En el navegador se comprobó acceso, Perfil, exportación real de un JSON con ocho grupos y el Diario sintético, validación de la confirmación y cierre de sesión. Se corrigieron una etiqueta partida y el Coach flotante que cubría los campos de Perfil. Tras una interrupción temporal de Docker, la repetición de pgTAP pasó las 80 pruebas; se eliminaron las cuentas sintéticas creadas para estas comprobaciones.
+
+## D-063 — Consultar Apple Salud mientras el CSV está activo
+
+- **Estado:** CONFIRMED en fuente para mantener capturas separadas de Apple Salud y CSV; UNKNOWN para compilación con Xcode y validación en iPhone.
+- **Decisión:** Perfil ofrece sincronizar Apple Salud con el CSV cargado. La consulta actualiza una captura independiente de HealthKit sin reemplazar los datos CSV visibles. El usuario puede alternar entre ambas fuentes durante la sesión o quitar el CSV; BioPulse no suma ni mezcla fuentes. Se muestra la hora de consulta o el error parcial de HealthKit.
+- **Límites:** la consulta requiere autorización y que Apple Salud tenga muestras accesibles. El CSV permanece solo en memoria, como antes. No se añade sincronización con la cuenta web ni lectura continua en segundo plano.

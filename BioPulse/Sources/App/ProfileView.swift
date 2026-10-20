@@ -44,22 +44,47 @@ struct ProfileView: View {
                     UIApplication.shared.open(url)
                 }
                 .buttonStyle(PulseActionButtonStyle())
-            } else {
-                Button("Solicitar acceso") { Task { await health.requestAccess() } }
-                    .buttonStyle(PulseActionButtonStyle())
-                    .disabled(!health.isAvailable)
             }
 
-            Button("Actualizar mediciones") { Task { await health.reload() } }
+            Button(
+                health.isCSVImported
+                    ? (health.hasRequestedAccess ? "Sincronizar Apple Salud" : "Conectar Apple Salud")
+                    : (health.hasRequestedAccess ? "Actualizar mediciones" : "Solicitar acceso a Apple Salud")
+            ) {
+                Task {
+                    if health.hasRequestedAccess {
+                        await health.reload()
+                    } else {
+                        await health.requestAccess()
+                    }
+                }
+            }
                 .buttonStyle(PulseSecondaryButtonStyle())
                 .disabled(!health.isAvailable || health.isLoading)
+            if health.isCSVImported {
+                if health.isLoading {
+                    ProgressView("Consultando Apple Salud…")
+                        .font(.footnote).tint(PulseStyle.mint)
+                } else if let healthKitSyncError = health.healthKitSyncError {
+                    StatusPanel(symbol: "exclamationmark.triangle", title: "Consulta parcial de Apple Salud", message: healthKitSyncError)
+                } else if let healthKitLastUpdated = health.healthKitLastUpdated {
+                    StatusPanel(
+                        symbol: "checkmark.circle",
+                        title: "Apple Salud sincronizado",
+                        message: "Consulta completada · \(healthKitLastUpdated.formatted(date: .abbreviated, time: .shortened)). El CSV sigue visible y ambas fuentes permanecen separadas."
+                    )
+                } else {
+                    Text("Puedes consultar Apple Salud sin quitar el CSV. Las fuentes se mantienen separadas.")
+                        .font(.footnote).foregroundStyle(PulseStyle.secondary)
+                }
+            }
 
             SectionHeading(title: "CSV", subtitle: "Revisa un archivo antes de incorporarlo")
             StatusPanel(
                 symbol: "doc.text.magnifyingglass",
-                title: health.isCSVImported ? "CSV activo en esta sesión" : "Importación privada en este iPhone",
-                message: health.isCSVImported
-                    ? "Las señales del archivo aparecen en Hoy y Tendencias. Se conservan en memoria hasta cerrar la app y no se envían a servicios externos."
+                title: health.hasCSVData ? (health.isCSVImported ? "CSV activo en esta sesión" : "CSV cargado en esta sesión") : "Importación privada en este iPhone",
+                message: health.hasCSVData
+                    ? "Las señales del archivo se conservan en memoria hasta cerrar la app. Puedes alternar entre el CSV y Apple Salud; las fuentes no se mezclan ni se envían a servicios externos."
                     : "Carga un CSV de Apple Salud para ver tendencias. El archivo se procesa en el iPhone; no se sube ni se escribe en Apple Salud."
             )
             Button(isImportingCSV ? "Procesando CSV…" : "Revisar archivo CSV") { showingImporter = true }
@@ -83,8 +108,18 @@ struct ProfileView: View {
                     .buttonStyle(PulseActionButtonStyle())
                 }
             }
-            if health.isCSVImported {
-                Button("Quitar CSV y volver a Apple Salud", role: .destructive) {
+            if health.hasCSVData {
+                Button(health.isCSVImported ? "Ver datos de Apple Salud" : "Volver a mostrar el CSV") {
+                    if health.isCSVImported {
+                        Task { await health.showHealthKitData() }
+                    } else {
+                        health.showCSVData()
+                    }
+                }
+                .buttonStyle(PulseSecondaryButtonStyle())
+                .disabled(!health.isAvailable || health.isLoading)
+
+                Button("Quitar CSV", role: .destructive) {
                     health.clearCSV()
                     importResult = nil
                 }
@@ -129,8 +164,8 @@ struct ProfileView: View {
             SectionHeading(title: "Privacidad", subtitle: "Diseñada para mantener tus datos cerca")
             StatusPanel(
                 symbol: "arrow.triangle.2.circlepath",
-                title: "Sincronización iOS pendiente",
-                message: "Iniciar sesión no sube tus datos de salud ni tu Diario. La configuración por categoría aún no está disponible en esta app."
+                title: "Sincronización con BioPulse web pendiente",
+                message: "La consulta de Apple Salud actualiza los datos en este iPhone. Iniciar sesión no los sube a BioPulse web ni sincroniza el Diario."
             )
             Text("Las consultas de Apple Salud y la revisión del CSV se realizan en este dispositivo. Si autorizas al Coach, se enviarán métricas agregadas y contexto reciente para responder tus preguntas; no las muestras originales de HealthKit.")
                 .font(.subheadline)

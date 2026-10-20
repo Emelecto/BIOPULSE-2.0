@@ -43,6 +43,14 @@ struct SleepStageObservation: Identifiable, Equatable, Sendable {
     var id: String { "\(start.timeIntervalSince1970)-\(end.timeIntervalSince1970)-\(stage.rawValue)" }
 }
 
+private struct HealthDataSnapshot {
+    let readings: [HealthMetric: HealthReading]
+    let dailyHistory: [HealthMetric: [DailyHealthObservation]]
+    let hourlyActiveEnergy: [HourlyEnergyObservation]
+    let sleepStages: [SleepStageObservation]
+    let lastUpdated: Date?
+}
+
 @MainActor
 final class HealthDataController: ObservableObject {
     @Published private(set) var readings: [HealthMetric: HealthReading] = [:]
@@ -54,10 +62,15 @@ final class HealthDataController: ObservableObject {
     @Published private(set) var lastUpdated: Date?
     @Published private(set) var hasRequestedAccess = UserDefaults.standard.bool(forKey: "BioPulse.hasRequestedHealthAccess")
     @Published private(set) var isCSVImported = false
+    @Published private(set) var hasCSVData = false
     @Published private(set) var csvLastDay: Date?
+    @Published private(set) var healthKitLastUpdated: Date?
+    @Published private(set) var healthKitSyncError: String?
 
     private let store = HKHealthStore()
     private let catalog = HealthKitCapabilityCatalog()
+    private var csvSnapshot: HealthDataSnapshot?
+    private var healthKitSnapshot: HealthDataSnapshot?
 
     var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
     var displayedDataDay: Date { csvLastDay ?? Calendar.current.startOfDay(for: .now) }
@@ -97,26 +110,59 @@ final class HealthDataController: ObservableObject {
             guard let point = points.last else { continue }
             latest[metric] = HealthReading(value: point.value, measuredAt: point.day, sourceName: "CSV · último día disponible")
         }
-        readings = latest
-        dailyHistory = history
-        hourlyActiveEnergy = []
-        sleepStages = []
+        let snapshot = HealthDataSnapshot(
+            readings: latest,
+            dailyHistory: history,
+            hourlyActiveEnergy: [],
+            sleepStages: [],
+            lastUpdated: .now
+        )
+        csvSnapshot = snapshot
+        apply(snapshot)
         csvLastDay = result.records.compactMap { date(for: $0.day) }.max()
+        hasCSVData = true
         isCSVImported = true
         errorMessage = nil
-        lastUpdated = .now
         return true
+    }
+
+    func showCSVData() {
+        guard let csvSnapshot else { return }
+        isCSVImported = true
+        apply(csvSnapshot)
+    }
+
+    func showHealthKitData() async {
+        isCSVImported = false
+        if let healthKitSnapshot {
+            apply(healthKitSnapshot)
+        }
+        if hasRequestedAccess {
+            await reload()
+        } else {
+            await requestAccess()
+        }
     }
 
     func clearCSV() {
         isCSVImported = false
+        hasCSVData = false
         csvLastDay = nil
-        readings = [:]
-        dailyHistory = [:]
-        hourlyActiveEnergy = []
-        sleepStages = []
-        lastUpdated = nil
+        csvSnapshot = nil
+        if let healthKitSnapshot {
+            apply(healthKitSnapshot)
+        } else {
+            apply(HealthDataSnapshot(readings: [:], dailyHistory: [:], hourlyActiveEnergy: [], sleepStages: [], lastUpdated: nil))
+        }
         Task { await reload() }
+    }
+
+    private func apply(_ snapshot: HealthDataSnapshot) {
+        readings = snapshot.readings
+        dailyHistory = snapshot.dailyHistory
+        hourlyActiveEnergy = snapshot.hourlyActiveEnergy
+        sleepStages = snapshot.sleepStages
+        lastUpdated = snapshot.lastUpdated
     }
 
     private func date(for day: LocalDay) -> Date? {
@@ -156,10 +202,10 @@ final class HealthDataController: ObservableObject {
     }
 
     func reload() async {
-        guard !isCSVImported else { return }
-        guard isAvailable, hasRequestedAccess else { return }
+        guard isAvailable, hasRequestedAccess, !isLoading else { return }
         isLoading = true
         errorMessage = nil
+        healthKitSyncError = nil
         defer { isLoading = false }
 
         let now = Date()
@@ -257,13 +303,19 @@ final class HealthDataController: ObservableObject {
             failedQueries += 1
         }
 
-        readings = updated
-        dailyHistory = updatedHistory
-        hourlyActiveEnergy = updatedEnergy
-        sleepStages = updatedStages
-        lastUpdated = now
+        let snapshot = HealthDataSnapshot(
+            readings: updated,
+            dailyHistory: updatedHistory,
+            hourlyActiveEnergy: updatedEnergy,
+            sleepStages: updatedStages,
+            lastUpdated: now
+        )
+        healthKitSnapshot = snapshot
+        healthKitLastUpdated = now
+        if !isCSVImported { apply(snapshot) }
         if failedQueries > 0 {
             errorMessage = "Algunas señales no pudieron consultarse. Puedes volver a intentarlo."
+            healthKitSyncError = errorMessage
         }
     }
 
