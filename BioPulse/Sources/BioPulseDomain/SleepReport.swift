@@ -113,11 +113,10 @@ public struct ResolvedSleepValues: Sendable {
     public static func resolve(observed: [WellnessValue], reports: [SleepReport],
                                calendar: Calendar = .current) -> ResolvedSleepValues {
         var nights: [Date: WellnessValue] = [:]
-        for value in observed where value.metric == .sleepDuration && value.value.isFinite && value.value >= 0 {
+        for value in observed where value.metric == .sleepDuration && value.isUsable {
             let day = calendar.startOfDay(for: value.day)
-            nights[day] = WellnessValue(day: day, metric: .sleepDuration, value: value.value)
+            nights[day] = WellnessValue(day: day, metric: .sleepDuration, value: value.value, source: value.source)
         }
-        var reportedDays: Set<Date> = []
         var latestReports: [Date: SleepReport] = [:]
         // The most recently saved report wins if a file contains duplicate dates.
         for report in reports.sorted(by: { $0.recordedAt < $1.recordedAt }) where report.isValid {
@@ -127,11 +126,11 @@ public struct ResolvedSleepValues: Sendable {
         }
         for (day, report) in latestReports {
             guard nights[day] == nil || report.preferManual else { continue }
-            nights[day] = WellnessValue(day: day, metric: .sleepDuration, value: Double(report.durationMinutes))
-            reportedDays.insert(day)
+            nights[day] = WellnessValue(day: day, metric: .sleepDuration, value: Double(report.durationMinutes), source: .selfReported)
         }
         return ResolvedSleepValues(values: observed.filter { $0.metric != .sleepDuration }
-                                   + nights.keys.sorted().compactMap { nights[$0] }, reportedDays: reportedDays)
+                                   + nights.keys.sorted().compactMap { nights[$0] },
+                                   reportedDays: Set(nights.filter { $0.value.source == .selfReported }.keys))
     }
 }
 
@@ -154,8 +153,7 @@ extension WellnessScores {
             let window = kind == .sleepDuration ? 14 : 28
             let start = calendar.date(byAdding: .day, value: -window, to: end) ?? end
             let days = Set(values.filter {
-                $0.metric == kind && $0.day >= start && $0.day < end && $0.value.isFinite
-                    && ((kind == .sleepDuration || kind == .activeEnergyBurned) ? $0.value >= 0 : $0.value > 0)
+                $0.metric == kind && $0.day >= start && $0.day < end && $0.isUsable
             }.map { calendar.startOfDay(for: $0.day) })
             return ScoreHistoryRequirement(metric: kind, available: days.count,
                                            required: kind == .sleepDuration ? 7 : 14, windowDays: window)

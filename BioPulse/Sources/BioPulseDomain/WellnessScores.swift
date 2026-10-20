@@ -1,15 +1,28 @@
 import Foundation
 
+public enum WellnessValueSource: Equatable, Sendable {
+    case observed, selfReported
+}
+
 /// Product hypothesis, versioned for reproducibility. These indexes are not clinical outcomes.
 public struct WellnessValue: Sendable {
     public let day: Date
     public let metric: MetricKind
     public let value: Double
+    public let source: WellnessValueSource
 
-    public init(day: Date, metric: MetricKind, value: Double) {
+    public init(day: Date, metric: MetricKind, value: Double, source: WellnessValueSource = .observed) {
         self.day = day
         self.metric = metric
         self.value = value
+        self.source = source
+    }
+
+    var isUsable: Bool {
+        guard value.isFinite else { return false }
+        if metric == .activeEnergyBurned { return value >= 0 }
+        if metric == .sleepDuration { return value > 0 || (value == 0 && source == .selfReported) }
+        return value > 0
     }
 }
 
@@ -37,13 +50,11 @@ public enum WellnessScores {
         return sorted.count.isMultiple(of: 2) ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle]
     }
     private static func value(_ values: [WellnessValue], _ kind: MetricKind, _ day: Date, _ calendar: Calendar) -> Double? {
-        guard let number = values.first(where: { $0.metric == kind && calendar.isDate($0.day, inSameDayAs: day) })?.value,
-              number.isFinite, ((kind == .activeEnergyBurned || kind == .sleepDuration) ? number >= 0 : number > 0) else { return nil }
-        return number
+        values.first { $0.metric == kind && calendar.isDate($0.day, inSameDayAs: day) && $0.isUsable }?.value
     }
     private static func history(_ values: [WellnessValue], _ kind: MetricKind, _ day: Date, window: Int, calendar: Calendar) -> [Double] {
         guard let start = calendar.date(byAdding: .day, value: -window, to: calendar.startOfDay(for: day)) else { return [] }
-        let valid = values.filter { $0.metric == kind && $0.day >= start && $0.day < calendar.startOfDay(for: day) && $0.value.isFinite && ((kind == .activeEnergyBurned || kind == .sleepDuration) ? $0.value >= 0 : $0.value > 0) }
+        let valid = values.filter { $0.metric == kind && $0.day >= start && $0.day < calendar.startOfDay(for: day) && $0.isUsable }
         let byDay = Dictionary(valid.map { (calendar.startOfDay(for: $0.day), $0.value) }, uniquingKeysWith: { first, _ in first })
         return Array(byDay.values)
     }

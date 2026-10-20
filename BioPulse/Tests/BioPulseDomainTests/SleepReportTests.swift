@@ -76,6 +76,9 @@ struct SleepReportTests {
         let reports = try (0...7).map { try report($0, duration: $0 == 7 ? 0 : 480) }
         let resolved = ResolvedSleepValues.resolve(observed: [], reports: reports, calendar: calendar)
         #expect(WellnessScores.sleep(resolved.values, day: day(7), calendar: calendar).value == 0)
+        let observedZeros = (0...7).map { WellnessValue(day: day($0), metric: .sleepDuration, value: 0) }
+        #expect(WellnessScores.sleep(observedZeros, day: day(7), calendar: calendar).value == nil)
+        #expect(WellnessScores.calibration(observedZeros, day: day(7), includeBiometrics: false, calendar: calendar).first?.available == 0)
         #expect(throws: SleepReportError.self) { try report(0, duration: 1441) }
         #expect(throws: SleepReportError.self) {
             try SleepReport(wakeDate: day(0), durationMinutes: 480, restfulness: 0, quality: 3, recordedAt: day(1))
