@@ -58,6 +58,8 @@ Apple y Google requieren además la configuración de sus proveedores en Supabas
 
 ## Verificación actual
 
+**Sueño manual, 20-10-2026:** el [run 39518324202](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39518324202), con Xcode 26.6, compiló la fuente `2950875` para simulador y dispositivo iOS sin firma, confirmó que XcodeGen reproduce el proyecto versionado y pasó las 38 pruebas del dominio. **Pendiente en iPhone:** formulario, persistencia entre aperturas/cuentas, permisos y apertura al tocar el recordatorio. Para actualizar una instalación existente, mantener su Bundle Identifier y elegir el mismo Apple Team; no es necesario regenerar el proyecto.
+
 **CONFIRMED:** [GitHub Actions en macOS, Xcode 26.6](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) generó el proyecto, compiló para simulador y para dispositivo iOS sin firma, y pasó las 26 pruebas Swift del dominio. El artefacto generado coincide byte por byte con el `.xcodeproj` versionado. **UNKNOWN:** firma con tu Apple Team, instalación y ejecución en tu iPhone, permisos reales de HealthKit, navegación visual, accesibilidad y flujos de cuenta/Coach en dispositivo. La compilación para dispositivo en CI no firma ni instala la app.
 
 **Corrección del 17-10-2026:** la primera copia versionada omitía `Info.plist`; al abrirla directamente, Xcode mostraba «Build input file cannot be found». El archivo generado ya está versionado. El [run 39056797219](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39056797219) compiló primero el proyecto de un checkout limpio, sin regenerarlo, y después confirmó que XcodeGen reproduce los archivos versionados; también pasaron 26 pruebas y el build iOS sin firma. Una copia descargada antes de esta corrección debe actualizarse.

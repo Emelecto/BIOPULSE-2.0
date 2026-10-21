@@ -438,7 +438,7 @@
 
 ## D-064 — Sueño autoinformado y cobertura de scores
 
-- **Estado:** CONFIRMED en fuente; UNKNOWN para compilación iOS y recorrido de notificaciones/persistencia en iPhone hasta completar la comprobación en Mac.
+- **Estado:** CONFIRMED en fuente, compilación iOS sin firma y 38 pruebas de dominio con [run 39518324202](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39518324202); UNKNOWN para el recorrido de notificaciones/persistencia de esta nueva función en un iPhone real.
 - **Decisión:** añadir un registro de sueño por fecha local al despertar, persistido por cuenta. Duración estimada, descanso y calidad son respuestas explícitas; despertares, factores y nota son opcionales. Se puede editar o eliminar. Apple Salud tiene prioridad por noche salvo elección explícita del usuario; no se suman fuentes y no se mezclan los CSV con autorreportes personales.
 - **Scores:** `personal-v2` iOS mantiene los pesos y ventanas, admite cero horas reportadas y cuenta días únicos. Duración reportada puede completar Sleep Score y BioScore; el feedback subjetivo se conserva como contexto y no cambia los pesos ni entrena ML. Se identifica procedencia manual tanto en el día como en su referencia.
 - **Experiencia:** mostrar progreso real hacia siete noches y catorce días por señal, distinguiendo falta de historial de falta de datos del día. El recordatorio de sueño es local, opt-in, inicialmente a las 09:00, configurable y vinculado a la cuenta. El toque abre el formulario tras restaurar la sesión. La programación respeta horario silencioso y se cancela al salir o eliminar la cuenta.

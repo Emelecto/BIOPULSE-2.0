@@ -21,5 +21,6 @@
 ## Verificación
 
 - Pruebas de dominio: `BioPulse/Tests/BioPulseDomainTests/SleepReportTests.swift` cubre ventanas, datos insuficientes, ausencia de biometría, prioridad y selección de fuente, duplicados, cero horas, validaciones y serialización de las respuestas.
-- **Pendiente en Mac/iPhone:** compilar con Xcode, verificar navegación y teclado en el formulario, persistencia al reiniciar y al cambiar cuentas, lectura de un archivo anterior, permisos/notificación a una hora cercana y apertura desde una app terminada.
+- **CONFIRMED:** el [run 39518324202](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39518324202), con Xcode 26.6 y fuente `2950875`, compiló para simulador y dispositivo iOS sin firma, confirmó la correspondencia del proyecto generado y pasó las 38 pruebas del dominio (incluidas ocho nuevas de sueño manual).
+- **Pendiente en iPhone:** verificar navegación y teclado en el formulario, persistencia al reiniciar y al cambiar cuentas, lectura de un archivo anterior, permisos/notificación a una hora cercana y apertura desde una app terminada.
 - No se afirma que las pruebas de dominio ni el análisis de sintaxis sustituyan una compilación iOS o la comprobación de notificaciones en un iPhone.
