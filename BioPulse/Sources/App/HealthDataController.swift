@@ -119,7 +119,7 @@ final class HealthDataController: ObservableObject {
                 return DailyHealthObservation(day: day, value: value, sourceName: "BioPulse")
             }
         }
-        let readings = Dictionary(uniqueKeysWithValues: definitions.compactMap { item in
+        let readings: [HealthMetric: HealthReading] = Dictionary(uniqueKeysWithValues: definitions.compactMap { item in
             guard let latest = history[item.0]?.last else { return nil }
             return (item.0, HealthReading(value: latest.value, measuredAt: latest.day, sourceName: "BioPulse"))
         })
