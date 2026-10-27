@@ -621,7 +621,6 @@ function Today({
           Ver componentes <ArrowRight size={13} />
         </small>
       </button>
-      <WrappedEntry onClick={onWrapped} />
       {daily.length === 0 && !csv && (
         <Card className="callout">
           <ShieldCheck size={22} />
@@ -690,6 +689,7 @@ function Today({
           onClick={() => onMetric("steps")}
         />
       </div>
+      <WrappedEntry onClick={onWrapped} />
       <div className="section-title">
         <h2>Dale contexto</h2>
         <p>Tus datos cuentan solo una parte</p>

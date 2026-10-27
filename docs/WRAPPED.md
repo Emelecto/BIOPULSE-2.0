@@ -23,8 +23,9 @@ La web comparte `wrapped-data.ts` y `WrappedStory` entre la cuenta y la demostra
 
 - CONFIRMED local: compilación de producción y 29 pruebas web, incluidas ocho de Wrapped y carga paginada (fechas inválidas, meses bisiestos, unidades, revisiones, días ausentes, contexto horario y simulación).
 - CONFIRMED local: análisis sintáctico de los archivos Swift modificados y nuevos.
-- UNKNOWN hasta CI: compilación con SDK de Apple y pruebas de dominio Swift. Swift en Windows no pudo resolver el SDK C requerido (`stdlib.h`), por lo que no se presenta como una prueba ejecutada.
+- CONFIRMED: [CI macOS/Xcode](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/40435652597) compiló el proyecto versionado para simulador y dispositivo sin firma, verificó que XcodeGen reproduce los archivos y pasó 42 pruebas Swift, incluidas cuatro del resumen mensual. Las pruebas Swift se ejecutaron en macOS; Windows solo aportó el parser.
 - UNKNOWN hasta revisión en dispositivo: aspecto y fluidez nativos, hoja de compartir, VoiceOver, Dynamic Type y respuesta táctil en iPhone.
+- CONFIRMED en navegador: recorrido de la demo, ampliación, selector de mes, exploración diaria, detalles, comparación, contexto de Diario, selección de métricas y creación del PNG. Revisión visual en 1280 × 900 y 390 × 844. Sin errores de consola.
 - La revisión del componente web mediante la demo no sustituye un recorrido autenticado con una cuenta y datos remotos reales.
 
 ## Recorrido manual

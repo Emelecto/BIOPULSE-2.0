@@ -59,7 +59,7 @@ export function WrappedStory({ daily, journal, source, simulated = false, onClos
   const [shareKinds, setShareKinds] = useState<WrappedKind[]>(["sleep_duration", "steps"]); const [message, setMessage] = useState("");
   const titleId = useId();
   const motion = useMotionVisibility<HTMLElement>();
-  const go = (next: number) => { const target = Math.max(0, Math.min(6, next)); const root = pages.current; root?.scrollTo({ left: root.clientWidth * target, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" }); };
+  const go = (next: number) => { const target = Math.max(0, Math.min(6, next)); const root = pages.current; root?.scrollTo({ left: root.clientWidth * target, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches || Math.abs(target - page) > 1 ? "instant" : "smooth" }); };
   const day = snapshot.days[contextDay] ?? snapshot.days[0]; const notes = snapshot.entries.filter(e => journalDay(e) === day);
 
   useEffect(() => {

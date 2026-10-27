@@ -47,6 +47,7 @@ La app SwiftUI usa una interfaz oscura y atmosférica, con fondo nocturno, super
 - Anillo orgánico con luz y deformación suave, número estable, pausa por visibilidad/ciclo de vida y movimiento reducido.
 - Respuesta de pulsación compartida, entradas cortas y cambios animados de selección, gráficas y Diario.
 - Wrapped usa una presentación inmersiva oscura, acentos por señal, tipografía editorial, siete escenas y navegación horizontal. Cada señal conserva su gráfica diaria y procedencia; los detalles, comparación y tarjeta de imagen son interactivos.
+- CONFIRMED: [CI macOS/Xcode](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/40435652597) compiló para simulador y dispositivo sin firma y pasó 42 pruebas de dominio. Se revisó la demo web en escritorio y móvil. UNKNOWN: interacción y apariencia de esta entrega en iPhone real.
 - Misma estructura narrativa en SwiftUI, app web y teléfono público. Este último muestra datos simulados y ofrece ampliación a pantalla completa. Ver alcance y aceptación en `WRAPPED.md`.
 
 ## Funciones explícitamente futuras
