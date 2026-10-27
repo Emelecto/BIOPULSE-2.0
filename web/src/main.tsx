@@ -252,17 +252,15 @@ function Landing() {
           <div className="land-hero-scene" aria-hidden="true" />
           <div className="land-hero-copy">
             <p className="eyebrow"><span className="live-pip" /> BIENESTAR, EN CONTEXTO</p>
-            <h1 id="land-title">Tus señales,<br /><em>con más contexto.</em></h1>
+            <h1 id="land-title">Un laboratorio<br /><em>en tu muñeca.</em></h1>
             <p className="land-lead">
-              Sueño, actividad y lo que vives, en una misma lectura personal.
-              Explora tus registros con claridad, transparencia y control sobre tus datos.
+              Para quienes usan Apple Watch, BioPulse pone en contexto tus señales de sueño y actividad para que descubras cómo se relacionan con tu día a día.
             </p>
             <div className="land-buttons">
               <a className="action" href="/app?mode=signup">Crear cuenta <ArrowRight size={18} /></a>
               <a className="action action-secondary" href="#metodo">Cómo funciona <ArrowDownRight size={18} /></a>
             </div>
-            <span className="land-subnote land-privacy-note"><LockKeyhole size={14} /> La cuenta no conecta tus datos de salud.</span>
-            <p className="land-platform-note">iOS usa Apple Health · la app web usa Health Auto Export, un servicio diferente.</p>
+            <span className="land-subnote land-privacy-note"><LockKeyhole size={14} /> Toca y explora la demo aquí mismo. Prueba BioPulse a tu ritmo, sin compromisos.</span>
           </div>
           <div
             className="land-visual"
