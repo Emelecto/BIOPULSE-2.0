@@ -402,6 +402,7 @@ struct TrendsView: View {
                         AxisValueLabel()
                     } }
                     .frame(height: chartHeight)
+                    .pulseChartReveal()
                     .accessibilityLabel("Historial de \(chartMetric.displayName), \(chartObservations.count) días con registros")
                 }
                 Text(health.isCSVImported ? "Agregados diarios · CSV" : "Agregados reales · Apple Salud")

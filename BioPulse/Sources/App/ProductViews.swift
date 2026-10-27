@@ -554,7 +554,7 @@ struct WrappedView: View {
     }
     @ViewBuilder private func context(_ snapshot: MonthlyWrapped) -> some View {
         Text("Toca un día para reunir tus señales y tus palabras.").font(.subheadline).foregroundStyle(PulseStyle.secondary)
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 3), count: 7), spacing: 3) {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 44), spacing: 3)], spacing: 3) {
             ForEach(Array(snapshot.days.enumerated()), id: \.offset) { index, day in
                 Button { contextIndex = index } label: {
                     VStack(spacing: 2) {
@@ -613,7 +613,7 @@ private struct WrappedMetricScene: View {
             }
             .chartXScale(domain: summary.month...(Calendar.current.date(byAdding: .month, value: 1, to: summary.month) ?? summary.month))
             .chartXAxis { AxisMarks(values: .stride(by: .day, count: 7)) { _ in AxisValueLabel(format: .dateTime.day()) } }
-            .chartYAxis(.hidden).frame(height: 150).chartXSelection(value: $chartDate)
+            .chartYAxis(.hidden).pulseChartReveal().frame(height: 150).chartXSelection(value: $chartDate)
             .onChange(of: chartDate) { _, value in if let value, let next = summary.days.firstIndex(where: { Calendar.current.isDate($0, inSameDayAs: value) }) { index = Double(next) } }
             Slider(value: $index, in: 0...Double(max(1, summary.days.count - 1)), step: 1) { Text("Recorre los días") }.tint(metric.accent).accessibilityValue(selected.formatted(.dateTime.day().month()))
             HStack { Text(selected.formatted(.dateTime.day().month())).font(.caption); Spacer(); Text(metric.formatted(summary.series(metric).first { $0.day == selected }?.value)).font(.title3).foregroundStyle(metric.accent).contentTransition(.numericText()) }

@@ -148,7 +148,7 @@ struct TodayView: View {
                     }
                     .chartYScale(domain: .automatic(includesZero: true))
                     .chartXAxis { AxisMarks(values: .stride(by: .hour, count: 6)) { _ in AxisValueLabel(format: .dateTime.hour()) } }
-                    .chartYAxis(.hidden)
+                    .chartYAxis(.hidden).pulseChartReveal()
                     .frame(height: chartHeight)
                     .accessibilityLabel(health.isCSVImported ? "Energía activa agregada del día en el CSV" : "Energía activa registrada por hora en Apple Salud")
                 }
@@ -189,7 +189,7 @@ struct TodayView: View {
                             .foregroundStyle(.white.opacity(0.7))
                             .cornerRadius(2)
                     }
-                    .chartXAxis(.hidden).chartYAxis(.hidden)
+                    .chartXAxis(.hidden).chartYAxis(.hidden).pulseChartReveal()
                     .frame(height: 20)
                     .accessibilityHidden(true)
                 }

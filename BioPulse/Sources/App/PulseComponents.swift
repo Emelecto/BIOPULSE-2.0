@@ -21,8 +21,21 @@ struct PulseSceneMotion: ViewModifier {
     }
 }
 
+struct PulseChartReveal: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var visible = false
+    func body(content: Content) -> some View {
+        content
+            .mask { Rectangle().scaleEffect(x: visible || reduceMotion ? 1 : 0.02, y: 1, anchor: .leading) }
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.24), value: visible)
+            .onAppear { visible = true }
+            .onDisappear { visible = false }
+    }
+}
+
 extension View {
     func pulseSceneMotion() -> some View { modifier(PulseSceneMotion()) }
+    func pulseChartReveal() -> some View { modifier(PulseChartReveal()) }
 }
 
 enum PulseStyle {

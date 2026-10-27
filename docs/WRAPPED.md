@@ -21,7 +21,7 @@ La web comparte `wrapped-data.ts` y `WrappedStory` entre la cuenta y la demostra
 
 ## Comprobaciones
 
-- CONFIRMED local: compilación de producción y 26 pruebas web, incluidas cinco de Wrapped (fechas inválidas, meses bisiestos, unidades, revisiones, días ausentes, contexto horario y simulación).
+- CONFIRMED local: compilación de producción y 29 pruebas web, incluidas ocho de Wrapped y carga paginada (fechas inválidas, meses bisiestos, unidades, revisiones, días ausentes, contexto horario y simulación).
 - CONFIRMED local: análisis sintáctico de los archivos Swift modificados y nuevos.
 - UNKNOWN hasta CI: compilación con SDK de Apple y pruebas de dominio Swift. Swift en Windows no pudo resolver el SDK C requerido (`stdlib.h`), por lo que no se presenta como una prueba ejecutada.
 - UNKNOWN hasta revisión en dispositivo: aspecto y fluidez nativos, hoja de compartir, VoiceOver, Dynamic Type y respuesta táctil en iPhone.
