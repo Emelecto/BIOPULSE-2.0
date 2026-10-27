@@ -3,6 +3,7 @@ import SwiftUI
 
 struct JournalView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var typeSize
     @ObservedObject var journal: JournalController
     @ObservedObject var personal: PersonalContextStore
     @State private var showingComposer = false
@@ -20,7 +21,7 @@ struct JournalView: View {
                 }
                 Spacer(minLength: 0)
                 Text(selectedDay.formatted(.dateTime.weekday(.wide).day().month(.wide)))
-                    .font(.subheadline.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.8)
+                    .font(.caption.weight(.medium)).lineLimit(1).minimumScaleFactor(0.8)
                 Spacer(minLength: 0)
                 Button { shiftDay(1) } label: {
                     Image(systemName: "chevron.right").frame(width: 44, height: 44)
@@ -30,14 +31,14 @@ struct JournalView: View {
             .foregroundStyle(.white).padding(.horizontal, 8).pulseSurface()
             DashboardCard {
                 Text(Calendar.current.isDateInToday(selectedDay) ? "¿Cómo te sientes hoy?" : "¿Cómo te sentiste?")
-                    .font(.title3.weight(.semibold))
+                    .font(.subheadline.weight(.semibold))
                 Text("Tu respuesta es subjetiva y queda junto a tus datos, no como una medición.")
-                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 8) { checkInChoices }
-                    VStack(alignment: .leading, spacing: 8) { checkInChoices }
-                }
-                .padding(.top, 7)
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
+                let choiceLayout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+                    : AnyLayout(HStackLayout(spacing: 6))
+                choiceLayout { checkInChoices }
+                    .padding(.top, 4)
                 if let current = personal.checkIn(on: selectedDay) {
                     Text("Guardado: \(current.energy.title)")
                         .font(.caption).foregroundStyle(PulseStyle.secondary)
@@ -131,13 +132,14 @@ struct JournalView: View {
             Button {
                 personal.saveCheckIn(energy: energy, note: "", on: selectedDay)
             } label: {
-                Label(energy.title, systemImage: energy.symbol)
+                Text(energy.title)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 10).frame(minHeight: 44)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 6).frame(maxWidth: .infinity, minHeight: 44)
                     .background(isSelected ? PulseStyle.elevated : PulseStyle.background,
-                                in: Capsule())
-                    .overlay { Capsule().strokeBorder(.white.opacity(isSelected ? 0.65 : 0.16)) }
+                                in: RoundedRectangle(cornerRadius: 12))
+                    .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(isSelected ? 0.65 : 0.16)) }
             }
             .buttonStyle(PulsePressButtonStyle())
             .accessibilityAddTraits(isSelected ? .isSelected : [])

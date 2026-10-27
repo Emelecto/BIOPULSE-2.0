@@ -82,8 +82,8 @@ struct RootView: View {
                 Label(health.isCSVImported ? "Coach pausado con CSV" : "Coach IA", systemImage: health.isCSVImported ? "lock.fill" : "sparkles")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .frame(minHeight: 48)
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 44)
                     .background {
                         if reduceTransparency || contrast == .increased {
                             Capsule().fill(PulseStyle.elevated)
@@ -98,6 +98,6 @@ struct RootView: View {
             .disabled(health.isCSVImported)
             .accessibilityLabel("Abrir Coach BioPulse")
         }
-        .padding(.horizontal, 22).padding(.vertical, 8)
+        .padding(.horizontal, 18).padding(.vertical, 4)
     }
 }

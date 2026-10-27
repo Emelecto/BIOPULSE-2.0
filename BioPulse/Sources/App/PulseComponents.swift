@@ -96,10 +96,10 @@ struct PulseIcon: View {
 
     var body: some View {
         Image(systemName: symbol)
-            .font(.title3.weight(.medium))
+            .font(.body.weight(.medium))
             .foregroundStyle(accent)
-            .frame(width: 44, height: 44)
-            .background(LinearGradient(colors: [accent.opacity(0.18), accent.opacity(0.04)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 13))
+            .frame(width: 32, height: 32)
+            .background(LinearGradient(colors: [accent.opacity(0.18), accent.opacity(0.04)], startPoint: .topLeading, endPoint: .bottomTrailing), in: RoundedRectangle(cornerRadius: 10))
             .accessibilityHidden(true)
     }
 }
@@ -172,9 +172,9 @@ struct SectionHeading: View {
     let subtitle: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).font(.title3.weight(.semibold))
-            Text(subtitle).font(.subheadline).foregroundStyle(PulseStyle.secondary)
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title).font(.subheadline.weight(.semibold))
+            Text(subtitle).font(.caption).foregroundStyle(PulseStyle.secondary)
         }
     }
 }
@@ -185,18 +185,18 @@ struct StatusPanel: View {
     let message: String
 
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(alignment: .top, spacing: 10) {
             PulseIcon(symbol: symbol)
-            VStack(alignment: .leading, spacing: 7) {
-                Text(title).font(.headline)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.subheadline.weight(.semibold))
                 Text(message)
-                    .font(.subheadline)
+                    .font(.caption)
                     .foregroundStyle(PulseStyle.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 0)
         }
-        .padding(19)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .pulseSurface()
     }
@@ -215,14 +215,13 @@ struct ScreenShell<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                DashboardPageHeader(title: title)
-                    .padding(.top, 15)
-                Text(subtitle).font(.subheadline).foregroundStyle(PulseStyle.secondary)
+            VStack(alignment: .leading, spacing: 12) {
+                DashboardPageHeader(title: title, subtitle: subtitle)
+                    .padding(.top, 8)
                 content
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 30)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 20)
             .frame(maxWidth: 620, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
@@ -238,7 +237,8 @@ struct PulseActionButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.semibold))
-            .frame(maxWidth: .infinity, minHeight: 48)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, minHeight: 44)
             .foregroundStyle(PulseStyle.background)
             .background(LinearGradient(colors: [.white, Color(red: 0.86, green: 0.87, blue: 0.88)], startPoint: .top, endPoint: .bottom), in: RoundedRectangle(cornerRadius: 14))
             .shadow(color: .black.opacity(configuration.isPressed ? 0.1 : 0.24), radius: configuration.isPressed ? 2 : 8, x: 0, y: configuration.isPressed ? 1 : 5)
@@ -255,7 +255,8 @@ struct PulseSecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.subheadline.weight(.semibold))
-            .frame(maxWidth: .infinity, minHeight: 48)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, minHeight: 44)
             .foregroundStyle(PulseStyle.mint)
             .pulseSurface()
             .opacity(!isEnabled ? 0.5 : configuration.isPressed ? 0.72 : 1)
@@ -295,10 +296,10 @@ struct FeatureDestinationLink<Destination: View>: View {
 
     var body: some View {
         NavigationLink(destination: destination) {
-            HStack(spacing: 14) {
+            HStack(spacing: 10) {
                 PulseIcon(symbol: symbol)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(title).font(.headline)
+                    Text(title).font(.subheadline.weight(.semibold))
                     Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(PulseStyle.secondary)
@@ -309,7 +310,7 @@ struct FeatureDestinationLink<Destination: View>: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(PulseStyle.muted)
             }
-            .padding(17)
+            .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
             .pulseSurface()
         }

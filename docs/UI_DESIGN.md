@@ -14,7 +14,15 @@ La app SwiftUI usa una interfaz oscura y atmosférica, con fondo nocturno, super
 - Cuenta obligatoria; el inicio de sesión no concede consentimiento para sincronizar datos.
 - Coach conversacional en español con consentimiento específico y límites informativos/no diagnósticos. La respuesta real del proveedor y la experiencia en dispositivo siguen pendientes de QA.
 
-**CONFIRMED:** [CI en macOS con Xcode 26.6](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) compiló el target iOS para simulador y dispositivo sin firma y pasó 26 pruebas Swift del dominio. **UNKNOWN:** apariencia y funcionamiento en dispositivos reales, permisos HealthKit efectivos, VoiceOver, Dynamic Type y notificaciones. La compilación no confirma por sí sola el comportamiento visual o funcional de cada pantalla.
+**CONFIRMED:** [CI en macOS con Xcode 26.6](https://github.com/Emelecto/BIOPULSE-2.0/actions/runs/39053219208) compiló el target iOS para simulador y dispositivo sin firma y pasó 26 pruebas Swift del dominio. El video aportado por el usuario el 2026-10-26 muestra las cinco pestañas de iOS y sus desplazamientos, y sirve como referencia visual anterior al ajuste de densidad. **UNKNOWN:** validación del nuevo diseño compacto en iPhone, permisos HealthKit efectivos, VoiceOver, Dynamic Type y notificaciones. La compilación no confirma por sí sola el comportamiento visual o funcional de cada pantalla.
+
+## Densidad compacta — 2026-10-26
+
+- **CONFIRMED en fuente:** cabecera con marca de 20 pt, título `.title2`, fecha/subtítulo `.caption` y espaciado de 12 pt entre grupos. Tarjetas con 12 pt de margen interior; botones principales y secundarios conservan un mínimo de 44 pt.
+- **CONFIRMED en fuente:** anillo base de 176 pt, métricas de al menos 110 pt y energía de al menos 232 pt. Las dimensiones relevantes usan `ScaledMetric`; las tarjetas pueden crecer y las filas se apilan con texto grande.
+- **CONFIRMED en fuente:** Hoy presenta las métricas antes de calibración y registro de sueño. Tendencias muestra la gráfica antes del panel ML. Las explicaciones siguen disponibles en desplegables; no se alteran cálculos, permisos ni persistencia.
+- **CONFIRMED en web:** el teléfono de la landing reproduce este orden y lenguaje visual, con cinco pestañas, gráficas filtrables, detalles y formularios de demostración. Las cifras y respuestas se identifican como simuladas. Los cambios existen solo en memoria y se pierden al recargar; no se conecta con HealthKit, la cuenta o el Coach real.
+- **Aceptación pendiente en iPhone:** comprobar primera vista en un dispositivo de 390 × 844 pt y otro pequeño, texto estándar y tamaños de accesibilidad, cabeceras legibles, tarjetas sin recortes y controles operables. La réplica web no acredita por sí sola la apariencia nativa.
 
 ## Reglas visuales y de información
 

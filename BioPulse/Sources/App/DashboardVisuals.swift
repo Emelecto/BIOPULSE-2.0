@@ -33,23 +33,26 @@ enum ScoreColor {
 
 struct DashboardPageHeader: View {
     let title: String
+    var subtitle: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 9) {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
                 Image("BioPulseBrandMark")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 27, height: 27)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .frame(width: 20, height: 20)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .accessibilityHidden(true)
                 Text("BioPulse")
-                    .font(.title2.weight(.regular))
+                    .font(.subheadline.weight(.medium))
                     .foregroundStyle(.white)
             }
-            VStack(alignment: .leading, spacing: 7) {
-                Text(title).font(.largeTitle.weight(.semibold))
-                Capsule().fill(.white).frame(width: 34, height: 3)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.title2.weight(.semibold))
+                if let subtitle {
+                    Text(subtitle).font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -68,18 +71,18 @@ struct DashboardCard<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) { content }
+        VStack(alignment: .leading, spacing: 6) { content }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            .padding(16)
+            .padding(12)
             .background {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(PulseStyle.surface)
                     .overlay(alignment: .topLeading) {
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .fill(RadialGradient(colors: [accent.opacity(0.09), .clear], center: .topLeading, startRadius: 0, endRadius: 220))
                     }
                     .overlay {
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
                             .strokeBorder(.white.opacity(0.14), lineWidth: 1)
                     }
                     .shadow(color: .black.opacity(0.2), radius: 12, x: 0, y: 7)
@@ -122,6 +125,7 @@ struct PendingScoreHero: View {
     let title: String
     var score: Double? = nil
     var subtitle: String = "Puntuación en preparación"
+    @ScaledMetric(relativeTo: .body) private var ringHeight: CGFloat = 176
 
     private var validScore: Double? {
         guard let score, score.isFinite, (0...100).contains(score) else { return nil }
@@ -144,7 +148,7 @@ struct PendingScoreHero: View {
             .padding(.horizontal, 32)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 285)
+        .frame(height: ringHeight)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(validScore.map { "\(title): \(Int($0.rounded())) de 100. \(subtitle)" } ?? "\(title): puntuación aún no disponible")
     }

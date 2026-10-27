@@ -4,6 +4,7 @@ import UIKit
 import UniformTypeIdentifiers
 
 struct ProfileView: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
     @ObservedObject var health: HealthDataController
     @ObservedObject var auth: AuthSessionStore
     @ObservedObject var personal: PersonalContextStore
@@ -21,14 +22,17 @@ struct ProfileView: View {
     var body: some View {
         ScreenShell(title: "Perfil", subtitle: "Tu cuenta, tus datos y tus decisiones") {
             DashboardCard {
-                Image(systemName: "person.crop.circle")
-                    .font(.system(size: 42, weight: .ultraLight)).foregroundStyle(.white)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text(auth.session?.user.email ?? "Cuenta BioPulse")
-                    .font(.title3.weight(.semibold)).foregroundStyle(.white)
-                    .lineLimit(2).textSelection(.enabled)
-                Text("Sesión activa · Tu Diario local está aislado por cuenta")
-                    .font(.caption).foregroundStyle(PulseStyle.secondary)
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "person.crop.circle")
+                        .font(.title2.weight(.light)).foregroundStyle(.white)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(auth.session?.user.email ?? "Cuenta BioPulse")
+                            .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                            .fixedSize(horizontal: false, vertical: true).textSelection(.enabled)
+                        Text("Sesión activa · Tu Diario local está aislado por cuenta")
+                            .font(.caption).foregroundStyle(PulseStyle.secondary)
+                    }
+                }
             }
             SectionHeading(title: "Apple Salud", subtitle: "La fuente principal de BioPulse")
             StatusPanel(
@@ -38,29 +42,34 @@ struct ProfileView: View {
                     ? "La solicitud de acceso se realizó. Apple mantiene privada la decisión de lectura; solo las muestras recibidas aparecen como medidas."
                     : "Elige qué categorías permitir. Puedes cambiarlas después en Ajustes o Apple Salud."
             )
-            if health.hasRequestedAccess {
-                Button("Abrir Ajustes de BioPulse") {
-                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                    UIApplication.shared.open(url)
+            let actionLayout = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(spacing: 8))
+                : AnyLayout(HStackLayout(spacing: 8))
+            actionLayout {
+                if health.hasRequestedAccess {
+                    Button("Abrir Ajustes") {
+                        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                        UIApplication.shared.open(url)
+                    }
+                    .buttonStyle(PulseActionButtonStyle())
+                    .accessibilityLabel("Abrir Ajustes de BioPulse")
                 }
-                .buttonStyle(PulseActionButtonStyle())
-            }
-
-            Button(
-                health.isCSVImported
-                    ? (health.hasRequestedAccess ? "Sincronizar Apple Salud" : "Conectar Apple Salud")
-                    : (health.hasRequestedAccess ? "Actualizar mediciones" : "Solicitar acceso a Apple Salud")
-            ) {
-                Task {
-                    if health.hasRequestedAccess {
-                        await health.reload()
-                    } else {
-                        await health.requestAccess()
+                Button(
+                    health.isCSVImported
+                        ? (health.hasRequestedAccess ? "Sincronizar Apple Salud" : "Conectar Apple Salud")
+                        : (health.hasRequestedAccess ? "Actualizar mediciones" : "Solicitar acceso a Apple Salud")
+                ) {
+                    Task {
+                        if health.hasRequestedAccess {
+                            await health.reload()
+                        } else {
+                            await health.requestAccess()
+                        }
                     }
                 }
-            }
                 .buttonStyle(PulseSecondaryButtonStyle())
                 .disabled(!health.isAvailable || health.isLoading)
+            }
             if health.isCSVImported {
                 if health.isLoading {
                     ProgressView("Consultando Apple Salud…")

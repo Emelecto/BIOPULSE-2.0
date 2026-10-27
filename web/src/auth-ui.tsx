@@ -29,7 +29,7 @@ function Feedback({ error, notice }: { error?: string; notice?: string }) {
 }
 
 export function AuthPage() {
-  const [mode, setMode] = useState<"login" | "signup" | "recovery">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "recovery">(() => new URLSearchParams(window.location.search).get("mode") === "signup" ? "signup" : "login");
   const [sent, setSent] = useState<"signup" | "recovery" | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

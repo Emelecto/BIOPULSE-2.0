@@ -16,7 +16,7 @@ struct ScoreCalibrationCard: View {
     var body: some View {
         DashboardCard {
             Label(requirements.allSatisfy(\.isReady) ? "Tu referencia está lista; falta el día evaluado" : "Tus scores necesitan conocerte", systemImage: "calendar.badge.clock")
-                .font(.headline).foregroundStyle(.white)
+                .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
             Text("Es normal ver el anillo sin número al comenzar. La app reúne historial para comparar tus registros contigo mismo. Si Apple Salud ya tiene historial compatible, se aprovecha desde el primer día.")
                 .font(.subheadline).foregroundStyle(PulseStyle.secondary)
             ForEach(requirements) { item in
@@ -66,13 +66,13 @@ struct SleepCheckInCard: View {
     var body: some View {
         DashboardCard {
             Label("¿Cómo dormiste?", systemImage: "moon.stars")
-                .font(.headline).foregroundStyle(.white)
+                .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
             if let report = personal.sleepReport() {
                 Text("Hoy registraste \(report.durationMinutes / 60) h \(report.durationMinutes % 60) min · descanso \(report.restfulness)/5 · calidad \(report.quality)/5")
-                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
             } else {
                 Text("No necesitas dormir con el reloj. Estima cuánto dormiste y cómo te sientes al despertar.")
-                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
             }
             Button(personal.sleepReport() == nil ? "Registrar mi sueño" : "Editar el sueño de hoy") {
                 editingNight = Night(date: .now)
@@ -146,7 +146,7 @@ struct SleepReminderControls: View {
                     }
                 }
             ))
-            .font(.headline).tint(.white).disabled(requestingPermission)
+            .font(.subheadline.weight(.semibold)).tint(.white).disabled(requestingPermission)
             if personal.sleepReminder.enabled {
                 DatePicker("Hora del recordatorio", selection: Binding(
                     get: { Calendar.current.date(bySettingHour: personal.sleepReminder.hour, minute: personal.sleepReminder.minute, second: 0, of: .now) ?? .now },
@@ -160,8 +160,11 @@ struct SleepReminderControls: View {
                     }
                 ), displayedComponents: .hourAndMinute)
             }
-            Text("Opcional · 9:00 a. m. por defecto. Al tocarlo se abre tu registro de sueño. Respeta el horario silencioso de Personalizar; iOS puede silenciar o retrasar el aviso según tus ajustes.")
-                .font(.caption).foregroundStyle(PulseStyle.secondary)
+            DisclosureGroup("Detalles del recordatorio") {
+                Text("Opcional · 9:00 a. m. por defecto. Al tocarlo se abre tu registro de sueño. Respeta el horario silencioso de Personalizar; iOS puede silenciar o retrasar el aviso según tus ajustes.")
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
+            }
+            .font(.caption).tint(.white).frame(minHeight: 44)
             if let message { Text(message).font(.caption).foregroundStyle(PulseStyle.secondary) }
         }
         .task { message = await personal.scheduleSleepReminder() }
@@ -335,6 +338,7 @@ struct TrendsView: View {
     @State private var selectedMetric: HealthMetric?
     @State private var chartMetric: HealthMetric = .heartRateVariabilitySDNN
     @State private var periodDays = 7
+    @ScaledMetric(relativeTo: .body) private var chartHeight: CGFloat = 150
 
     private let metrics: [HealthMetric] = [
         .heartRateVariabilitySDNN, .restingHeartRate, .heartRate,
@@ -351,21 +355,14 @@ struct TrendsView: View {
                 Text("SEÑAL DE CAMBIO PERSONAL").font(.caption.weight(.semibold)).foregroundStyle(PulseStyle.secondary)
                 Text(signal.value.map { $0 == 0 ? "Sin cambio persistente" : "\($0)/100" } ?? "—")
                     .font(.title2.weight(.semibold)).foregroundStyle(.white)
-                Text(signal.reason).font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                Text(signal.reason).font(.caption).foregroundStyle(PulseStyle.secondary)
                 Text("\(health.isCSVImported ? "Día importado" : "Ayer") · \(signal.version) · magnitud de cambio, no probabilidad de enfermedad")
                     .font(.caption2).foregroundStyle(PulseStyle.muted)
-                Text("Es una regla fija, no ML: compara sueño, HRV y frecuencia en reposo con tu historial. Solo marca un cambio si al menos dos señales se desvían durante dos días seguidos. Un 0 no descarta un problema de salud.")
-                    .font(.caption).foregroundStyle(PulseStyle.secondary)
-            }
-            DashboardCard {
-                Text("MODELO ML · ISOLATION FOREST · \(anomaly.version)")
-                    .font(.caption.weight(.semibold)).foregroundStyle(PulseStyle.secondary)
-                Text(anomaly.value.map { "\($0)/100" } ?? "Datos insuficientes")
-                    .font(.title2.weight(.semibold)).foregroundStyle(.white)
-                Text(anomaly.reason)
-                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
-                Text("Aprende tu patrón con HRV, pulso en reposo y energía activa. Entrena y analiza en este iPhone; no necesita datos de sueño ni envía mediciones a un modelo remoto.")
-                    .font(.caption).foregroundStyle(PulseStyle.secondary)
+                DisclosureGroup("Cómo se interpreta") {
+                    Text("Es una regla fija, no ML: compara sueño, HRV y frecuencia en reposo con tu historial. Solo marca un cambio si al menos dos señales se desvían durante dos días seguidos. Un 0 no descarta un problema de salud.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
+                .font(.caption).tint(.white).frame(minHeight: 44)
             }
             DashboardCard {
                 Text("Tu historia, día a día").font(.headline)
@@ -386,7 +383,7 @@ struct TrendsView: View {
                 .pickerStyle(.menu)
                 if chartObservations.isEmpty {
                     DashboardEmptyChart(message: "Aún no hay registros para este periodo")
-                        .frame(height: 205)
+                        .frame(height: chartHeight)
                 } else {
                     Chart(chartObservations) { point in
                         BarMark(x: .value("Día", point.day, unit: .day), y: .value("Valor", point.value))
@@ -401,7 +398,7 @@ struct TrendsView: View {
                         AxisGridLine().foregroundStyle(.white.opacity(0.08))
                         AxisValueLabel()
                     } }
-                    .frame(height: 205)
+                    .frame(height: chartHeight)
                     .accessibilityLabel("Historial de \(chartMetric.displayName), \(chartObservations.count) días con registros")
                 }
                 Text(health.isCSVImported ? "Agregados diarios · CSV" : "Agregados reales · Apple Salud")
@@ -413,6 +410,19 @@ struct TrendsView: View {
                 subtitle: "Compara periodos reales, añade anotaciones y revisa tu día"
             ) {
                 PersonalInsightsView(health: health, journal: journal, personal: personal)
+            }
+            DashboardCard {
+                Text("MODELO ML · ISOLATION FOREST · \(anomaly.version)")
+                    .font(.caption.weight(.semibold)).foregroundStyle(PulseStyle.secondary)
+                Text(anomaly.value.map { "\($0)/100" } ?? "Datos insuficientes")
+                    .font(.headline).foregroundStyle(.white)
+                DisclosureGroup("Método y cobertura") {
+                    Text(anomaly.reason)
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                    Text("Aprende tu patrón con HRV, pulso en reposo y energía activa. Entrena y analiza en este iPhone; no necesita datos de sueño ni envía mediciones a un modelo remoto.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
+                .font(.caption).tint(.white).frame(minHeight: 44)
             }
             SectionHeading(title: "Mediciones", subtitle: "Toca una señal para conocerla")
             ForEach(metrics) { metric in
@@ -452,6 +462,8 @@ struct TrendsView: View {
 }
 
 struct SleepView: View {
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @ScaledMetric(relativeTo: .body) private var stageChartHeight: CGFloat = 132
     @ObservedObject var health: HealthDataController
     @ObservedObject var personal: PersonalContextStore
 
@@ -473,30 +485,36 @@ struct SleepView: View {
     var body: some View {
         ScreenShell(title: "Sueño", subtitle: health.isCSVImported ? "Sueño del archivo importado" : "Con tu reloj o con tu propio registro") {
             DashboardCard {
-                PendingScoreHero(title: "Sleep Score", score: score.value.map(Double.init), subtitle: score.value == nil ? (needsHistory ? "Construyendo tu referencia" : "Falta registrar la noche") : "Índice exploratorio")
-                Text(isReported ? "Duración estimada por ti" : "Tiempo dormido").font(.subheadline).foregroundStyle(PulseStyle.secondary)
-                Text(sleepMinutes.map { "\(Int($0) / 60) h \(Int($0) % 60) min" } ?? "—")
-                    .font(.largeTitle.weight(.semibold)).monospacedDigit().foregroundStyle(.white)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Noche que termina el \(sleepDay.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.caption).foregroundStyle(PulseStyle.secondary)
+                let summaryLayout = typeSize.isAccessibilitySize
+                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+                    : AnyLayout(HStackLayout(alignment: .center, spacing: 8))
+                summaryLayout {
+                    PendingScoreHero(title: "Sleep Score", score: score.value.map(Double.init), subtitle: score.value == nil ? (needsHistory ? "Construyendo tu referencia" : "Falta registrar la noche") : "Índice exploratorio")
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(isReported ? "Duración estimada por ti" : "Tiempo dormido").font(.caption).foregroundStyle(PulseStyle.secondary)
+                        Text(sleepMinutes.map { "\(Int($0) / 60) h \(Int($0) % 60) min" } ?? "—")
+                            .font(.title2.weight(.semibold)).monospacedDigit().foregroundStyle(.white)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("Noche que termina el \(sleepDay.formatted(date: .abbreviated, time: .omitted))")
+                            .font(.caption).foregroundStyle(PulseStyle.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 Text(score.reason)
-                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                    .font(.caption).foregroundStyle(PulseStyle.secondary)
                 if sleepData.includesSelfReport(on: sleepDay) {
                     Label("Incluye sueño reportado por ti", systemImage: "pencil.circle")
                         .font(.caption).foregroundStyle(PulseStyle.secondary)
                 }
             }
             if score.value == nil {
-                ScoreCalibrationCard(values: sleepData.values, day: sleepDay, isBioScore: false, reason: score.reason)
+                DisclosureGroup("Tu referencia de sueño") {
+                    ScoreCalibrationCard(values: sleepData.values, day: sleepDay, isBioScore: false, reason: score.reason)
+                }
+                .font(.subheadline).tint(.white).frame(minHeight: 44)
             }
             SleepCheckInCard(personal: personal, health: health, showsHistory: true)
             SleepReminderControls(personal: personal)
-            StatusPanel(
-                symbol: "function",
-                title: "Qué resume este índice",
-                message: "Combina duración de sueño (65 %) y cercanía a tu duración habitual (35 %). Necesita la noche evaluada y siete noches previas dentro de 14 días. No analiza etapas, calidad percibida ni es un modelo de aprendizaje automático."
-            )
             DashboardCard {
                 Text("Meta personal de sueño").font(.headline)
                 Picker("Duración objetivo", selection: Binding(
@@ -512,6 +530,13 @@ struct SleepView: View {
                     .font(.caption).foregroundStyle(PulseStyle.secondary)
             }
             DashboardCard {
+                DisclosureGroup("Qué resume este índice") {
+                    Text("Combina duración de sueño (65 %) y cercanía a tu duración habitual (35 %). Necesita la noche evaluada y siete noches previas dentro de 14 días. No analiza etapas, calidad percibida ni es un modelo de aprendizaje automático.")
+                        .font(.caption).foregroundStyle(PulseStyle.secondary)
+                }
+                .font(.subheadline).tint(.white).frame(minHeight: 44)
+            }
+            DashboardCard {
                 Text("Etapas disponibles en Apple Salud").font(.headline)
                 if isReported {
                     Text("Mediciones del dispositivo, separadas de tu estimación. Registrar duración no genera etapas.")
@@ -519,7 +544,7 @@ struct SleepView: View {
                 }
                 if health.sleepStages.isEmpty {
                     DashboardEmptyChart(message: health.isCSVImported ? "El CSV cargado no incluye etapas de sueño." : "Sin etapas de sueño registradas por un dispositivo compatible")
-                        .frame(height: 170)
+                        .frame(height: stageChartHeight)
                 } else {
                     Chart(health.sleepStages) { interval in
                         BarMark(
@@ -533,7 +558,7 @@ struct SleepView: View {
                     .chartXAxis { AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                         AxisValueLabel(format: .dateTime.hour().minute())
                     } }
-                    .frame(height: 170)
+                    .frame(height: stageChartHeight)
                     .accessibilityLabel("Etapas de sueño registradas en Apple Salud")
                     Text("\(health.sleepStages.count) intervalos registrados · Apple Salud")
                         .font(.caption2).foregroundStyle(PulseStyle.muted)
@@ -715,7 +740,7 @@ struct MetricListRow: View {
                     .foregroundStyle(PulseStyle.muted)
             }
         }
-        .padding(17)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .pulseSurface()
     }

@@ -9,6 +9,9 @@ struct TodayView: View {
     let openJournal: () -> Void
     @State private var selectedMetric: HealthMetric?
     @State private var showingScore = false
+    @ScaledMetric(relativeTo: .body) private var metricHeight: CGFloat = 110
+    @ScaledMetric(relativeTo: .body) private var energyHeight: CGFloat = 232
+    @ScaledMetric(relativeTo: .body) private var chartHeight: CGFloat = 100
     private var scoreValues: [WellnessValue] { health.sleepScoreData(using: personal).values }
     private var needsHistory: Bool {
         WellnessScores.calibration(scoreValues, day: health.bioScoreDay, includeBiometrics: true).contains { !$0.isReady }
@@ -26,32 +29,27 @@ struct TodayView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                DashboardPageHeader(title: health.isCSVImported ? "Tus datos" : "Hoy")
-                Text((health.isCSVImported ? health.displayedDataDay : Date.now).formatted(.dateTime.weekday(.wide).day().month(.wide)) + (health.isCSVImported ? " · fecha del CSV" : ""))
-                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+            VStack(alignment: .leading, spacing: 12) {
+                DashboardPageHeader(
+                    title: health.isCSVImported ? "Tus datos" : "Hoy",
+                    subtitle: (health.isCSVImported ? health.displayedDataDay : Date.now).formatted(.dateTime.weekday(.wide).day().month(.wide)) + (health.isCSVImported ? " · fecha del CSV" : "")
+                )
                 Button { showingScore = true } label: {
                     VStack(spacing: 4) {
                         PendingScoreHero(title: "BioScore", score: score.value.map(Double.init), subtitle: score.value == nil ? (needsHistory ? "Construyendo tu referencia" : "Faltan datos del día") : "Índice exploratorio · \(health.isCSVImported ? "día importado" : "ayer")")
                         Text(score.value == nil ? score.reason : "Índice personal · \(health.isCSVImported ? "día importado" : "ayer") · \(score.version)")
-                            .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                            .font(.caption).foregroundStyle(PulseStyle.secondary)
                         Label("Ver componentes", systemImage: "arrow.up.right")
-                            .font(.caption.weight(.semibold)).foregroundStyle(.white).padding(.top, 6)
+                            .font(.caption.weight(.semibold)).foregroundStyle(.white)
                     }
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PulsePressButtonStyle())
 
-                if score.value == nil {
-                    ScoreCalibrationCard(values: health.sleepScoreData(using: personal).values,
-                                         day: health.bioScoreDay, isBioScore: true, reason: score.reason)
-                }
                 if health.sleepScoreData(using: personal).includesSelfReport(on: health.bioScoreDay) {
                     Text("Este BioScore incluye sueño reportado por ti, también en su referencia personal.")
                         .font(.caption).foregroundStyle(PulseStyle.secondary)
                 }
-                SleepCheckInCard(personal: personal, health: health, showsHistory: false)
-
                 if !health.hasRequestedAccess && !health.isCSVImported {
                     StatusPanel(symbol: "heart.text.square", title: "Conecta Apple Salud", message: "Elige qué señales compartir para ver tus mediciones y, con historial suficiente, tu índice personal.")
                     Button("Elegir datos de Salud") { Task { await health.requestAccess() } }
@@ -68,35 +66,45 @@ struct TodayView: View {
                     ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
                     : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
                 layout {
-                    energyCard.frame(maxWidth: .infinity).frame(height: 328)
+                    energyCard.frame(maxWidth: .infinity).frame(minHeight: energyHeight)
                     VStack(spacing: 12) {
                         metricCard(health.isCSVImported ? "HRV mediana" : "HRV media", metric: .heartRateVariabilitySDNN, note: health.isCSVImported ? "Mediana diaria" : "Media de hoy", symbol: "waveform.path.ecg")
-                            .frame(height: 158)
+                            .frame(minHeight: metricHeight)
                         metricCard("FC en reposo", metric: .restingHeartRate, note: health.isCSVImported ? "Mediana diaria" : "Última de hoy", symbol: "heart")
-                            .frame(height: 158)
+                            .frame(minHeight: metricHeight)
                     }.frame(maxWidth: .infinity)
                 }
                 layout {
                     metricCard("Sueño", metric: .sleepAnalysis, note: sleepCardNote, symbol: "moon.stars")
-                        .frame(maxWidth: .infinity).frame(height: 158)
+                        .frame(maxWidth: .infinity).frame(minHeight: metricHeight)
                     metricCard("Pasos", metric: .stepCount, note: health.isCSVImported ? "Total del día importado" : "Acumulado de hoy", symbol: "figure.walk")
-                        .frame(maxWidth: .infinity).frame(height: 158)
+                        .frame(maxWidth: .infinity).frame(minHeight: metricHeight)
                 }
+
+                if score.value == nil {
+                    DisclosureGroup("Tu referencia personal") {
+                        ScoreCalibrationCard(values: health.sleepScoreData(using: personal).values,
+                                             day: health.bioScoreDay, isBioScore: true, reason: score.reason)
+                    }
+                    .font(.subheadline).tint(.white)
+                    .frame(minHeight: 44)
+                }
+                SleepCheckInCard(personal: personal, health: health, showsHistory: false)
 
                 SectionHeading(title: "Dale contexto", subtitle: "Tus datos cuentan solo una parte")
                 Button(action: openJournal) {
                     DashboardCard {
                         Label("Añadir al Diario", systemImage: "square.and.pencil")
-                            .font(.headline).foregroundStyle(.white)
+                            .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
                         Text("Registra un hábito, síntoma o evento de hoy.")
-                            .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                            .font(.caption).foregroundStyle(PulseStyle.secondary)
                     }
                 }.buttonStyle(PulsePressButtonStyle())
                 FeatureDestinationLink(symbol: "wind", title: "Una pausa para respirar", subtitle: "Sigue un ritmo visual a tu propio paso") { BreathingSessionView() }
                 Text("BioPulse no ofrece diagnósticos médicos ni interpreta una lectura aislada como enfermedad.")
                     .font(.footnote).foregroundStyle(PulseStyle.secondary)
             }
-            .padding(.horizontal, 20).padding(.top, 18).padding(.bottom, 24)
+            .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 20)
             .frame(maxWidth: 620).frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)
@@ -124,10 +132,10 @@ struct TodayView: View {
                 Text(HealthMetric.activeEnergyBurned.formattedValue(health.readings[.activeEnergyBurned]))
                     .font(.system(.title2, design: .rounded, weight: .semibold))
                     .foregroundStyle(.white).monospacedDigit()
-                    .minimumScaleFactor(0.7).lineLimit(1)
-                Spacer(minLength: 10)
+                    .minimumScaleFactor(0.7).lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                Spacer(minLength: 4)
                 if health.hourlyActiveEnergy.isEmpty {
-                    DashboardEmptyChart(message: "Sin registros por hora").frame(height: 156)
+                    DashboardEmptyChart(message: "Sin registros por hora").frame(height: chartHeight)
                 } else {
                     Chart(health.hourlyActiveEnergy) { observation in
                         BarMark(x: .value("Hora", observation.hour, unit: .hour),
@@ -138,7 +146,7 @@ struct TodayView: View {
                     .chartYScale(domain: .automatic(includesZero: true))
                     .chartXAxis { AxisMarks(values: .stride(by: .hour, count: 6)) { _ in AxisValueLabel(format: .dateTime.hour()) } }
                     .chartYAxis(.hidden)
-                    .frame(height: 156)
+                    .frame(height: chartHeight)
                     .accessibilityLabel(health.isCSVImported ? "Energía activa agregada del día en el CSV" : "Energía activa registrada por hora en Apple Salud")
                 }
                 Text(health.isCSVImported ? "Agregado diario · CSV" : "Registrada por hora · Apple Salud")
@@ -163,15 +171,15 @@ struct TodayView: View {
             DashboardCard {
                 HStack(alignment: .top) {
                     Text(title).font(.subheadline.weight(.medium)).foregroundStyle(PulseStyle.secondary)
-                        .lineLimit(1).minimumScaleFactor(0.8)
+                        .lineLimit(typeSize.isAccessibilitySize ? nil : 1).minimumScaleFactor(0.8)
                     Spacer(minLength: 0)
                     Image(systemName: symbol).foregroundStyle(.white.opacity(0.75))
                 }
-                Spacer(minLength: 7)
+                Spacer(minLength: 3)
                 Text(displayValue)
                     .font(.system(.title2, design: .rounded, weight: .semibold))
                     .foregroundStyle(.white).monospacedDigit()
-                    .lineLimit(1).minimumScaleFactor(0.7)
+                    .lineLimit(typeSize.isAccessibilitySize ? nil : 1).minimumScaleFactor(0.7)
                 if !history.isEmpty {
                     Chart(history) { point in
                         BarMark(x: .value("Día", point.day, unit: .day), y: .value("Valor", point.value))
@@ -179,7 +187,7 @@ struct TodayView: View {
                             .cornerRadius(2)
                     }
                     .chartXAxis(.hidden).chartYAxis(.hidden)
-                    .frame(height: 27)
+                    .frame(height: 20)
                     .accessibilityHidden(true)
                 }
                 Text(note).font(.caption2).foregroundStyle(PulseStyle.muted)

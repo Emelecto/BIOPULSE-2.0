@@ -443,3 +443,12 @@
 - **Scores:** `personal-v2` iOS mantiene los pesos y ventanas, admite cero horas reportadas y cuenta días únicos. Duración reportada puede completar Sleep Score y BioScore; el feedback subjetivo se conserva como contexto y no cambia los pesos ni entrena ML. Se identifica procedencia manual tanto en el día como en su referencia.
 - **Experiencia:** mostrar progreso real hacia siete noches y catorce días por señal, distinguiendo falta de historial de falta de datos del día. El recordatorio de sueño es local, opt-in, inicialmente a las 09:00, configurable y vinculado a la cuenta. El toque abre el formulario tras restaurar la sesión. La programación respeta horario silencioso y se cancela al salir o eliminar la cuenta.
 - **Contrato:** criterios de aceptación y límites en `docs/MANUAL_SLEEP.md`. No se modifica la web en esta entrega.
+
+
+## D-065 — Densidad compacta en iOS y réplica del teléfono público
+
+- **Estado:** CONFIRMED en fuente; UNKNOWN para compilación y nueva apariencia en Xcode/iPhone. La revisión sintáctica de los siete archivos Swift modificados pasa en Windows; no equivale a compilar SwiftUI.
+- **Motivo:** el recorrido real compartido el 2026-10-26 muestra cabeceras, anillos y paneles que ocupan gran parte de la primera vista. Se priorizan métricas y gráficas, con detalles metodológicos desplegables.
+- **Decisión:** reducir jerarquía de cabeceras y separaciones, usar anillo base de 176 pt, tarjetas más compactas y botones de al menos 44 pt. Mantener Dynamic Type, crecimiento de contenido y alternativas verticales para texto grande. Se conserva la información completa, los cálculos y los límites de cada fuente.
+- **Landing:** recreación web de las cinco pestañas basada en el video y la nueva estructura SwiftUI. Incluye filtros, detalles y registros de demostración solo en memoria; las etiquetas de simulación permanecen visibles. No se copian datos personales del video ni se ejecutan servicios de Salud o IA desde la demo.
+- **Criterios:** ver más de un bloque útil al entrar a las pantallas con texto estándar; evitar recortes con texto grande; conservar áreas táctiles; mantener desplazamiento y navegación; identificar todos los datos de ejemplo. Comprobación nativa en iPhone pendiente.
