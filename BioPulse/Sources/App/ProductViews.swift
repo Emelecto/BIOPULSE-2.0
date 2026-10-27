@@ -417,7 +417,7 @@ struct WrappedView: View {
             (health.dailyHistory[native] ?? []).map { WrappedObservation(day: $0.day, metric: wrapped, value: $0.value, source: $0.sourceName) }
         }
         values += health.sleepScoreData(using: personal).values.filter { $0.metric == .sleepDuration }.map {
-            WrappedObservation(day: $0.day, metric: .sleep, value: $0.value, source: $0.source == .selfReported ? "Registro manual" : health.isCSVImported ? "CSV local" : "Apple Salud")
+            WrappedObservation(day: $0.day, metric: .sleep, value: $0.value, source: $0.source == .selfReported ? "Registro manual" : health.isCSVImported ? "CSV local" : health.isPresentationMode ? "BioPulse" : "Apple Salud")
         }
         return values
     }
@@ -432,7 +432,7 @@ struct WrappedView: View {
         return Set(([Date.now] + observations.map(\.day) + includedEntries.map(\.occurredAt) + contextMoments.map(\.occurredAt)).filter { $0 <= .now }.compactMap { calendar.dateInterval(of: .month, for: $0)?.start }).sorted(by: >)
     }
     private var summary: MonthlyWrapped { MonthlyWrapped(month: month, observations: observations, entries: includedEntries, additionalContext: contextMoments) }
-    private var source: String { health.isCSVImported ? "CSV local · Diario de la cuenta excluido" : "Apple Salud y registros personales" }
+    private var source: String { health.isCSVImported ? "CSV local · Diario de la cuenta excluido" : health.isPresentationMode ? "BioPulse · señales y contexto personal" : "Apple Salud y registros personales" }
 
     var body: some View {
         let snapshot = summary
@@ -583,6 +583,165 @@ struct WrappedView: View {
         let renderer = ImageRenderer(content: WrappedShareCard(summary: snapshot, metrics: WrappedMetric.allCases.filter { selectedShare.contains($0) }, source: source).padding(30).frame(width: 540).background(Color(red: 0.055, green: 0.085, blue: 0.07)).environment(\.colorScheme, .dark))
         renderer.scale = 2
         if let image = renderer.uiImage { shareImage = Image(uiImage: image) }
+    }
+}
+
+@MainActor
+struct PresentationRootView: View {
+    private enum Tab: Hashable { case today, trends, journal, sleep, profile }
+    private enum PresentedSheet: String, Identifiable { case coach, sleepReport; var id: String { rawValue } }
+    @Environment(\.dismiss) private var dismiss
+    @StateObject private var health = HealthDataController(presentationMode: true)
+    @StateObject private var personal = PersonalContextStore(userID: UUID(), presentationMode: true)
+    @StateObject private var journal = JournalController(store: InMemoryContextJournalStore())
+    @State private var selectedTab: Tab = .today
+    @State private var presentedSheet: PresentedSheet?
+    @State private var showingWrapped = false
+    @State private var showingResetConfirmation = false
+
+    var body: some View {
+        TabView(selection: $selectedTab) {
+            NavigationStack {
+                TodayView(health: health, personal: personal, openJournal: { selectedTab = .journal }, openWrapped: { showingWrapped = true })
+                    .environment(\.pulseMotionEnabled, selectedTab == .today && !showingWrapped)
+                    .safeAreaInset(edge: .bottom, spacing: 0) { coachDock }
+            }
+            .tabItem { Label("Hoy", systemImage: "house.fill") }.tag(Tab.today)
+            NavigationStack {
+                TrendsView(openWrapped: { showingWrapped = true }, health: health, journal: journal, personal: personal)
+                    .environment(\.pulseMotionEnabled, selectedTab == .trends && !showingWrapped)
+                    .safeAreaInset(edge: .bottom, spacing: 0) { coachDock }
+            }
+            .tabItem { Label("Tendencias", systemImage: "chart.xyaxis.line") }.tag(Tab.trends)
+            NavigationStack { JournalView(journal: journal, personal: personal).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
+                .tabItem { Label("Diario", systemImage: "square.and.pencil") }.tag(Tab.journal)
+            NavigationStack { SleepView(health: health, personal: personal).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
+                .tabItem { Label("Sueño", systemImage: "moon.stars.fill") }.tag(Tab.sleep)
+            NavigationStack { presentationProfile.safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
+                .tabItem { Label("Perfil", systemImage: "person.crop.circle") }.tag(Tab.profile)
+        }
+        .buttonStyle(PulsePressButtonStyle())
+        .sensoryFeedback(.selection, trigger: selectedTab)
+        .fullScreenCover(isPresented: $showingWrapped) { WrappedView(health: health, personal: personal, journal: journal) }
+        .sheet(item: $presentedSheet) { sheet in
+            switch sheet {
+            case .sleepReport:
+                SleepReportEditor(personal: personal, health: health)
+                    .presentationDetents([.large]).presentationDragIndicator(.visible)
+            case .coach:
+                PresentationCoachView()
+                    .presentationDetents([.large]).presentationDragIndicator(.visible)
+            }
+        }
+        .confirmationDialog("Reiniciar el recorrido", isPresented: $showingResetConfirmation, titleVisibility: .visible) {
+            Button("Reiniciar datos de presentación", role: .destructive) { resetPresentation() }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Los cambios hechos durante esta sesión se borrarán y el recorrido volverá al inicio.")
+        }
+        .preferredColorScheme(.dark)
+        .tint(.white)
+        .task {
+            await journal.seedPresentationSample()
+            await health.reload()
+        }
+    }
+
+    private var coachDock: some View {
+        HStack {
+            Spacer(minLength: 0)
+            Button { presentedSheet = .coach } label: {
+                Label("Coach IA", systemImage: "sparkles")
+                    .font(.subheadline.weight(.semibold)).foregroundStyle(.white)
+                    .padding(.horizontal, 14).frame(minHeight: 44)
+                    .background(.regularMaterial, in: Capsule())
+                    .overlay(Capsule().strokeBorder(.white.opacity(0.25), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+            }
+            .accessibilityLabel("Abrir Coach BioPulse")
+        }
+        .padding(.horizontal, 18).padding(.vertical, 4)
+    }
+
+    private var presentationProfile: some View {
+        ScreenShell(title: "Perfil", subtitle: "Tu espacio BioPulse") {
+            DashboardCard {
+                Label("BioPulse", systemImage: "waveform.path.ecg")
+                    .font(.headline).foregroundStyle(.white)
+                Text("Sueño, actividad y contexto en una sola vista.")
+                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+            }
+            SectionHeading(title: "Tu recorrido", subtitle: "Explora todas las señales y momentos")
+            Button { showingWrapped = true } label: {
+                DashboardCard {
+                    Label("BioPulse Wrapped", systemImage: "sparkles")
+                        .font(.headline).foregroundStyle(.white)
+                    Text("Un resumen interactivo de tus últimos meses.")
+                        .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                }
+            }.buttonStyle(PulsePressButtonStyle())
+            SectionHeading(title: "Apple Salud", subtitle: "Una experiencia lista para recorrer")
+            StatusPanel(symbol: "heart.text.square", title: "Señales disponibles", message: "Explora mediciones, tendencias y registros desde las pestañas de BioPulse.")
+            Button { showingResetConfirmation = true } label: {
+                Label("Reiniciar recorrido", systemImage: "arrow.counterclockwise")
+            }
+            .buttonStyle(PulseSecondaryButtonStyle())
+            Button("Volver") { dismiss() }
+                .font(.subheadline.weight(.medium)).foregroundStyle(PulseStyle.secondary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+        }
+    }
+
+    private func resetPresentation() {
+        health.resetPresentationData()
+        personal.resetPresentationData()
+        Task { await journal.resetPresentationSample() }
+        selectedTab = .today
+        showingWrapped = false
+    }
+}
+
+private struct PresentationCoachView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var question = "¿Qué patrón notas en mi mes?"
+    @State private var response: String?
+    private let prompts = ["¿Qué patrón notas en mi mes?", "¿Cómo fue mi descanso?", "¿Qué hábito puedo explorar?"]
+
+    var body: some View {
+        ScreenShell(title: "Coach BioPulse", subtitle: "Explora tus señales con preguntas") {
+            DashboardCard {
+                Label("Una lectura de tu contexto", systemImage: "sparkles")
+                    .font(.headline).foregroundStyle(.white)
+                Text(response ?? "Elige una pregunta para ver cómo Coach conecta sueño, actividad y contexto.")
+                    .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            ForEach(prompts, id: \.self) { prompt in
+                Button(prompt) { question = prompt; respond(to: prompt) }
+                    .buttonStyle(PulseSecondaryButtonStyle())
+            }
+            HStack(spacing: 10) {
+                TextField("Escribe una pregunta", text: $question, axis: .vertical)
+                    .textFieldStyle(.roundedBorder).lineLimit(1...3)
+                Button { respond(to: question) } label: { Image(systemName: "arrow.up.circle.fill").font(.title2) }
+                    .disabled(question.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .accessibilityLabel("Enviar pregunta")
+            }
+            Button("Cerrar") { dismiss() }.buttonStyle(PulseActionButtonStyle())
+        }
+        .preferredColorScheme(.dark)
+        .animation(.easeInOut(duration: 0.22), value: response)
+    }
+
+    private func respond(to question: String) {
+        let lower = question.lowercased()
+        if lower.contains("sueño") || lower.contains("descanso") {
+            response = "Tu horario de descanso se mantiene estable y la mayoría de las noches se acerca a tu objetivo. Mira Sueño para explorar duración y etapas a lo largo del mes."
+        } else if lower.contains("hábito") || lower.contains("habito") {
+            response = "Podrías observar cómo una rutina de desconexión antes de dormir se relaciona con tu energía al día siguiente. Añade el hábito al Diario y revisa Tendencias."
+        } else {
+            response = "En este mes aparecen señales de descanso bastante constantes junto con varios días activos. Tus notas del Diario añaden contexto a esos cambios. Explora Wrapped para ver cada métrica y momento."
+        }
     }
 }
 

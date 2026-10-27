@@ -11,6 +11,7 @@ struct RootView: View {
     @State private var presentedSheet: PresentedSheet?
     @State private var selectedTab: Tab = .today
     @State private var showingWrapped = false
+    @State private var showingPresentation = false
     @EnvironmentObject private var notificationRouter: SleepNotificationRouter
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -41,13 +42,14 @@ struct RootView: View {
                 NavigationStack { SleepView(health: health, personal: personal).environment(\.pulseMotionEnabled, selectedTab == .sleep && !showingWrapped).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
                     .tabItem { Label("Sueño", systemImage: "moon.stars.fill") }
                     .tag(Tab.sleep)
-                NavigationStack { ProfileView(health: health, auth: auth, personal: personal).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
+                NavigationStack { ProfileView(health: health, auth: auth, personal: personal, openPresentation: { showingPresentation = true }).safeAreaInset(edge: .bottom, spacing: 0) { coachDock } }
                     .tabItem { Label("Perfil", systemImage: "person.crop.circle") }
                     .tag(Tab.profile)
             }
         .buttonStyle(PulsePressButtonStyle())
         .sensoryFeedback(.selection, trigger: selectedTab)
         .fullScreenCover(isPresented: $showingWrapped) { WrappedView(health: health, personal: personal, journal: journal) }
+        .fullScreenCover(isPresented: $showingPresentation) { PresentationRootView() }
         .tint(.white)
         .preferredColorScheme(.dark)
         .task {

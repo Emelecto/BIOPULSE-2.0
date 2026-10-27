@@ -174,10 +174,12 @@ final class PersonalContextStore: ObservableObject {
     private let fileURL: URL
     private let sleepTargetKey: String
     let userID: UUID
+    let isPresentationMode: Bool
     private var allowsWrites = true
 
-    init(userID: UUID) {
+    init(userID: UUID, presentationMode: Bool = false) {
         self.userID = userID
+        isPresentationMode = presentationMode
         guard let baseURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
             preconditionFailure("Application Support must be available on iOS.")
         }
@@ -187,6 +189,10 @@ final class PersonalContextStore: ObservableObject {
             .appendingPathComponent(userID.uuidString.lowercased(), isDirectory: true)
             .appendingPathComponent("personal-context-v1.json", isDirectory: false)
         sleepTargetKey = "BioPulse.sleepTarget.\(userID.uuidString.lowercased())"
+        if presentationMode {
+            seedPresentationData()
+            return
+        }
         let storedTarget = UserDefaults.standard.integer(forKey: sleepTargetKey)
         if (360...600).contains(storedTarget) { sleepTargetMinutes = storedTarget }
         load()
@@ -195,7 +201,7 @@ final class PersonalContextStore: ObservableObject {
     func updateSleepTarget(_ minutes: Int) {
         guard (360...600).contains(minutes), minutes.isMultiple(of: 30) else { return }
         sleepTargetMinutes = minutes
-        UserDefaults.standard.set(minutes, forKey: sleepTargetKey)
+        if !isPresentationMode { UserDefaults.standard.set(minutes, forKey: sleepTargetKey) }
     }
 
     func sleepReport(on date: Date = .now) -> SleepReport? {
@@ -231,6 +237,7 @@ final class PersonalContextStore: ObservableObject {
     }
 
     func scheduleSleepReminder() async -> String? {
+        guard !isPresentationMode else { return nil }
         await SleepReminderNotifications.schedule(userID: userID, reminder: sleepReminder,
                                                  quietStart: preferences.quietStartHour, quietEnd: preferences.quietEndHour)
     }
@@ -290,6 +297,14 @@ final class PersonalContextStore: ObservableObject {
     }
 
     func deleteLocalAccountData() throws {
+        if isPresentationMode {
+            checkIns = []
+            annotations = []
+            experiments = []
+            sleepReports = []
+            sleepReminder = SleepReminderPreferences()
+            return
+        }
         allowsWrites = false
         SleepReminderNotifications.cancel(for: userID)
         let reminders = ["biopulse.daily.checkin", "biopulse.weekly.summary"]
@@ -333,6 +348,7 @@ final class PersonalContextStore: ObservableObject {
 
     @discardableResult
     private func persist() -> Bool {
+        if isPresentationMode { return true }
         guard allowsWrites else { return false }
         do {
             try FileManager.default.createDirectory(
@@ -357,6 +373,35 @@ final class PersonalContextStore: ObservableObject {
         } catch {
             persistenceMessage = "No se pudo guardar en este dispositivo. Comprueba el espacio disponible e inténtalo otra vez."
             return false
+        }
+    }
+
+    func resetPresentationData() {
+        guard isPresentationMode else { return }
+        seedPresentationData()
+    }
+
+    private func seedPresentationData() {
+        sleepTargetMinutes = 480
+        preferences = PersonalizationPreferences()
+        preferences.focus = .sleep
+        preferences.readingLevel = .simple
+        sleepReminder = SleepReminderPreferences()
+        let calendar = Calendar.current
+        checkIns = (0..<12).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: -offset * 2, to: .now) else { return nil }
+            let energy: CheckInEnergy = offset.isMultiple(of: 4) ? .energized : offset.isMultiple(of: 3) ? .steady : .energized
+            return PersonalCheckIn(energy: energy, note: offset.isMultiple(of: 3) ? "Un día con buen ritmo y una pausa para recuperarme." : "Me sentí con energía durante la mañana.", recordedAt: date)
+        }
+        annotations = (0..<6).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: -offset * 5 - 1, to: .now) else { return nil }
+            let kind: AnnotationKind = offset.isMultiple(of: 2) ? .training : .lateCaffeine
+            return PersonalAnnotation(kind: kind, title: kind == .training ? "Entrenamiento" : "Café por la tarde", note: kind == .training ? "Sesión de fuerza y movilidad." : "Un cambio de rutina para tener en cuenta.", occurredAt: date)
+        }
+        experiments = [PersonalExperiment(question: "¿Qué cambia cuando mantengo una rutina de sueño?", habit: "Apagar pantallas antes de dormir", startedAt: calendar.date(byAdding: .day, value: -9, to: .now) ?? .now, plannedDays: 14)]
+        sleepReports = (0..<28).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: -offset, to: .now) else { return nil }
+            return try? SleepReport(wakeDate: date, durationMinutes: 420 + ((offset * 17) % 70), restfulness: 3 + (offset % 3 == 0 ? 1 : 0), quality: 4, awakenings: offset % 4, factors: offset % 5 == 0 ? [.caffeine] : [], note: "Rutina nocturna registrada.", recordedAt: .now, calendar: calendar)
         }
     }
 }

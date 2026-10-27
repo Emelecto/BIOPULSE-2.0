@@ -21,7 +21,7 @@ struct TodayView: View {
         let data = health.sleepScoreData(using: personal)
         if let lastDay = data.values.filter({ $0.metric == .sleepDuration && $0.day <= .now }).map(\.day).max(),
            data.reportedDays.contains(Calendar.current.startOfDay(for: lastDay)) { return "Estimado por ti · última noche" }
-        return health.isCSVImported ? "Última noche del CSV" : "Última noche · Apple Salud"
+        return health.isCSVImported ? "Última noche del CSV" : health.isPresentationMode ? "Última noche · BioPulse" : "Última noche · Apple Salud"
     }
 
     private var score: WellnessScore {

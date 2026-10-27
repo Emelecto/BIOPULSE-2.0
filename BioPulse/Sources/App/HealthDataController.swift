@@ -69,15 +69,79 @@ final class HealthDataController: ObservableObject {
 
     private let store = HKHealthStore()
     private let catalog = HealthKitCapabilityCatalog()
+    let isPresentationMode: Bool
     private var csvSnapshot: HealthDataSnapshot?
     private var healthKitSnapshot: HealthDataSnapshot?
 
-    var isAvailable: Bool { HKHealthStore.isHealthDataAvailable() }
+    var isAvailable: Bool { isPresentationMode || HKHealthStore.isHealthDataAvailable() }
     var displayedDataDay: Date {
         isCSVImported ? (csvLastDay ?? Calendar.current.startOfDay(for: .now)) : Calendar.current.startOfDay(for: .now)
     }
 
+    init(presentationMode: Bool = false) {
+        isPresentationMode = presentationMode
+        if presentationMode {
+            hasRequestedAccess = true
+            apply(Self.presentationSnapshot())
+        }
+    }
+
+    func resetPresentationData() {
+        guard isPresentationMode else { return }
+        apply(Self.presentationSnapshot())
+        errorMessage = nil
+        isCSVImported = false
+        hasCSVData = false
+    }
+
+    private static func presentationSnapshot() -> HealthDataSnapshot {
+        var calendar = Calendar.current
+        calendar.timeZone = .current
+        let today = calendar.startOfDay(for: .now)
+        let definitions: [(HealthMetric, Double, Double, String)] = [
+            (.stepCount, 8_420, 2_050, "pasos"),
+            (.activeEnergyBurned, 512, 118, "kcal"),
+            (.appleExerciseTime, 46, 12, "min"),
+            (.heartRateVariabilitySDNN, 54, 13, "ms"),
+            (.restingHeartRate, 58, 5, "lpm"),
+            (.sleepAnalysis, 438, 48, "min"),
+            (.walkingRunningDistance, 6.1, 1.4, "km"),
+            (.respiratoryRate, 15.2, 1.2, "rpm"),
+            (.oxygenSaturation, 0.98, 0.01, "%")
+        ]
+        var history: [HealthMetric: [DailyHealthObservation]] = [:]
+        for (metric, base, swing, _) in definitions {
+            history[metric] = (0..<120).compactMap { offset in
+                guard let day = calendar.date(byAdding: .day, value: offset - 119, to: today) else { return nil }
+                let wave = sin(Double(offset) * 0.31) * 0.58 + cos(Double(offset) * 0.13) * 0.27
+                let weekly = offset.isMultiple(of: 7) ? -0.22 : 0.08
+                let value = max(metric == .oxygenSaturation ? 0.94 : 1, base + swing * (wave + weekly))
+                return DailyHealthObservation(day: day, value: value, sourceName: "BioPulse")
+            }
+        }
+        let readings = Dictionary(uniqueKeysWithValues: definitions.compactMap { item in
+            guard let latest = history[item.0]?.last else { return nil }
+            return (item.0, HealthReading(value: latest.value, measuredAt: latest.day, sourceName: "BioPulse"))
+        })
+        let stageDefinitions: [(stage: SleepStageKind, start: Int, end: Int)] = [
+            (.core, 0, 95), (.deep, 95, 165), (.core, 165, 250),
+            (.rem, 250, 310), (.core, 310, 375), (.rem, 375, 430)
+        ]
+        let stages: [SleepStageObservation] = stageDefinitions.compactMap { item in
+            guard let startDate = calendar.date(byAdding: .minute, value: item.start, to: today.addingTimeInterval(-8 * 60 * 60)),
+                  let endDate = calendar.date(byAdding: .minute, value: item.end, to: today.addingTimeInterval(-8 * 60 * 60)) else { return nil }
+            return SleepStageObservation(start: startDate, end: endDate, stage: item.stage)
+        }
+        let energy = (7..<22).compactMap { hour -> HourlyEnergyObservation? in
+            guard let date = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: today) else { return nil }
+            let calories = max(0, 34 + 26 * sin(Double(hour) * 0.7))
+            return HourlyEnergyObservation(hour: date, kilocalories: calories)
+        }
+        return HealthDataSnapshot(readings: readings, dailyHistory: history, hourlyActiveEnergy: energy, sleepStages: stages, lastUpdated: .now)
+    }
+
     func useCSV(_ result: CSVImportResult) -> Bool {
+        guard !isPresentationMode else { return false }
         guard !result.records.isEmpty else { return false }
         let mapped: [(MetricKind, HealthMetric)] = [
             (.heartRate, .heartRate), (.restingHeartRate, .restingHeartRate),
@@ -129,12 +193,14 @@ final class HealthDataController: ObservableObject {
     }
 
     func showCSVData() {
+        guard !isPresentationMode else { return }
         guard let csvSnapshot else { return }
         isCSVImported = true
         apply(csvSnapshot)
     }
 
     func showHealthKitData() async {
+        guard !isPresentationMode else { return }
         isCSVImported = false
         if let healthKitSnapshot {
             apply(healthKitSnapshot)
@@ -147,6 +213,7 @@ final class HealthDataController: ObservableObject {
     }
 
     func clearCSV() {
+        guard !isPresentationMode else { return }
         isCSVImported = false
         hasCSVData = false
         csvLastDay = nil
@@ -175,6 +242,7 @@ final class HealthDataController: ObservableObject {
     }
 
     func requestAccess() async {
+        guard !isPresentationMode else { return }
         guard isAvailable else {
             errorMessage = "Apple Salud no está disponible en este dispositivo."
             return
@@ -204,6 +272,7 @@ final class HealthDataController: ObservableObject {
     }
 
     func reload() async {
+        guard !isPresentationMode else { return }
         guard isAvailable, hasRequestedAccess, !isLoading else { return }
         isLoading = true
         errorMessage = nil

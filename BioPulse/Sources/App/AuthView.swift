@@ -98,6 +98,7 @@ private struct AuthView: View {
     @State private var confirmationEmail: String?
     @State private var nextResendAt = Date.distantPast
     @State private var hasAppeared = false
+    @State private var showingPresentation = false
     @FocusState private var focusedField: AuthField?
 
     private var normalizedEmail: String {
@@ -116,6 +117,15 @@ private struct AuthView: View {
                     credentialForm.pulseEntrance(visible: hasAppeared, reduceMotion: reduceMotion, delay: 0.06)
                     providerOptions.pulseEntrance(visible: hasAppeared, reduceMotion: reduceMotion, delay: 0.1)
                 }
+                Button { showingPresentation = true } label: {
+                    Label("Explorar BioPulse", systemImage: "sparkles")
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity, minHeight: 48)
+                        .foregroundStyle(.white)
+                        .overlay(Capsule().stroke(.white.opacity(0.2)))
+                }
+                .buttonStyle(PulsePressButtonStyle())
+                .accessibilityHint("Abre la aplicación con un perfil de presentación local")
                 Label("Tu cuenta protege el acceso. Tú decides qué datos compartir.", systemImage: "lock.shield")
                     .font(.footnote).foregroundStyle(PulseStyle.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -136,6 +146,7 @@ private struct AuthView: View {
             passwordConfirmation = ""
         }
         .onAppear { hasAppeared = true }
+        .fullScreenCover(isPresented: $showingPresentation) { PresentationRootView() }
     }
 
     private var header: some View {
@@ -354,6 +365,7 @@ private struct AuthView: View {
             }
             .buttonStyle(PulsePressButtonStyle())
             .disabled(isWorking || auth.configurationProblem != nil)
+
         }
     }
 

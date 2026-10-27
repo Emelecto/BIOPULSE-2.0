@@ -8,6 +8,7 @@ struct ProfileView: View {
     @ObservedObject var health: HealthDataController
     @ObservedObject var auth: AuthSessionStore
     @ObservedObject var personal: PersonalContextStore
+    let openPresentation: () -> Void
     @State private var showingImporter = false
     @State private var importResult: CSVImportResult?
     @State private var importError: String?
@@ -21,6 +22,14 @@ struct ProfileView: View {
 
     var body: some View {
         ScreenShell(title: "Perfil", subtitle: "Tu cuenta, tus datos y tus decisiones") {
+            Button(action: openPresentation) {
+                DashboardCard {
+                    Label("Explorar BioPulse", systemImage: "sparkles")
+                        .font(.headline).foregroundStyle(.white)
+                    Text("Abre un recorrido interactivo con Wrapped y todas las secciones.")
+                        .font(.subheadline).foregroundStyle(PulseStyle.secondary)
+                }
+            }.buttonStyle(PulsePressButtonStyle())
             DashboardCard {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "person.crop.circle")

@@ -20,6 +20,33 @@ final class JournalController: ObservableObject {
         JournalController(store: JSONContextJournalStore(fileURL: journalFileURL(userID: userID)))
     }
 
+    func seedPresentationSample() async {
+        guard !hasLoaded else { return }
+        guard let memoryStore = store as? InMemoryContextJournalStore else { return }
+        let samples: [(JournalCategory, String, String, Int)] = [
+            (.habit, "Caminata matutina", "Una vuelta corta antes de empezar el día.", 2),
+            (.event, "Entrenamiento de fuerza", "Sesión de 40 minutos por la tarde.", 6),
+            (.habit, "Rutina de descanso", "Dejé el teléfono fuera de la habitación.", 10),
+            (.symptom, "Energía estable", "Me sentí bien durante la mayor parte del día.", 15),
+            (.event, "Día de recuperación", "Actividad ligera y una noche más larga.", 21)
+        ]
+        for (category, title, notes, daysAgo) in samples {
+            let date = Calendar.current.date(byAdding: .day, value: -daysAgo, to: .now) ?? .now
+            guard let draft = try? JournalEntryDraft(category: category, title: title, notes: notes, occurredAt: date, timeZoneIdentifier: TimeZone.current.identifier) else { continue }
+            _ = try? await memoryStore.apply(.insert(draft: draft), at: date)
+        }
+        await load()
+    }
+
+    func resetPresentationSample() async {
+        guard let memoryStore = store as? InMemoryContextJournalStore else { return }
+        let current = (try? await memoryStore.entries(matching: nil)) ?? []
+        for entry in current { _ = try? await memoryStore.delete(id: entry.id, expectedRevision: entry.revision) }
+        entries = []
+        hasLoaded = false
+        await seedPresentationSample()
+    }
+
     func load(force: Bool = false) async {
         guard force || !hasLoaded else { return }
         isLoading = true
