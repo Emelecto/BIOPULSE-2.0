@@ -238,8 +238,8 @@ final class PersonalContextStore: ObservableObject {
 
     func scheduleSleepReminder() async -> String? {
         guard !isPresentationMode else { return nil }
-        await SleepReminderNotifications.schedule(userID: userID, reminder: sleepReminder,
-                                                 quietStart: preferences.quietStartHour, quietEnd: preferences.quietEndHour)
+        return await SleepReminderNotifications.schedule(userID: userID, reminder: sleepReminder,
+                                                          quietStart: preferences.quietStartHour, quietEnd: preferences.quietEndHour)
     }
 
     var activeExperiments: [PersonalExperiment] {

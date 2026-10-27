@@ -33,15 +33,15 @@ final class JournalController: ObservableObject {
         for (category, title, notes, daysAgo) in samples {
             let date = Calendar.current.date(byAdding: .day, value: -daysAgo, to: .now) ?? .now
             guard let draft = try? JournalEntryDraft(category: category, title: title, notes: notes, occurredAt: date, timeZoneIdentifier: TimeZone.current.identifier) else { continue }
-            _ = try? await memoryStore.apply(.insert(draft: draft), at: date)
+            _ = await memoryStore.apply(.insert(draft: draft), at: date)
         }
         await load()
     }
 
     func resetPresentationSample() async {
         guard let memoryStore = store as? InMemoryContextJournalStore else { return }
-        let current = (try? await memoryStore.entries(matching: nil)) ?? []
-        for entry in current { _ = try? await memoryStore.delete(id: entry.id, expectedRevision: entry.revision) }
+        let current = await memoryStore.entries(matching: nil)
+        for entry in current { _ = await memoryStore.delete(id: entry.id, expectedRevision: entry.revision) }
         entries = []
         hasLoaded = false
         await seedPresentationSample()
