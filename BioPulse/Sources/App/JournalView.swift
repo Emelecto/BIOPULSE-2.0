@@ -99,6 +99,9 @@ struct JournalView: View {
             actions: { Button("Aceptar") { journal.dismissError() } },
             message: { Text(journal.errorMessage ?? "Error desconocido") }
         )
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: selectedDay)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: personal.checkIns)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: journal.saveRevision)
         .sensoryFeedback(.success, trigger: announcedSaveRevision)
         .task(id: announcedSaveRevision) {
             guard showsSaveConfirmation else { return }

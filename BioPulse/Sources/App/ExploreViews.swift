@@ -332,6 +332,8 @@ struct SleepReportEditor: View {
 }
 
 struct TrendsView: View {
+    var openWrapped: () -> Void = {}
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ObservedObject var health: HealthDataController
     @ObservedObject var journal: JournalController
     @ObservedObject var personal: PersonalContextStore
@@ -348,6 +350,7 @@ struct TrendsView: View {
 
     var body: some View {
         ScreenShell(title: "Tendencias", subtitle: "Cambios observados en tus registros") {
+            WrappedEntryButton(action: openWrapped)
             let yesterday = health.isCSVImported ? health.displayedDataDay : (Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: .now)) ?? .now)
             let signal = WellnessScores.change(health.wellnessValues, day: yesterday)
             let anomaly = PersonalAnomalyForest.evaluate(health.personalAnomalyObservations, on: yesterday)
@@ -449,6 +452,8 @@ struct TrendsView: View {
             }
         }
         .refreshable { await health.reload() }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: periodDays)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.22), value: chartMetric)
         .sheet(item: $selectedMetric) { metric in
             MetricDetailView(metric: metric, reading: health.readings[metric])
                 .presentationDetents([.medium, .large])

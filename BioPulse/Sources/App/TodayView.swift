@@ -7,6 +7,7 @@ struct TodayView: View {
     @ObservedObject var health: HealthDataController
     @ObservedObject var personal: PersonalContextStore
     let openJournal: () -> Void
+    let openWrapped: () -> Void
     @State private var selectedMetric: HealthMetric?
     @State private var showingScore = false
     @ScaledMetric(relativeTo: .body) private var metricHeight: CGFloat = 110
@@ -89,6 +90,7 @@ struct TodayView: View {
                     .font(.subheadline).tint(.white)
                     .frame(minHeight: 44)
                 }
+                WrappedEntryButton(action: openWrapped)
                 SleepCheckInCard(personal: personal, health: health, showsHistory: false)
 
                 SectionHeading(title: "Dale contexto", subtitle: "Tus datos cuentan solo una parte")
@@ -105,6 +107,7 @@ struct TodayView: View {
                     .font(.footnote).foregroundStyle(PulseStyle.secondary)
             }
             .padding(.horizontal, 18).padding(.top, 8).padding(.bottom, 20)
+            .pulseSceneMotion()
             .frame(maxWidth: 620).frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)

@@ -1,5 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Activity, ArrowUpRight, BookOpen, ChevronLeft, ChevronRight, FileUp, Heart, Home, LockKeyhole, Moon, Plus, RefreshCw, ShieldCheck, Sparkles, TrendingUp, UserRound, Wind, X, Zap } from "lucide-react";
+
+import { WrappedDialog, WrappedEntry, WrappedStory } from "./wrapped";
+import { wrappedDemoData } from "./wrapped-data";
+import { useMotionVisibility } from "./motion";
+const wrappedFixture = wrappedDemoData();
 
 type DemoTab = "Hoy" | "Tendencias" | "Diario" | "Sueño" | "Perfil";
 type MetricKey = "active" | "hrv" | "resting" | "sleep" | "steps";
@@ -28,8 +33,9 @@ function DemoBars({ values, label, small = false }: { values: number[]; label: s
 }
 
 function DemoRing({ title, value }: { title: string; value: number | null }) {
+  const motion = useMotionVisibility<HTMLDivElement>();
   const tint = value === null ? "#e5e8e9" : value === 78 ? "#aed463" : "#92d56b";
-  return <div className="bp-score" style={{ "--bp-score-tint": tint } as CSSProperties}>
+  return <div ref={motion.ref} data-motion-active={motion.active} className="bp-score" style={{ "--bp-score-tint": tint } as CSSProperties}>
     <svg viewBox="0 0 240 240" aria-hidden="true">{[0, 1, 2, 3].map(strand => {
       const points = Array.from({ length: 181 }, (_, step) => {
         const a = step / 180 * Math.PI * 2;
@@ -52,6 +58,9 @@ function DemoCard({ children, className = "" }: { children: ReactNode; className
 
 export function LandingPhone() {
   const [tab, setTab] = useState<DemoTab>("Hoy");
+  const [wrapped, setWrapped] = useState(false);
+  const [fullWrapped, setFullWrapped] = useState(false);
+  const wrappedRef = useRef<HTMLDivElement>(null);
   const [panel, setPanel] = useState<Panel | null>(null);
   const [period, setPeriod] = useState(7);
   const [trendMetric, setTrendMetric] = useState<MetricKey>("hrv");
@@ -63,6 +72,8 @@ export function LandingPhone() {
   ]);
   const [sleepMinutes, setSleepMinutes] = useState(462);
   const [sleepReported, setSleepReported] = useState(false);
+  const wrappedDaily = useMemo(() => wrappedFixture.daily.map(row => row.local_date === "2026-10-26" ? { ...row, value: ({ sleep_duration: sleepMinutes, steps: 8420, active_energy: 486, hrv_sdnn: 53, resting_heart_rate: 58 } as Record<string, number>)[row.metric_kind] ?? row.value } : row), [sleepMinutes]);
+  const wrappedJournal = useMemo(() => [...wrappedFixture.journal, ...entries.map(entry => ({ id: `phone-${entry.id}`, title: entry.title, notes: entry.note, category: "event" as const, occurred_at: new Date(Date.UTC(2026, 9, 26 + entry.day, 12)).toISOString(), timezone_identifier: "UTC" }))], [entries]);
   const [coachExample, setCoachExample] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -85,7 +96,7 @@ export function LandingPhone() {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") { event.preventDefault(); setPanel(null); }
       if (event.key !== "Tab") return;
-      const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>("button:not([disabled]), input, select, textarea, [tabindex='0']") ?? []).filter(el => el.getClientRects().length);
+      const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>("button:not([disabled]), input, select, textarea, [tabindex='0']") ?? []).filter(el => el.getClientRects().length && !el.closest('[inert]'));
       const first = controls[0]; const last = controls[controls.length - 1];
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
@@ -98,6 +109,27 @@ export function LandingPhone() {
     };
   }, [panel]);
 
+  useEffect(() => {
+    if (!wrapped) return;
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const background = rootRef.current?.querySelector<HTMLElement>(".bp-scroll");
+    const chrome = rootRef.current?.querySelectorAll<HTMLElement>(".bp-coach,.bp-tabbar");
+    if (background) background.inert = true;
+    chrome?.forEach(element => { element.inert = true; });
+    const layer = wrappedRef.current;
+    layer?.querySelector<HTMLButtonElement>("button")?.focus({ preventScroll: true });
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); setWrapped(false); }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(layer?.querySelectorAll<HTMLElement>("button:not([disabled]),input,select,[tabindex='0']") ?? []).filter(el => el.getClientRects().length && !el.closest("[inert]"));
+      const first = controls[0]; const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => { if (background) background.inert = false; chrome?.forEach(element => { element.inert = false; }); document.removeEventListener("keydown", onKey); previous?.focus({ preventScroll: true }); };
+  }, [wrapped]);
+
   const metricButton = (key: MetricKey) => {
     const metric = metricInfo[key]; const Icon = metric.icon;
     return <button className={`bp-card bp-metric bp-metric-${key}`} type="button" onClick={() => setPanel(key)}>
@@ -108,14 +140,16 @@ export function LandingPhone() {
     </button>;
   };
 
-  return <div className="land-iphone bp-demo" ref={rootRef}>
+  return <><div className="land-iphone bp-demo" data-overlay-open={wrapped || fullWrapped || !!panel} ref={rootRef}>
     <div className="land-iphone-glass">
       <div className="land-iphone-status" aria-hidden="true"><span>9:41</span><span className="land-iphone-island" /><span className="land-iphone-system"><i /><i /><i /><b /></span></div>
       <div className="bp-demo-label"><span /> DEMO INTERACTIVA · DATOS SIMULADOS</div>
+      {wrapped && <div className="bp-wrapped-layer" ref={wrappedRef} role="dialog" aria-modal="true" aria-label="BioPulse Wrapped, datos simulados"><WrappedStory daily={wrappedDaily} journal={wrappedJournal} onExpand={() => { setWrapped(false); setFullWrapped(true); }} source="Datos simulados" simulated embedded onClose={() => setWrapped(false)} /></div>}
       <div className="bp-scroll" key={tab}>
         <header className="bp-header"><div className="bp-brand"><img src="/images/biopulse-brand-mark.png" alt="" /><span>BioPulse</span></div><h2>{tab}</h2><p>{tab === "Hoy" ? "Lunes, 26 de octubre" : tab === "Tendencias" ? "Cambios observados en tus registros" : tab === "Diario" ? "Tu contexto, en tus palabras" : tab === "Sueño" ? "Con tu reloj o con tu propio registro" : "Tu cuenta, tus datos y tus decisiones"}</p></header>
         {tab === "Hoy" && <>
           <button className="bp-score-button" type="button" onClick={() => setPanel("score")}><DemoRing title="BioScore" value={78} /><span>Índice personal · ayer · ejemplo simulado</span><small><ArrowUpRight size={11} /> Ver componentes</small></button>
+          <WrappedEntry onClick={() => setWrapped(true)} />
           <DemoSection title="Señales de hoy" subtitle="Mediciones y registros, no puntuaciones" />
           <div className="bp-metric-grid"><button className="bp-card bp-energy" type="button" onClick={() => setPanel("active")}><span className="bp-metric-label"><Zap size={12} /> Energía activa</span><strong>486 kcal</strong><DemoBars values={energy} label="Energía activa por hora" /><span className="bp-chart-labels"><span>6 a. m.</span><span>12 p. m.</span><span>6 p. m.</span></span><small>Registrada por hora · simulada</small></button><div className="bp-metric-stack">{metricButton("hrv")}{metricButton("resting")}</div>{metricButton("sleep")}{metricButton("steps")}</div>
           <DemoCard><strong>¿Cómo dormiste?</strong><p>No necesitas dormir con el reloj. También puedes registrar tu descanso.</p><button className="bp-primary" type="button" onClick={() => setPanel("sleep-editor")}>{sleepReported ? "Editar mi sueño" : "Registrar mi sueño"}</button></DemoCard>
@@ -125,6 +159,7 @@ export function LandingPhone() {
           <p className="bp-footnote">BioPulse no ofrece diagnósticos médicos. Todas las cifras de este teléfono son simuladas.</p>
         </>}
         {tab === "Tendencias" && <>
+          <WrappedEntry onClick={() => setWrapped(true)} />
           <DemoCard><span className="bp-caption">SEÑAL DE CAMBIO PERSONAL</span><strong>Sin cambio persistente</strong><p>Lectura de ejemplo, sin valor clínico.</p><details><summary>Cómo se interpreta</summary><p>Compara señales con tu propio historial. Una coincidencia no demuestra una causa. Aquí se usan únicamente datos simulados.</p></details></DemoCard>
           <DemoCard><strong>Tu historia, día a día</strong><p>Los huecos no se rellenan.</p><div className="bp-segments" role="group" aria-label="Periodo de tendencias de demostración">{[7, 30, 90].map(days => <button type="button" key={days} aria-pressed={period === days} onClick={() => setPeriod(days)}>{days} días</button>)}</div><label className="bp-chart-select">Señal<select value={trendMetric} onChange={e => setTrendMetric(e.target.value as MetricKey)}>{(["hrv", "resting", "sleep", "active"] as MetricKey[]).map(key => <option value={key} key={key}>{metricInfo[key].title}</option>)}</select></label><DemoBars values={trendValues} label={`${trend.title}, ${period} días`} /><div className="bp-chart-labels"><span>Hace {period} días</span><span>Hoy</span></div><small>Agregados simulados · {trend.unit}</small></DemoCard>
           <DemoCard><span className="bp-caption">MODELO ML · ISOLATION FOREST</span><strong>Datos insuficientes</strong><details><summary>Método y cobertura</summary><p>La app iOS evalúa un patrón personal en el dispositivo. Esta demo no entrena ni ejecuta modelos.</p></details></DemoCard>
@@ -173,5 +208,5 @@ export function LandingPhone() {
       </div></div>}
     </div>
     <p className="bp-demo-hint">Explora las pestañas y toca las tarjetas.</p>
-  </div>;
+  </div>{fullWrapped && <WrappedDialog daily={wrappedDaily} journal={wrappedJournal} source="Datos simulados" simulated onClose={() => setFullWrapped(false)} />}</>;
 }

@@ -1,6 +1,30 @@
 import SwiftUI
 import UIKit
 
+private struct PulseMotionEnabledKey: EnvironmentKey { static let defaultValue = true }
+extension EnvironmentValues {
+    var pulseMotionEnabled: Bool {
+        get { self[PulseMotionEnabledKey.self] }
+        set { self[PulseMotionEnabledKey.self] = newValue }
+    }
+}
+
+struct PulseSceneMotion: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var visible = false
+    func body(content: Content) -> some View {
+        content.opacity(visible ? 1 : 0.8)
+            .offset(y: visible || reduceMotion ? 0 : 6)
+            .animation(reduceMotion ? .easeOut(duration: 0.12) : .easeOut(duration: 0.22), value: visible)
+            .onAppear { visible = true }
+            .onDisappear { visible = false }
+    }
+}
+
+extension View {
+    func pulseSceneMotion() -> some View { modifier(PulseSceneMotion()) }
+}
+
 enum PulseStyle {
     static let background = Color(red: 0.035, green: 0.047, blue: 0.055)
     static let surface = Color(red: 0.09, green: 0.105, blue: 0.115)
@@ -222,6 +246,7 @@ struct ScreenShell<Content: View>: View {
             }
             .padding(.horizontal, 18)
             .padding(.bottom, 20)
+            .pulseSceneMotion()
             .frame(maxWidth: 620, alignment: .leading)
             .frame(maxWidth: .infinity)
         }
@@ -270,7 +295,7 @@ struct PulsePressButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.94 : 1)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
             .opacity(configuration.isPressed ? 0.82 : 1)
             .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.9), value: configuration.isPressed)
     }

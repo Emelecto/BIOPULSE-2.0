@@ -452,3 +452,11 @@
 - **Decisión:** reducir jerarquía de cabeceras y separaciones, usar anillo base de 176 pt, tarjetas más compactas y botones de al menos 44 pt. Mantener Dynamic Type, crecimiento de contenido y alternativas verticales para texto grande. Se conserva la información completa, los cálculos y los límites de cada fuente.
 - **Landing:** recreación web de las cinco pestañas basada en el video y la nueva estructura SwiftUI. Incluye filtros, detalles y registros de demostración solo en memoria; las etiquetas de simulación permanecen visibles. No se copian datos personales del video ni se ejecutan servicios de Salud o IA desde la demo.
 - **Criterios:** ver más de un bloque útil al entrar a las pantallas con texto estándar; evitar recortes con texto grande; conservar áreas táctiles; mantener desplazamiento y navegación; identificar todos los datos de ejemplo. Comprobación nativa en iPhone pendiente.
+
+## D-066 — Movimiento y Wrapped mensual en iOS, web y demo
+
+- **Decisión:** añadir una experiencia mensual de siete escenas con datos existentes: portada, panorama, sueño, actividad, señales, contexto y tarjeta compartible. Acceso desde Hoy/Tendencias, archivo de meses disponibles, navegación por gesto/botones, detalle por día, estadísticas y comparación mensual.
+- **Movimiento:** animar filamentos del anillo con el número estable; pausar al ocultar pantalla o app y respetar movimiento reducido. Extender estilos de pulsación, entradas, cambios de selección y confirmaciones, conservando controles nativos en SwiftUI.
+- **Datos:** resumen local determinista; huecos visibles y coberturas explícitas. iOS resuelve sueño con el adaptador existente e incluye contexto local. CSV y contexto de la cuenta permanecen separados. La web pagina el historial dentro de los filtros por propietario existentes. No hay nuevo backend ni envío automático de resúmenes.
+- **Compartir:** elegir métricas y revisar una tarjeta antes de crear una imagen local; Diario excluido. La demo conserva etiquetas de simulación y comparte los mismos componentes web, con un conjunto de ejemplo aislado de las cuentas.
+- **Verificación:** CONFIRMED para build web, 26 pruebas web y parser Swift local. Compilación Apple, pruebas Swift en macOS y revisión de dispositivo pendientes. Criterios, arquitectura y recorrido manual en `docs/WRAPPED.md`.

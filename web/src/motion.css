@@ -1,0 +1,33 @@
+:root{--pulse-ease-out:cubic-bezier(.23,1,.32,1);--pulse-ease-change:cubic-bezier(.77,0,.175,1)}
+.app-page button,.bp-demo button{transition:transform 140ms var(--pulse-ease-out),opacity 140ms ease,background-color 160ms ease,color 160ms ease}
+.app-page button:active:not(:disabled),.bp-demo button:active:not(:disabled){transform:scale(.98)}
+.app-page button:disabled,.bp-demo button:disabled{cursor:default}
+.app-page input,.app-page textarea,.bp-demo input,.bp-demo textarea{transition:border-color 160ms ease,box-shadow 160ms ease}
+.bottom-tabs button,.app-sidebar nav button{transition:background-color 160ms ease,color 160ms ease}
+.score-ring[data-motion-active=false] .ring-layer,.bp-score[data-motion-active=false] polyline{animation-play-state:paused}
+.bp-score svg polyline{transform-origin:120px 120px;animation:bp-strand-drift 22s linear infinite}
+.bp-score svg polyline:nth-child(2){animation-duration:28s;animation-direction:reverse}
+.bp-score svg polyline:nth-child(3){animation-duration:35s}
+.bp-score svg polyline:nth-child(4){animation-duration:42s;animation-direction:reverse}
+.bp-wrapped-layer{position:absolute;inset:57px 0 0;z-index:15;border-radius:0 0 40px 40px;overflow:hidden;background:#101817}
+.bp-demo:has(.bp-wrapped-layer) .bp-scroll{visibility:hidden}
+.bp-demo .wrapped-entry{padding:12px;gap:10px;margin:6px 0}
+.bp-demo .wrapped-entry-art{width:34px;height:34px;font-size:23px;flex:none}
+.bp-demo .wrapped-entry small{font-size:8px}.bp-demo .wrapped-entry strong{font-size:12px}.bp-demo .wrapped-entry span span{font-size:9px}.bp-demo .wrapped-entry>svg{width:14px}
+@media(hover:hover) and (pointer:fine){.app-page .card button:hover,.bp-card:hover{background-color:#ffffff08}.wrapped-entry:hover{border-color:#b4c9b37a}}
+@media(prefers-reduced-motion:no-preference){
+ .app-scene,.bp-scroll{animation:pulse-scene-enter 220ms var(--pulse-ease-out) both}
+ .app-scene .bar-chart,.app-scene .metric-spark,.bp-bars{animation:pulse-chart-enter 240ms var(--pulse-ease-out) both;transform-origin:50% 100%}
+ .detail-panel,.coach-panel,.bp-sheet,.welcome-panel{animation:pulse-sheet-enter 250ms var(--pulse-ease-out) both}
+ .journal-entry,.bp-entry{animation:pulse-scene-enter 220ms var(--pulse-ease-out) both}
+ .app-page details[open]>:not(summary){animation:pulse-fade-enter 180ms ease-out}
+ @keyframes pulse-scene-enter{from{opacity:.65;transform:translateY(6px)}to{opacity:1;transform:none}}
+ @keyframes pulse-chart-enter{from{opacity:.4;transform:scaleY(.94)}to{opacity:1;transform:none}}
+ @keyframes pulse-sheet-enter{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+ @keyframes pulse-fade-enter{from{opacity:.4}to{opacity:1}}
+ @keyframes bp-strand-drift{to{transform:rotate(360deg)}}
+}
+@media(prefers-reduced-motion:reduce){.app-page *,.bp-demo *{animation:none!important;scroll-behavior:auto!important;transition-duration:0ms!important}.app-page button:active,.bp-demo button:active{transform:none!important}}
+.wrapped-story[data-motion-active=false] *,.wrapped-story:not([data-page="0"]) .wrap-orbit i{animation-play-state:paused}
+.bp-demo[data-overlay-open=true] .bp-score-button polyline{animation-play-state:paused}
+.wrap-header>span{flex:1}.wrap-header>button+button{margin-left:7px}

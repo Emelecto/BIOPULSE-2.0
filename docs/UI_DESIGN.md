@@ -42,6 +42,13 @@ La app SwiftUI usa una interfaz oscura y atmosférica, con fondo nocturno, super
 - Probar Coach con respuesta real del proveedor, consentimiento, revocación, errores y fallback.
 - Corregir hallazgos; entonces actualizar el estado de cada función de «implementado en código» a «verificado» cuando corresponda.
 
+## Movimiento y Wrapped mensual — 2026-10-26
+
+- Anillo orgánico con luz y deformación suave, número estable, pausa por visibilidad/ciclo de vida y movimiento reducido.
+- Respuesta de pulsación compartida, entradas cortas y cambios animados de selección, gráficas y Diario.
+- Wrapped usa una presentación inmersiva oscura, acentos por señal, tipografía editorial, siete escenas y navegación horizontal. Cada señal conserva su gráfica diaria y procedencia; los detalles, comparación y tarjeta de imagen son interactivos.
+- Misma estructura narrativa en SwiftUI, app web y teléfono público. Este último muestra datos simulados y ofrece ampliación a pantalla completa. Ver alcance y aceptación en `WRAPPED.md`.
+
 ## Funciones explícitamente futuras
 
 - App complementaria para watchOS, widgets y complicaciones para Apple Watch.

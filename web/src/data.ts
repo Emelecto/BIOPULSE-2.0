@@ -113,16 +113,7 @@ export async function loadMetrics(
 ): Promise<{ daily: Daily[]; hourly: Hourly[]; sleep: Sleep[] }> {
   if (!supabase) throw new Error("Falta configurar Supabase.");
   const [d, h, s] = await Promise.all([
-    supabase
-      .from("daily_metric_summaries")
-      .select(
-        "local_date,metric_kind,value,unit,quality,source_kind,updated_at",
-      )
-      .eq("user_id", userId)
-      .eq("source_kind", "health_auto_export_aggregate")
-      .gte("local_date", daysAgo(90))
-      .order("local_date", { ascending: false })
-      .limit(1000),
+    loadDailyHistory(userId),
     supabase
       .from("intraday_metric_summaries")
       .select("local_date,bucket_start,metric_kind,value,unit")
@@ -137,26 +128,42 @@ export async function loadMetrics(
       .gte("local_date", daysAgo(30))
       .limit(200),
   ]);
-  if (d.error || h.error || s.error)
+  if (h.error || s.error)
     throw new Error(
       "No se pudieron cargar las mediciones. Comprueba permisos y conexión.",
     );
   return {
-    daily: (d.data ?? []) as Daily[],
+    daily: d,
     hourly: (h.data ?? []) as Hourly[],
     sleep: (s.data ?? []) as Sleep[],
   };
 }
+async function loadDailyHistory(userId: string): Promise<Daily[]> {
+  if (!supabase) return [];
+  const rows: Daily[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase.from("daily_metric_summaries")
+      .select("local_date,metric_kind,value,unit,quality,source_kind,updated_at")
+      .eq("user_id", userId).eq("source_kind", "health_auto_export_aggregate")
+      .gte("local_date", daysAgo(90)).order("local_date", { ascending: false }).order("metric_kind", { ascending: true })
+      .range(offset, offset + 999);
+    if (error) throw new Error("No se pudo cargar todo el historial de mediciones.");
+    rows.push(...(data ?? []) as Daily[]);
+    if ((data?.length ?? 0) < 1000) return rows;
+  }
+}
 export async function loadJournal(userId: string): Promise<Journal[]> {
   if (!supabase) return [];
-  const { data, error } = await supabase
-    .from("journal_entries")
-    .select("id,category,title,notes,occurred_at,timezone_identifier")
-    .eq("user_id", userId)
-    .order("occurred_at", { ascending: false })
-    .limit(100);
-  if (error) throw new Error("No se pudo cargar el Diario.");
-  return (data ?? []) as Journal[];
+  const rows: Journal[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await supabase.from("journal_entries")
+      .select("id,category,title,notes,occurred_at,timezone_identifier")
+      .eq("user_id", userId).order("occurred_at", { ascending: false }).order("id", { ascending: true })
+      .range(offset, offset + 999);
+    if (error) throw new Error("No se pudo cargar el Diario completo.");
+    rows.push(...(data ?? []) as Journal[]);
+    if ((data?.length ?? 0) < 1000) return rows;
+  }
 }
 export async function journalConsent(userId: string): Promise<boolean> {
   if (!supabase) return false;

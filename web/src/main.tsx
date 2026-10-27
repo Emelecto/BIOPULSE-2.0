@@ -63,6 +63,9 @@ import "./landing.css";
 import { LandingPhone } from "./landing-phone";
 import "./landing-phone.css";
 import "./csv.css";
+import { WrappedDialog, WrappedEntry } from "./wrapped";
+import { useMotionVisibility } from "./motion";
+import "./motion.css";
 
 type Tab = "Hoy" | "Tendencias" | "Diario" | "Sueño" | "Perfil";
 const tabs: {
@@ -506,8 +509,9 @@ function Ring({
   score?: ScoreResult;
 }) {
   const tint = scoreColor(score?.value ?? null);
+  const motion = useMotionVisibility<HTMLDivElement>();
   return (
-    <div className={`score-ring ${compact ? "ring-compact" : ""}`} role="img" style={tint ? { color: tint } : undefined} aria-label={score?.value === null ? `${title}: ${score.reason}` : `${title}: ${score?.value ?? "sin datos"} de 100`}>
+    <div ref={motion.ref} data-motion-active={motion.active} className={`score-ring ${compact ? "ring-compact" : ""}`} role="img" style={tint ? { color: tint } : undefined} aria-label={score?.value === null ? `${title}: ${score.reason}` : `${title}: ${score?.value ?? "sin datos"} de 100`}>
       <div className="ring-layer ring-a" />
       <div className="ring-layer ring-b" />
       <div className="ring-layer ring-c" />
@@ -568,6 +572,7 @@ function Today({
   hourly,
   csv,
   onJournal,
+  onWrapped,
   onMetric,
   onConnect,
   targetMinutes,
@@ -576,6 +581,7 @@ function Today({
   hourly: Hourly[];
   csv: ActiveCSV | null;
   onJournal: () => void;
+  onWrapped: () => void;
   onMetric: (kind: string) => void;
   onConnect: () => void;
   targetMinutes: number;
@@ -615,6 +621,7 @@ function Today({
           Ver componentes <ArrowRight size={13} />
         </small>
       </button>
+      <WrappedEntry onClick={onWrapped} />
       {daily.length === 0 && !csv && (
         <Card className="callout">
           <ShieldCheck size={22} />
@@ -706,11 +713,13 @@ function Today({
 function Trends({
   daily,
   csv,
+  onWrapped,
   onMetric,
 }: {
   daily: Daily[];
   csv: ActiveCSV | null;
   onMetric: (kind: string) => void;
+  onWrapped: () => void;
 }) {
   const choices = csv
     ? Object.keys(metricNames).filter((metric) => daily.some((row) => row.metric_kind === metric))
@@ -741,6 +750,7 @@ function Trends({
         title="Tendencias"
         subtitle="Cambios observados en tus registros"
       />
+      <WrappedEntry onClick={onWrapped} />
       <Card className="signal-card">
         <span className="card-topline">SEÑAL DE CAMBIO PERSONAL</span>
         <strong>{signal.value === null ? "—" : signal.value === 0 ? "Sin cambio persistente" : `${signal.value}/100`}</strong>
@@ -1720,6 +1730,7 @@ function AppShell({ session }: { session: Session }) {
   const [error, setError] = useState("");
   const [coach, setCoach] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
+  const [wrapped, setWrapped] = useState(false);
   const [welcome, setWelcome] = useState(() => localStorage.getItem(`biopulse.webWelcome.${session.user.id}`) !== "seen");
   const metrics = csv ? { daily: csv.result.daily, hourly: [] as Hourly[], sleep: [] as Sleep[] } : remoteMetrics;
   const userId = session.user.id;
@@ -1831,6 +1842,7 @@ function AppShell({ session }: { session: Session }) {
               {error}
             </div>
           )}
+          <div className="app-scene" key={tab}>
           {!loading &&
             (tab === "Hoy" ? (
               <Today
@@ -1838,12 +1850,13 @@ function AppShell({ session }: { session: Session }) {
                 hourly={metrics.hourly}
                 csv={csv}
                 onJournal={() => navigate("Diario")}
+                onWrapped={() => setWrapped(true)}
                 onMetric={setDetail}
                 onConnect={() => navigate("Perfil")}
                 targetMinutes={targetMinutes}
               />
             ) : tab === "Tendencias" ? (
-              <Trends daily={metrics.daily} csv={csv} onMetric={setDetail} />
+              <Trends daily={metrics.daily} csv={csv} onMetric={setDetail} onWrapped={() => setWrapped(true)} />
             ) : tab === "Diario" ? (
               <JournalPage
                 userId={userId}
@@ -1864,6 +1877,7 @@ function AppShell({ session }: { session: Session }) {
                 onClearCSV={() => setCSV(null)}
               />
             ))}
+          </div>
         </div>
         {tab !== "Perfil" && <button
           className="coach-fab"
@@ -1889,6 +1903,7 @@ function AppShell({ session }: { session: Session }) {
           ))}
         </nav>
       </main>
+      {wrapped && <WrappedDialog daily={metrics.daily} journal={csv ? [] : entries} source={csv ? "CSV local" : "Health Auto Export y Diario"} onClose={() => setWrapped(false)} />}
       {coach && !csv && (
         <Coach
           onClose={() => setCoach(false)}

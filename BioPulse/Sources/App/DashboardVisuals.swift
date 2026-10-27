@@ -94,11 +94,14 @@ struct DashboardCard<Content: View>: View {
 struct OrganicScoreRing: View {
     let score: Double?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.pulseMotionEnabled) private var motionEnabled
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var visible = false
 
     var body: some View {
         let tint = ScoreColor.color(for: score)
-        TimelineView(.animation(minimumInterval: 1.0 / 24.0, paused: reduceMotion)) { timeline in
-            let phase = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * 0.22
+        TimelineView(.animation(minimumInterval: 1.0 / 24.0, paused: reduceMotion || !visible || !motionEnabled || scenePhase != .active)) { timeline in
+            let phase = reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate * 0.65
             Canvas { context, size in
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)
                 let radius = min(size.width, size.height) * 0.42
@@ -113,11 +116,14 @@ struct OrganicScoreRing: View {
                         if step == 0 { path.move(to: point) } else { path.addLine(to: point) }
                     }
                     path.closeSubpath()
-                    context.stroke(path, with: .color(tint.opacity(strand == 0 ? 0.82 : 0.38)), lineWidth: strand == 0 ? 1.8 : 0.8)
+                    let light = CGPoint(x: center.x + cos(phase * 0.4) * radius, y: center.y + sin(phase * 0.4) * radius)
+                    context.stroke(path, with: .linearGradient(Gradient(colors: [tint.opacity(0.2), tint.opacity(strand == 0 ? 1 : 0.55), tint.opacity(0.2)]), startPoint: light, endPoint: CGPoint(x: size.width - light.x, y: size.height - light.y)), lineWidth: strand == 0 ? 2 : 0.9)
                 }
             }
         }
         .accessibilityHidden(true)
+        .onAppear { visible = true }
+        .onDisappear { visible = false }
     }
 }
 
@@ -125,6 +131,7 @@ struct PendingScoreHero: View {
     let title: String
     var score: Double? = nil
     var subtitle: String = "Puntuación en preparación"
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .body) private var ringHeight: CGFloat = 176
 
     private var validScore: Double? {
@@ -149,6 +156,7 @@ struct PendingScoreHero: View {
         }
         .frame(maxWidth: .infinity)
         .frame(height: ringHeight)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.22), value: validScore)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(validScore.map { "\(title): \(Int($0.rounded())) de 100. \(subtitle)" } ?? "\(title): puntuación aún no disponible")
     }
